@@ -1,0 +1,82 @@
+# DA Dashboard — my follow-ups
+
+One assistant's view of their Zalo follow-ups: what is due today, what is
+due this week, what was missed, which customers have an open question, and
+which tracker rows need fixing. Built for a phone.
+
+Live at https://kohsinlong.github.io/DA-Dashboard-/ once GitHub Pages is
+switched on (Settings → Pages → Deploy from a branch → `main` / root).
+
+## What the page shows
+
+- **Tiles** — due today, due this week (with how many are already closed
+  and how many still to come), missed or incomplete (this week and last),
+  open queries, data flags.
+- **Today** — a ring that fills as the day's cadences are sent, with
+  customers done / in progress / not started and messages sent.
+- **Your score** — today, month to date and since July, on exactly the
+  head-office scoring (1 per cadence fully sent, 0.5 partial, 0 missed).
+  Only cadences whose window has closed count; days ahead are shown to
+  plan, not scored. A line says what tonight's month score becomes if
+  today's tasks are finished.
+- **Your month, day by day** — one square per day, coloured by that day's
+  score, with current streak, best streak and perfect days.
+- **This week** — Mon to Sun, due count per day, closed days split into
+  full / partial / missed.
+- **Due today** — every Zalo tag with the exact CRM items still to send,
+  and when a windowed cadence (D6-7, CD+3-5) opened. Filter by to do /
+  in progress / done. Due tomorrow shown underneath.
+- **Missed and incomplete** — newest first, grouped yesterday / this week /
+  last week, older behind a button.
+- **Open queries** — every real question or request a customer raised, kept
+  open until a real answer lands (see below).
+- **Team this month** and **Data flags to fix**.
+
+Sign in uses the same shared password as the head-office page. After sign-in
+the DA picks their clinic and name once; the phone remembers it. Languages:
+EN / Tiếng Việt / 中文 (`?lang=vi` to open in Vietnamese).
+
+## Data
+
+`optom-core.js` is shared with the head-office dashboard
+(https://github.com/kohsinlong/zalo-sop-dashboard): the embedded snapshot of
+the Membership trackers, the live-feed settings (`LIVE`), and the rules that
+turn tracker rows into scored cases. Keep the two copies identical so a
+customer scores the same on every page. Whether each message was actually
+sent is modelled until the Salework Zalo API is connected.
+
+`?feed=<url>` overrides the feed for testing; `?asof=YYYY-MM-DD` moves the
+reporting date.
+
+## Open queries — the chat-log ledger
+
+`tools/chat-queries.gs` is a Google Apps Script that turns Zalo chat logs
+into a ledger of open queries:
+
+1. Paste (or pipe) the conversation export into a **Chat log** sheet:
+   `Thread | Time | Sender (customer / da) | Text | Clinic | DA | Zalo tag`.
+   `sample/chat-log.csv` shows the shape. Strip phone numbers first.
+2. Every 15 minutes `scan()` sends each thread that has new messages to
+   Claude (last 40 messages plus that thread's open queries) and asks, with
+   a fixed JSON schema, which customer messages are real questions or
+   requests, and whether each open query is now **resolved** (an actual
+   answer), **promised** ("để em kiểm tra", no answer yet), or **chased**
+   (the customer asked again). Greetings, thanks and acknowledgements are
+   ignored.
+3. Results land in a **Queries** sheet, one row per query with asked-at,
+   category, paraphrase, status, promised-at, chased count, resolved-at and
+   response hours. Status can be edited by hand (resolved after a phone
+   call, dismissed if it was not a question).
+4. The script's web app serves the ledger as JSON; put its URL and token
+   into `QUERIES` near the top of the script in `index.html` and the panel
+   switches from the modelled sample to live rows.
+
+Same pipeline, two uses: the structured columns drive the dashboard counts
+("promised and still waiting", median hours to answer), and the per-thread
+paraphrases are what an "ask about your chats" box would search over.
+
+The API key lives in the Apps Script's Script properties, never in the
+repo. Message text is sent to the Claude API for classification only.
+
+Static HTML, no build step. No patient data appears on the page: Zalo tags
+carry the child's name reduced to initials.

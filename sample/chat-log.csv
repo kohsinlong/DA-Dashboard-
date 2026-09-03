@@ -1,0 +1,11 @@
+Thread,Time,Sender,Text,Clinic,DA,Zalo tag
+t001,2026-09-01 09:12,customer,Chị ơi kính của bé bao giờ về ạ?,CTE D5,Thảo,MCY-260828-Chị Sa-N.T.T.C.
+t001,2026-09-01 09:30,da,Dạ để em kiểm tra rồi báo lại chị nhé,CTE D5,Thảo,MCY-260828-Chị Sa-N.T.T.C.
+t001,2026-09-02 08:05,customer,Em ơi có tin gì chưa?,CTE D5,Thảo,MCY-260828-Chị Sa-N.T.T.C.
+t002,2026-09-01 14:02,customer,Gói hội viên 1 năm giá bao nhiêu vậy em?,NGT,Tiên,KTY-260824-Chị Giang-P.K.M.
+t002,2026-09-01 14:10,da,Dạ gói 1 năm là 2.400.000đ chị ạ, bao gồm 4 lần khám và chỉnh gọng miễn phí,NGT,Tiên,KTY-260824-Chị Giang-P.K.M.
+t002,2026-09-01 14:12,customer,Cảm ơn em nhiều,NGT,Tiên,KTY-260824-Chị Giang-P.K.M.
+t003,2026-09-02 19:40,customer,Bé đeo kính bị cộm mắt thì có sao không em?,NGT,Tiên,OKY-260829-Chị Nga-H.H.H.
+t003,2026-09-02 19:41,customer,Đeo được 3 đêm rồi,NGT,Tiên,OKY-260829-Chị Nga-H.H.H.
+t004,2026-09-03 07:50,da,Chào chị, kính của bé đã về, chị sắp xếp ghé lấy giúp em nhé,CTE D5,Thảo,KTN-260827-Chị Trâm-T.H.N.
+t004,2026-09-03 07:55,customer,Ok em, chiều nay chị qua,CTE D5,Thảo,KTN-260827-Chị Trâm-T.H.N.
