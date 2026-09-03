@@ -32,8 +32,12 @@ switched on (Settings → Pages → Deploy from a branch → `main` / root).
   open until a real answer lands (see below).
 - **Team this month** and **Data flags to fix**.
 
-Sign in uses the same shared password as the head-office page. After sign-in
-the DA picks their clinic and name once; the phone remembers it. Languages:
+Sign in with the clinic's username and the shared password. The username is
+the clinic name without spaces, upper-case, plus `_DA` (`NGT_DA`, `CTED5_DA`),
+so a new clinic in the feed needs no code change; extra aliases go in `USERS`
+in `index.html`. The password is stored only as a SHA-256 hash (`PW_HASH`).
+After sign-in the DA picks their name from that clinic's list once; the
+phone remembers it. Languages:
 EN / Tiếng Việt / 中文 (`?lang=vi` to open in Vietnamese).
 
 ## Data

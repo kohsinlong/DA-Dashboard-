@@ -263,8 +263,12 @@
     <p class="lede" id="gateLede">Sign in to see your follow-ups for today.</p>
     <div class="gateerr" id="gateErr"></div>
     <div class="field">
+      <label for="gu" id="luser">Username</label>
+      <input type="text" id="gu" name="username" autocomplete="username" autocapitalize="characters" required autofocus>
+    </div>
+    <div class="field">
       <label for="gp" id="lpass">Password</label>
-      <input type="password" id="gp" name="password" autocomplete="current-password" required autofocus>
+      <input type="password" id="gp" name="password" autocomplete="current-password" required>
     </div>
     <button type="submit" class="gatebtn" id="gateBtn">Sign in</button>
   </form>
@@ -312,7 +316,20 @@
   var TODAY = Z.todayISO(), START = Z.START, TARGET = Z.TARGET, MS = Z.MS;
   var PAGE = 10;
 
-  var PW_HASH = "d53942c8e49f95569651edc09e700cc036cc347754caa01dfa482574a51dae6e";
+  /* One shared password; the username picks the clinic. A username is the
+     clinic name without spaces, upper-case, plus _DA (NGT -> NGT_DA,
+     CTE D5 -> CTED5_DA), so a new clinic in the feed needs no code change.
+     USERS holds any extra aliases. */
+  var PW_HASH = "0fc190fe4ff2e5f3040c5cf8152c8a93f3e1e4c0da8b732ec286d82c6d290b75";
+  var USERS = { "NGT_DA":"NGT", "CTED5_DA":"CTE D5" };
+  var myClinic = "";
+  function userClinic(u){
+    u = String(u || "").trim().toUpperCase();
+    if(USERS[u]) return USERS[u];
+    var hit = "";
+    CASES.forEach(function(c){ if(c[0].replace(/\s+/g,"").toUpperCase() + "_DA" === u) hit = c[0]; });
+    return hit;
+  }
   var lang = store("zsop_da_lang") || "en", me = store("zsop_da_me") || "", session = null;
   var feedState = { mode:"snapshot", at:DATA.generated || "", error:"" };
 
@@ -540,8 +557,8 @@
     en:{
       title:"My follow-ups", sub:"Optometry · DA", asOf:"as of",
       signin:"Sign in", signingin:"Signing in…", signout:"Sign out", switchWho:"Not you?",
-      badlogin:"Incorrect password. Please try again.",
-      glede:"Sign in to see your follow-ups for today.", lpass:"Password",
+      badlogin:"Incorrect username or password. Please try again.",
+      glede:"Sign in with your clinic's username, e.g. NGT_DA.", lpass:"Password", luser:"Username",
       pickTitle:"Who are you?", pickLede:"Pick your clinic and your name. This phone will remember it.",
       hello:"Hello, {n}", feedLive:"Live · sheets read", feedLoading:"Reading the sheets…",
       feedFailed:"Sheets unreachable · snapshot of", feedSnap:"Snapshot of",
@@ -609,8 +626,8 @@
     vi:{
       title:"Follow-up của tôi", sub:"Khúc xạ · Trợ lý", asOf:"tính đến",
       signin:"Đăng nhập", signingin:"Đang đăng nhập…", signout:"Đăng xuất", switchWho:"Không phải bạn?",
-      badlogin:"Mật khẩu không đúng. Vui lòng thử lại.",
-      glede:"Đăng nhập để xem follow-up hôm nay của bạn.", lpass:"Mật khẩu",
+      badlogin:"Tên đăng nhập hoặc mật khẩu không đúng. Vui lòng thử lại.",
+      glede:"Đăng nhập bằng tên đăng nhập của phòng khám, ví dụ NGT_DA.", lpass:"Mật khẩu", luser:"Tên đăng nhập",
       pickTitle:"Bạn là ai?", pickLede:"Chọn phòng khám và tên của bạn. Điện thoại này sẽ ghi nhớ.",
       hello:"Chào {n}", feedLive:"Trực tiếp · đã đọc sheet", feedLoading:"Đang đọc sheet…",
       feedFailed:"Không đọc được sheet · bản chụp", feedSnap:"Bản chụp",
@@ -667,8 +684,8 @@
     zh:{
       title:"我的跟进", sub:"视光 · 助理", asOf:"截至",
       signin:"登录", signingin:"正在登录…", signout:"退出", switchWho:"不是你？",
-      badlogin:"密码不正确，请重试。",
-      glede:"登录以查看你今天的跟进。", lpass:"密码",
+      badlogin:"用户名或密码不正确，请重试。",
+      glede:"使用诊所的用户名登录，例如 NGT_DA。", lpass:"密码", luser:"用户名",
       pickTitle:"你是谁？", pickLede:"选择你的诊所和姓名。本手机会记住。",
       hello:"你好，{n}", feedLive:"实时 · 已读取表格", feedLoading:"正在读取表格…",
       feedFailed:"无法读取表格 · 快照", feedSnap:"快照",
@@ -1036,6 +1053,7 @@
     document.getElementById("gTitle").textContent = t.title;
     document.getElementById("gateLede").textContent = t.glede;
     document.getElementById("lpass").textContent = t.lpass;
+    document.getElementById("luser").textContent = t.luser;
     document.getElementById("pickTitle").textContent = t.pickTitle;
     document.getElementById("pickLede").textContent = t.pickLede;
     var b = document.getElementById("gateBtn");
@@ -1049,6 +1067,7 @@
   function showPick(){
     var by = daKeys(), h = "";
     Object.keys(by).sort().forEach(function(cl){
+      if(myClinic && cl !== myClinic) return;
       h += '<div class="pickclinic">'+esc(cl)+'</div><div class="pickrow">';
       Object.keys(by[cl]).sort().forEach(function(k){
         h += '<button data-me="'+esc(k)+'"'+(k===me?' class="on"':'')+'>'+esc(daName(k))+'<span>'+by[cl][k]+' KH</span></button>';
@@ -1063,16 +1082,16 @@
     document.getElementById("wrap").hidden = true;
     document.getElementById("pick").classList.remove("gone");
   }
-  function meKnown(){ return !!me && CASES.some(function(c){ return daKey(c) === me; }); }
-  function saveSession(){ session={ok:1}; try{sessionStorage.setItem("zsop_session","1")}catch(e){} }
-  function loadSession(){ try{ if(sessionStorage.getItem("zsop_session")==="1"){session={ok:1};return true;} }catch(e){} return false; }
+  function meKnown(){ return !!me && (!myClinic || daClinic(me) === myClinic) && CASES.some(function(c){ return daKey(c) === me; }); }
+  function saveSession(){ session={ok:1}; try{sessionStorage.setItem("zsop_da_clinic", myClinic)}catch(e){} }
+  function loadSession(){ try{ var c = sessionStorage.getItem("zsop_da_clinic"); if(c){ myClinic = c; session={ok:1}; return true; } }catch(e){} return false; }
   function signOut(){
-    session=null;
-    try{sessionStorage.removeItem("zsop_session")}catch(e){}
+    session=null; myClinic="";
+    try{sessionStorage.removeItem("zsop_da_clinic")}catch(e){}
     document.getElementById("wrap").hidden=true;
     document.getElementById("pick").classList.add("gone");
     document.getElementById("gate").classList.remove("gone");
-    var g=document.getElementById("gp"); g.value=""; g.focus();
+    var g=document.getElementById("gp"); g.value=""; document.getElementById("gu").focus();
   }
   function enterApp(){
     document.getElementById("gate").classList.add("gone");
@@ -1096,11 +1115,12 @@
     ev.preventDefault();
     var t=T(), btn=document.getElementById("gateBtn"), err=document.getElementById("gateErr");
     btn.disabled=true; btn.textContent=t.signingin; err.classList.remove("on");
+    var cl = userClinic(document.getElementById("gu").value);
     sha256(document.getElementById("gp").value).then(function(hh){
       btn.disabled=false; btn.textContent=t.signin;
-      if(hh!==PW_HASH){ err.textContent=t.badlogin; err.classList.add("on");
+      if(hh!==PW_HASH || !cl){ err.textContent=t.badlogin; err.classList.add("on");
         var g=document.getElementById("gp"); g.value=""; g.focus(); return; }
-      saveSession(); enterApp();
+      myClinic = cl; saveSession(); enterApp();
     }).catch(function(){ btn.disabled=false; btn.textContent=t.signin;
       err.textContent=t.badlogin; err.classList.add("on"); });
   });
@@ -1122,6 +1142,6 @@
 
   applyGateLang();
   if(loadSession()) enterApp();
-  else document.getElementById("gp").focus();
+  else document.getElementById("gu").focus();
 })();
 </script>
