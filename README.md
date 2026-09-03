@@ -1,13 +1,26 @@
-# DA Dashboard — my follow-ups
+# DA Dashboard
 
-One assistant's view of their Zalo follow-ups: what is due today, what is
-due this week, what was missed, which customers have an open question, and
-which tracker rows need fixing. Built for a phone.
+A DA signs in and lands on a KPI overview for the month: their own Zalo SOP
+score, and the clinic's sales and leads against target. Each card zooms in
+to its own page. Built for a phone.
 
-Live at https://kohsinlong.github.io/DA-Dashboard-/ once GitHub Pages is
-switched on (Settings → Pages → Deploy from a branch → `main` / root).
+Live at https://kohsinlong.github.io/DA-Dashboard-/ (GitHub Pages, `main` /
+root).
 
-## What the page shows
+## Pages
+
+| Page | What it shows | Data |
+|---|---|---|
+| `/` KPI | Three cards: Zalo SOP (you), Sales (clinic), Leads (clinic), each with target, pace line and a zoom-in link | SOP real; sales and leads modelled |
+| `/sop/` Zalo SOP | Your follow-ups: due today, due this week, missed, open queries, data flags, streaks, team | Real (sent marks modelled) |
+| `/sales/` Sales | Revenue and customers by stream (membership, repurchase, referral), target vs achieved, by month | Modelled placeholders |
+| `/leads/` Leads | Leads generated vs target, by week, by month | Modelled placeholders |
+
+Shared pieces: `shell.js` (sign-in, DA picker, session, language, header,
+navigation, live-feed loading), `theme.css`, `kpi-core.js` (targets and
+the modelled actuals, SOP scoring helpers) and `optom-core.js`.
+
+## The Zalo SOP page
 
 - **Tiles** — due today, due this week (with how many are already closed
   and how many still to come), missed or incomplete (this week and last),
@@ -39,6 +52,24 @@ in `index.html`. The password is stored only as a SHA-256 hash (`PW_HASH`).
 After sign-in the DA picks their name from that clinic's list once; the
 phone remembers it. Languages:
 EN / Tiếng Việt / 中文 (`?lang=vi` to open in Vietnamese).
+
+## Sign-in
+
+Sign in with the clinic's username and the shared password. The username is
+the clinic name without spaces, upper-case, plus `_DA` (`NGT_DA`, `CTED5_DA`),
+so a new clinic in the feed needs no code change; extra aliases go in `USERS`
+in `shell.js`. The password is stored only as a SHA-256 hash (`PW_HASH` in
+`shell.js`). After sign-in the DA picks their name from that clinic's list
+once; the phone remembers it. Languages: EN / Tiếng Việt / 中文 (`?lang=vi`
+to open in Vietnamese).
+
+## Sales and leads targets
+
+`kpi-core.js` holds `TARGETS` per clinic per month (revenue and customers for
+membership, repurchase and referral, plus a lead target) and `actuals()`,
+which currently models the achieved figures from them. Replace `TARGETS`
+with the real monthly targets and point `actuals()` at the sales tracker and
+Salework lead counts; both pages and the KPI cards fill in.
 
 ## Data
 
@@ -72,7 +103,7 @@ into a ledger of open queries:
    response hours. Status can be edited by hand (resolved after a phone
    call, dismissed if it was not a question).
 4. The script's web app serves the ledger as JSON; put its URL and token
-   into `QUERIES` near the top of the script in `index.html` and the panel
+   into `QUERIES` near the top of the script in `sop/index.html` and the panel
    switches from the modelled sample to live rows.
 
 Same pipeline, two uses: the structured columns drive the dashboard counts

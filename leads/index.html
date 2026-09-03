@@ -1,0 +1,107 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DA Dashboard · Leads</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:wght@500;600&display=swap">
+<link rel="stylesheet" href="../theme.css">
+<style>
+  .frow{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin:0 0 14px}
+  .frow button{background:var(--surface);border:1px solid var(--rule);border-radius:20px;padding:5px 13px;font-size:.83rem;color:var(--ink-2)}
+  .frow button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+  .mtdtag{font-family:"IBM Plex Mono",monospace;font-size:8.5px;letter-spacing:.08em;background:var(--accent-soft);color:var(--accent);padding:1px 5px;border-radius:3px;font-weight:600}
+  .frow button[aria-pressed="true"] .mtdtag{background:rgba(255,255,255,.22);color:var(--surface)}
+  .hero{display:block;grid-template-columns:none}
+  .hv{font-size:2.6rem;font-weight:600;letter-spacing:-.04em;line-height:1;margin:6px 0 2px;font-variant-numeric:tabular-nums}
+  .ht{font-size:.86rem;color:var(--muted)} .ht b{color:var(--ink);font-family:"IBM Plex Mono",monospace}
+  .gauge{position:relative;height:12px;background:var(--surface-3);border-radius:3px;margin:12px 0 6px;max-width:560px}
+  .gfill{height:100%;border-radius:3px}
+  .gpace{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--ink);opacity:.6}
+  .gl{display:flex;justify-content:space-between;font-family:"IBM Plex Mono",monospace;font-size:10px;color:var(--muted);max-width:560px}
+  .pace{display:inline-block;font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.05em;padding:2px 7px;border-radius:3px;font-weight:600;margin-top:8px}
+  .wkbars{display:flex;align-items:flex-end;gap:10px;height:170px;position:relative;margin-top:8px}
+  .wcol{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:5px;min-width:0}
+  .wbar{width:100%;max-width:64px;border-radius:2px 2px 0 0}
+  .wval{font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:600}
+  .wlab{font-family:"IBM Plex Mono",monospace;font-size:9px;color:var(--muted);white-space:nowrap}
+  .tblwrap{overflow-x:auto}
+</style>
+
+<div class="wrap" id="wrap" hidden>
+  <div id="app"></div>
+</div>
+
+<script src="../optom-core.js"></script>
+<script src="../kpi-core.js"></script>
+<script src="../shell.js"></script>
+<script>
+(function(){
+  "use strict";
+  var K = window.KPI, esc = SHELL.esc, fill = SHELL.fill, pct = K.pct;
+  var month = "";
+  var L = {
+    en:{ title:"Leads", sub:"{c} · target vs generated", asOf:"as of", dayOf:"day {d} of {n}", mtd:"MTD", mock:"modelled",
+      note:"<b>Placeholder.</b> The lead target is illustrative and the generated count is modelled from it. Point actuals() in kpi-core.js at the Salework lead count and the page fills in.",
+      hLeads:"Leads generated", achieved:"Generated", target:"Target", ofTarget:"of target", onPace:"On pace", behind:"Slightly behind", offPace:"Behind", met:"Target met", missed:"Below target",
+      pWeeks:"By week", pWeeksH:"Bars are leads generated; the dashed line is the week's share of the monthly target", wk:"W{n}", wkTarget:"weekly pace",
+      thWeek:"Week", thDates:"Dates", thTarget:"Target", thGen:"Generated", thPct:"%", thTot:"Total", noTargets:"No targets set for this clinic yet.", coming:"coming",
+      months:["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"] },
+    vi:{ title:"Leads", sub:"{c} · mục tiêu và tạo được", asOf:"tính đến", dayOf:"ngày {d} / {n}", mtd:"Đến nay", mock:"mô phỏng",
+      note:"<b>Số giữ chỗ.</b> Mục tiêu lead là số minh hoạ và số tạo được là mô phỏng từ đó. Nối actuals() trong kpi-core.js với số lead từ Salework là trang tự điền.",
+      hLeads:"Leads tạo được", achieved:"Tạo được", target:"Mục tiêu", ofTarget:"mục tiêu", onPace:"Đúng nhịp", behind:"Hơi chậm", offPace:"Chậm", met:"Đạt mục tiêu", missed:"Dưới mục tiêu",
+      pWeeks:"Theo tuần", pWeeksH:"Cột là số lead tạo được; vạch đứt là phần mục tiêu tháng của tuần đó", wk:"T{n}", wkTarget:"nhịp tuần",
+      thWeek:"Tuần", thDates:"Ngày", thTarget:"Mục tiêu", thGen:"Tạo được", thPct:"%", thTot:"Tổng", noTargets:"Phòng khám này chưa có mục tiêu.", coming:"sắp tới",
+      months:["Th1","Th2","Th3","Th4","Th5","Th6","Th7","Th8","Th9","Th10","Th11","Th12"] },
+    zh:{ title:"线索", sub:"{c} · 目标与生成", asOf:"截至", dayOf:"第 {d} / {n} 天", mtd:"本月至今", mock:"模拟",
+      note:"<b>占位数。</b>线索目标为示意值，生成数由其模拟生成。将 kpi-core.js 中的 actuals() 接到 Salework 的线索数，页面即自动填充。",
+      hLeads:"已生成线索", achieved:"已生成", target:"目标", ofTarget:"目标完成率", onPace:"进度正常", behind:"略落后", offPace:"落后", met:"已达标", missed:"未达标",
+      pWeeks:"按周", pWeeksH:"柱为生成的线索数；虚线为该周应占的月目标份额", wk:"第{n}周", wkTarget:"周进度",
+      thWeek:"周", thDates:"日期", thTarget:"目标", thGen:"已生成", thPct:"%", thTot:"合计", noTargets:"该诊所尚未设置目标。", coming:"即将到来",
+      months:["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"] }
+  };
+  function paceColour(pc){ return pc==="ok" ? "var(--ok)" : pc==="warn" ? "var(--warn)" : "var(--bad)"; }
+  function monthLabel(t, k){ return t.months[+k.slice(5,7)-1] + " " + k.slice(0,4); }
+
+  function render(st){
+    var t = L[st.lang], TODAY = st.today, cur = TODAY.slice(0,7), cl = st.clinic;
+    if(!month) month = cur;
+    var frac = K.monthFrac(month, TODAY);
+    document.title = "DA Dashboard · " + t.title;
+    SHELL.setTitle(t.title, esc(fill(t.sub, {c:cl})) + ' &middot; ' + esc(t.asOf) + ' ' + esc(TODAY));
+    var h = '<div class="frow">' + K.months(TODAY).map(function(m){
+      return '<button data-m="'+m+'" aria-pressed="'+(m===month)+'">'+esc(monthLabel(t, m))+(m===cur ? ' <span class="mtdtag">'+esc(t.mtd)+'</span>' : '')+'</button>'; }).join('') + '</div>';
+    h += '<div class="note"><p>'+t.note+'</p></div>';
+    var tg = K.targets(cl), ac = K.actuals(cl, month, TODAY);
+    if(!tg){ h += '<div class="panel"><div class="empty">'+esc(t.noTargets)+'</div></div>'; document.getElementById("app").innerHTML = h; wire(); return; }
+    var leadT = tg.leads, leadA = ac.leads, pc = K.paceClass(leadA, leadT, frac), p = pct(leadA, leadT);
+    h += '<div class="hero"><div style="font-family:\'IBM Plex Mono\',monospace;font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);font-weight:600">'+esc(t.hLeads)+' <span class="pill p-mock">'+esc(t.mock)+'</span>'
+      + (frac < 1 ? ' · '+esc(fill(t.dayOf, {d:+TODAY.slice(8,10), n:K.daysIn(month)})) : '')+'</div>'
+      + '<div class="hv">'+leadA.toLocaleString("en-US")+'</div><div class="ht"><b>'+leadA.toLocaleString("en-US")+'</b> / <b>'+leadT.toLocaleString("en-US")+'</b></div>'
+      + '<div class="gauge"><div class="gfill" style="width:'+Math.min(100, Math.max(p,1))+'%;background:'+paceColour(pc)+'"></div>'+(frac<1 ? '<div class="gpace" style="left:'+Math.round(frac*100)+'%"></div>' : '')+'</div>'
+      + '<div class="gl"><span>'+esc(t.achieved)+'</span><span>'+esc(t.target)+'</span></div>'
+      + '<span class="pace p-'+(pc||'accent')+'">'+esc(frac<1 ? (pc==="ok"?t.onPace:pc==="warn"?t.behind:t.offPace) : (pc==="ok"?t.met:t.missed))+' · '+p+'% '+esc(t.ofTarget)+'</span></div>';
+
+    var weeks = ac.leadsByWeek, wkT = weeks.map(function(w){ return Math.round(leadT * w.w.frac); }), mx = 1;
+    weeks.forEach(function(w, i){ mx = Math.max(mx, w.n || 0, wkT[i]); });
+    h += '<div class="panel"><h3><span>'+esc(t.pWeeks)+' <span class="pill p-mock">'+esc(t.mock)+'</span></span><span class="hint">'+esc(t.pWeeksH)+'</span></h3><div class="pad"><div class="wkbars">';
+    weeks.forEach(function(w, i){
+      var a = w.n, hgt = a === null ? 0 : Math.max(3, Math.round(a / mx * 130)), th = Math.round(wkT[i] / mx * 130);
+      h += '<div class="wcol"><span class="wval">'+(a === null ? '—' : a)+'</span>'
+        + '<div style="position:relative;width:100%;max-width:64px"><div class="wbar" style="height:'+hgt+'px;background:'+(a === null ? 'var(--surface-3)' : (a >= wkT[i]*0.97 ? 'var(--ok)' : a >= wkT[i]*0.85 ? 'var(--warn)' : 'var(--bad)'))+'"></div>'
+        + '<div style="position:absolute;left:0;right:0;bottom:'+th+'px;border-top:2px dashed var(--ink);opacity:.5"></div></div>'
+        + '<span class="wlab">'+esc(fill(t.wk, {n:w.w.i}))+' · '+(+w.w.start.slice(8,10))+'–'+(+w.w.end.slice(8,10))+'</span></div>';
+    });
+    h += '</div><div class="legend" style="margin-top:10px"><span><i style="border-top:2px dashed var(--ink);height:0;width:14px;border-radius:0"></i>'+esc(t.wkTarget)+'</span></div></div>'
+      + '<div class="tblwrap"><table><thead><tr><th>'+esc(t.thWeek)+'</th><th>'+esc(t.thDates)+'</th><th class="n">'+esc(t.thTarget)+'</th><th class="n">'+esc(t.thGen)+'</th><th class="n">'+esc(t.thPct)+'</th></tr></thead><tbody>';
+    weeks.forEach(function(w, i){
+      h += '<tr><td>'+esc(fill(t.wk, {n:w.w.i}))+'</td><td style="color:var(--muted)">'+(+w.w.start.slice(8,10))+'–'+(+w.w.end.slice(8,10))+'</td><td class="n">'+wkT[i]+'</td>'
+        + '<td class="n">'+(w.n === null ? '<span style="color:var(--muted)">'+esc(t.coming)+'</span>' : w.n)+'</td><td class="n">'+(w.n === null ? '' : pct(w.n, wkT[i])+'%')+'</td></tr>';
+    });
+    h += '<tr class="tot"><td>'+esc(t.thTot)+'</td><td></td><td class="n">'+leadT+'</td><td class="n">'+leadA+'</td><td class="n">'+p+'%</td></tr></tbody></table></div></div>';
+    document.getElementById("app").innerHTML = h;
+    wire();
+  }
+  function wire(){ document.querySelectorAll("[data-m]").forEach(function(b){ b.onclick = function(){ month = b.dataset.m; SHELL.render(); }; }); }
+  SHELL.init({ page:"leads", root:"../", onRender:render });
+})();
+</script>
