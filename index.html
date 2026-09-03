@@ -27,7 +27,7 @@
   .row i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:7px;vertical-align:middle}
   .twin{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:center;margin-top:8px}
   .mini{display:flex;align-items:flex-end;gap:5px;height:54px;margin-top:12px}
-  .mini div{flex:1;border-radius:2px 2px 0 0;position:relative;min-width:0}
+  .mini div{flex:1;position:relative;min-width:0}
   .mini div span{position:absolute;left:0;right:0;border-top:2px dashed var(--ink);opacity:.5}
   .mini div.f{border:1px dashed var(--rule);background:transparent}
   .mlab{display:flex;gap:5px;font-family:"IBM Plex Mono",monospace;font-size:9px;color:var(--muted)} .mlab span{flex:1;text-align:center}
@@ -38,6 +38,7 @@
 </div>
 
 <script src="optom-core.js"></script>
+<script src="kpi-data.js"></script>
 <script src="kpi-core.js"></script>
 <script src="shell.js"></script>
 <script>
@@ -45,29 +46,32 @@
   "use strict";
   var K = window.KPI, esc = SHELL.esc, fill = SHELL.fill, pct = K.pct, TARGET = window.ZSOP.TARGET;
   var L = {
-    en:{ title:"Hello, {n}", sub:"KPI · {c} · month to date", asOf:"as of", dayOf:"day {d} of {n}",
-      note:"<b>How to read this:</b> tap a card to zoom in. Zalo SOP is your own follow-ups and is real data. Sales and leads are the clinic's monthly targets; those two are <span class=\"pill p-mock\">modelled</span> placeholders until the sales tracker and Salework are connected.",
-      zoom:"zoom in →", sop:"Zalo SOP · you", sales:"Sales · clinic", leads:"Leads · clinic",
-      sopBig:"{p}%", sopSub:"month to date · <b>{d}</b> cadences · target {t}%", todayLine:"today <b>{a}</b> of <b>{n}</b> done · <b>{m}</b> missed this month", clinicLine:"clinic {c}: <b>{p}%</b>",
-      achieved:"Achieved", target:"Target", ofTarget:"of target", onPace:"On pace", behind:"Slightly behind", offPace:"Behind", met:"Target met", missed:"Below target",
-      st:{member:"Membership", repurchase:"Repurchase", referral:"Referral"}, cust:"{a}/{t} customers",
-      leadsLine:"<b>{a}</b> of <b>{t}</b> leads", wk:"W{n}",
+    en:{ title:"Hello, {n}", sub:"KPI · {c}", asOf:"as of", dayOf:"day {d} of {n}",
+      note:"<b>How to read this:</b> tap a card to zoom in. Zalo SOP is your own follow-ups, month to date. Sales are the clinic's figures from the latest Optometry Membership Weekly Report ({w}, as of {d}). Leads are <span class=\"pill p-mock\">modelled</span> until the report carries them.",
+      zoom:"zoom in →", sop:"Zalo SOP · you", sales:"Sales · {c}", leads:"Leads · {c}", wk:"{w} · {m} MTD · as of {d}",
+      sopSub:"month to date · <b>{d}</b> cadences · target {t}%", todayLine:"today <b>{a}</b> of <b>{n}</b> done · <b>{m}</b> missed this month", clinicLine:"clinic {c}: <b>{p}%</b>",
+      ofTargetLine:"<b>{a}</b> of <b>{t}</b> target", achieved:"Achieved", target:"Target", ofTarget:"of target", onPace:"On pace", behind:"Slightly behind", offPace:"Behind", met:"Target met", missed:"Below target",
+      members:"<b>{n}</b> members · <b>{d}</b> this week", revWeek:"<b>{v}</b> this week",
+      seg:{repurchase:"Repurchase", referral:"Referral", rescue:"Rescue"}, cust:"{n} cust.", custFrom:"customers as of {w}",
+      leadsLine:"<b>{a}</b> of <b>{t}</b> leads", conv:"<b>{r}</b> referral customers · <b>{p}%</b> conversion", noData:"No report data for {c} yet.", wkShort:"W{n}",
       months:["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"] },
-    vi:{ title:"Chào {n}", sub:"KPI · {c} · từ đầu tháng", asOf:"tính đến", dayOf:"ngày {d} / {n}",
-      note:"<b>Cách đọc:</b> bấm vào thẻ để xem chi tiết. SOP Zalo là follow-up của chính bạn, số thật. Doanh số và leads là mục tiêu tháng của phòng khám; hai thẻ này là số <span class=\"pill p-mock\">mô phỏng</span> cho tới khi kết nối bảng doanh số và Salework.",
-      zoom:"xem chi tiết →", sop:"SOP Zalo · bạn", sales:"Doanh số · phòng khám", leads:"Leads · phòng khám",
-      sopBig:"{p}%", sopSub:"từ đầu tháng · <b>{d}</b> mốc · mục tiêu {t}%", todayLine:"hôm nay xong <b>{a}</b> / <b>{n}</b> · bỏ <b>{m}</b> mốc tháng này", clinicLine:"phòng khám {c}: <b>{p}%</b>",
-      achieved:"Đạt", target:"Mục tiêu", ofTarget:"mục tiêu", onPace:"Đúng nhịp", behind:"Hơi chậm", offPace:"Chậm", met:"Đạt mục tiêu", missed:"Dưới mục tiêu",
-      st:{member:"Hội viên", repurchase:"Mua lại", referral:"Giới thiệu"}, cust:"{a}/{t} khách",
-      leadsLine:"<b>{a}</b> / <b>{t}</b> leads", wk:"T{n}",
+    vi:{ title:"Chào {n}", sub:"KPI · {c}", asOf:"tính đến", dayOf:"ngày {d} / {n}",
+      note:"<b>Cách đọc:</b> bấm vào thẻ để xem chi tiết. SOP Zalo là follow-up của chính bạn, từ đầu tháng. Doanh số là số của phòng khám từ Báo cáo tuần Hội viên Khúc xạ mới nhất ({w}, tính đến {d}). Leads là số <span class=\"pill p-mock\">mô phỏng</span> cho tới khi báo cáo có số lead.",
+      zoom:"xem chi tiết →", sop:"SOP Zalo · bạn", sales:"Doanh số · {c}", leads:"Leads · {c}", wk:"{w} · {m} đến nay · tính đến {d}",
+      sopSub:"từ đầu tháng · <b>{d}</b> mốc · mục tiêu {t}%", todayLine:"hôm nay xong <b>{a}</b> / <b>{n}</b> · bỏ <b>{m}</b> mốc tháng này", clinicLine:"phòng khám {c}: <b>{p}%</b>",
+      ofTargetLine:"<b>{a}</b> / mục tiêu <b>{t}</b>", achieved:"Đạt", target:"Mục tiêu", ofTarget:"mục tiêu", onPace:"Đúng nhịp", behind:"Hơi chậm", offPace:"Chậm", met:"Đạt mục tiêu", missed:"Dưới mục tiêu",
+      members:"<b>{n}</b> hội viên · <b>{d}</b> tuần này", revWeek:"<b>{v}</b> tuần này",
+      seg:{repurchase:"Mua lại", referral:"Giới thiệu", rescue:"Giữ chân"}, cust:"{n} khách", custFrom:"số khách tính đến {w}",
+      leadsLine:"<b>{a}</b> / <b>{t}</b> leads", conv:"<b>{r}</b> khách giới thiệu · chuyển đổi <b>{p}%</b>", noData:"Chưa có số báo cáo cho {c}.", wkShort:"T{n}",
       months:["Th1","Th2","Th3","Th4","Th5","Th6","Th7","Th8","Th9","Th10","Th11","Th12"] },
-    zh:{ title:"你好，{n}", sub:"KPI · {c} · 本月至今", asOf:"截至", dayOf:"第 {d} / {n} 天",
-      note:"<b>如何阅读：</b>点击卡片放大查看。Zalo SOP 是你自己的跟进，为真实数据。销售与线索是诊所的月度目标；在接入销售追踪表和 Salework 之前，这两张卡为<span class=\"pill p-mock\">模拟</span>占位数。",
-      zoom:"放大 →", sop:"Zalo SOP · 你", sales:"销售 · 诊所", leads:"线索 · 诊所",
-      sopBig:"{p}%", sopSub:"本月至今 · <b>{d}</b> 个触点 · 目标 {t}%", todayLine:"今天完成 <b>{a}</b> / <b>{n}</b> · 本月遗漏 <b>{m}</b>", clinicLine:"诊所 {c}：<b>{p}%</b>",
-      achieved:"达成", target:"目标", ofTarget:"目标完成率", onPace:"进度正常", behind:"略落后", offPace:"落后", met:"已达标", missed:"未达标",
-      st:{member:"会员", repurchase:"复购", referral:"转介绍"}, cust:"{a}/{t} 位客户",
-      leadsLine:"<b>{a}</b> / <b>{t}</b> 条线索", wk:"第{n}周",
+    zh:{ title:"你好，{n}", sub:"KPI · {c}", asOf:"截至", dayOf:"第 {d} / {n} 天",
+      note:"<b>如何阅读：</b>点击卡片放大查看。Zalo SOP 是你自己的跟进，本月至今。销售为诊所在最新一期视光会员周报中的数据（{w}，截至 {d}）。线索在周报填入之前为<span class=\"pill p-mock\">模拟</span>数。",
+      zoom:"放大 →", sop:"Zalo SOP · 你", sales:"销售 · {c}", leads:"线索 · {c}", wk:"{w} · {m} 本月至今 · 截至 {d}",
+      sopSub:"本月至今 · <b>{d}</b> 个触点 · 目标 {t}%", todayLine:"今天完成 <b>{a}</b> / <b>{n}</b> · 本月遗漏 <b>{m}</b>", clinicLine:"诊所 {c}：<b>{p}%</b>",
+      ofTargetLine:"<b>{a}</b> / 目标 <b>{t}</b>", achieved:"达成", target:"目标", ofTarget:"目标完成率", onPace:"进度正常", behind:"略落后", offPace:"落后", met:"已达标", missed:"未达标",
+      members:"<b>{n}</b> 位会员 · 本周 <b>{d}</b>", revWeek:"本周 <b>{v}</b>",
+      seg:{repurchase:"复购", referral:"转介绍", rescue:"挽回"}, cust:"{n} 位客户", custFrom:"客户数截至 {w}",
+      leadsLine:"<b>{a}</b> / <b>{t}</b> 条线索", conv:"<b>{r}</b> 位转介绍客户 · 转化率 <b>{p}%</b>", noData:"{c} 尚无周报数据。", wkShort:"第{n}周",
       months:["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"] }
   };
   function scoreColour(s){ return s>=TARGET ? "var(--ok)" : s>=70 ? "var(--warn)" : "var(--bad)"; }
@@ -76,65 +80,70 @@
 
   function render(st){
     var t = L[st.lang], TODAY = st.today, m = TODAY.slice(0,7), cl = st.clinic, me = st.me;
-    var frac = K.monthFrac(m, TODAY), day = +TODAY.slice(8,10), nDays = K.daysIn(m);
     document.title = "DA Dashboard · KPI";
-    SHELL.setTitle(fill(t.title, {n:SHELL.daName(me)}), esc(fill(t.sub, {c:cl})) + ' &middot; ' + esc(t.asOf) + ' ' + esc(TODAY) + ' &middot; ' + esc(fill(t.dayOf, {d:day, n:nDays})));
+    SHELL.setTitle(fill(t.title, {n:SHELL.daName(me)}), esc(fill(t.sub, {c:cl})) + ' &middot; ' + esc(t.asOf) + ' ' + esc(TODAY));
 
     var mine = K.sop(st.cases, function(c){ return SHELL.daKey(c) === me; }, m, TODAY);
     var clin = K.sop(st.cases, function(c){ return c[0] === cl; }, m, TODAY);
     var today = K.dueOn(st.cases, function(c){ return SHELL.daKey(c) === me; }, TODAY);
-    var tg = K.targets(cl), ac = K.actuals(cl, m, TODAY);
-    var revT = 0, revA = 0; K.STREAMS.forEach(function(s){ revT += tg ? tg.rev[s] : 0; revA += ac.rev[s]; });
-    var leadT = tg ? tg.leads : 0, leadA = ac.leads;
+    var w = K.latest(), hp = K.hosp(w, cl), wf = w ? w.frac : 0;
+    var wkLabel = w ? fill(t.wk, {w:w.id, m:t.months[+w.month.slice(5,7)-1], d:K.fmtDay(w.cutoff, t.months)}) : "";
+    var pm = w ? K.prevInMonth(w) : null, php = pm ? K.hosp(pm, cl) : null;
 
-    var h = '<div class="note"><p>'+t.note+'</p></div><div class="kpis">';
+    var h = '<div class="note"><p>'+fill(t.note, {w: w ? w.id : "—", d: w ? K.fmtDay(w.cutoff, t.months) : "—"})+'</p></div><div class="kpis">';
 
     /* Zalo SOP: me */
     h += '<a class="kcard '+(mine.due ? scoreClass(mine.score) : '')+'" href="sop/"><div class="kl"><span>'+esc(t.sop)+'</span><span class="zoom">'+esc(t.zoom)+'</span></div>'
-      + '<div class="kv" style="color:'+(mine.due ? scoreColour(mine.score) : 'var(--muted)')+'">'+(mine.due ? fill(t.sopBig, {p:mine.score}) : '—')+'</div>'
+      + '<div class="kv" style="color:'+(mine.due ? scoreColour(mine.score) : 'var(--muted)')+'">'+(mine.due ? mine.score+'%' : '—')+'</div>'
       + '<div class="kt">'+fill(t.sopSub, {d:mine.due, t:TARGET})+'</div>'
       + '<div class="gauge"><div class="gfill" style="width:'+Math.max(mine.score,1)+'%;background:'+scoreColour(mine.score)+'"></div><div class="gpace" style="left:'+TARGET+'%"></div></div>'
       + '<div class="gl"><span>0%</span><span>100%</span></div>'
       + '<div class="rows"><div class="row" style="grid-template-columns:1fr"><span>'+fill(t.todayLine, {a:today.full, n:today.n, m:mine.miss})+'</span></div>'
       + '<div class="row" style="grid-template-columns:1fr"><span>'+fill(t.clinicLine, {c:esc(cl), p:clin.score})+'</span></div></div></a>';
 
-    /* Sales: clinic */
-    var pcS = K.paceClass(revA, revT, frac), pS = pct(revA, revT);
-    h += '<a class="kcard '+pcS+'" href="sales/"><div class="kl"><span>'+esc(t.sales)+' <span class="pill p-mock">~</span></span><span class="zoom">'+esc(t.zoom)+'</span></div>'
-      + '<div class="kv">'+esc(K.money(revA, st.lang))+'</div>'
-      + '<div class="kt"><b>'+esc(K.money(revA, st.lang))+'</b> / <b>'+esc(K.money(revT, st.lang))+'</b></div>'
-      + '<div class="gauge"><div class="gfill" style="width:'+Math.min(100, Math.max(pS,1))+'%;background:'+paceColour(pcS)+'"></div>'
-      + (frac < 1 ? '<div class="gpace" style="left:'+Math.round(frac*100)+'%"></div>' : '')+'</div>'
-      + '<div class="gl"><span>'+esc(t.achieved)+'</span><span>'+esc(t.target)+'</span></div>'
-      + '<span class="pace p-'+(pcS||'accent')+'">'+esc(frac<1 ? (pcS==="ok"?t.onPace:pcS==="warn"?t.behind:t.offPace) : (pcS==="ok"?t.met:t.missed))+' · '+pS+'% '+esc(t.ofTarget)+'</span>'
-      + '<div class="rows">';
-    var cols = ["var(--c1, var(--accent))","var(--ok)","var(--warn)"];
-    K.STREAMS.forEach(function(s, i){
-      var rt = tg ? tg.rev[s] : 0, ra = ac.rev[s];
-      h += '<div class="row"><span><i style="background:'+cols[i]+'"></i>'+esc(t.st[s])+'</span><span class="n">'+esc(K.money(ra, st.lang))+' / '+esc(K.money(rt, st.lang))+'</span>'
-        + '<span class="n" style="color:var(--muted)">'+esc(fill(t.cust, {a:ac.cust[s], t: tg ? tg.cust[s] : 0}))+'</span></div>';
-    });
-    h += '</div></a>';
+    /* Sales: clinic, from the weekly report */
+    if(!hp){
+      h += '<a class="kcard" href="sales/"><div class="kl"><span>'+esc(fill(t.sales, {c:cl}))+'</span><span class="zoom">'+esc(t.zoom)+'</span></div><div class="kt" style="margin-top:12px">'+esc(fill(t.noData, {c:cl}))+'</div></a>'
+        + '<a class="kcard" href="leads/"><div class="kl"><span>'+esc(fill(t.leads, {c:cl}))+'</span><span class="zoom">'+esc(t.zoom)+'</span></div><div class="kt" style="margin-top:12px">'+esc(fill(t.noData, {c:cl}))+'</div></a>';
+    } else {
+      var revA = hp.memberRevenue, revT = hp.targetRevenue, pcS = K.paceClass(revA, revT, wf), pS = pct(revA, revT);
+      var revWk = K.thisWeek(w, cl, function(x){ return x.memberRevenue; }), memWk = K.thisWeek(w, cl, function(x){ return x.members; });
+      h += '<a class="kcard '+pcS+'" href="sales/"><div class="kl"><span>'+esc(fill(t.sales, {c:cl}))+'</span><span class="zoom">'+esc(t.zoom)+'</span></div>'
+        + '<div class="kv">'+esc(K.money(revA, st.lang))+'</div>'
+        + '<div class="kt">'+fill(t.ofTargetLine, {a:esc(K.money(revA, st.lang)), t:esc(K.money(revT, st.lang))})+' · '+esc(wkLabel)+'</div>'
+        + '<div class="gauge"><div class="gfill" style="width:'+Math.min(100, Math.max(pS,1))+'%;background:'+paceColour(pcS)+'"></div>'
+        + (wf < 1 ? '<div class="gpace" style="left:'+Math.round(wf*100)+'%"></div>' : '')+'</div>'
+        + '<div class="gl"><span>'+esc(t.achieved)+'</span><span>'+esc(t.target)+'</span></div>'
+        + '<span class="pace p-'+(pcS||'accent')+'">'+esc(wf<1 ? (pcS==="ok"?t.onPace:pcS==="warn"?t.behind:t.offPace) : (pcS==="ok"?t.met:t.missed))+' · '+pS+'% '+esc(t.ofTarget)+'</span>'
+        + '<div class="rows"><div class="row" style="grid-template-columns:1fr auto"><span>'+fill(t.members, {n:hp.members.toLocaleString("en-US"), d:(memWk>=0?"+":"")+memWk})+'</span><span class="n">'+fill(t.revWeek, {v:esc(K.money(revWk, st.lang))})+'</span></div>';
+      var cols = ["var(--accent)","var(--ok)","var(--warn)"];
+      K.SEGS.forEach(function(sg, i){
+        var x = hp.seg[sg] || {cust:0, rev:0};
+        h += '<div class="row"><span><i style="background:'+cols[i]+'"></i>'+esc(t.seg[sg])+'</span><span class="n">'+esc(K.money(x.rev, st.lang))+'</span>'
+          + '<span class="n" style="color:var(--muted)">'+(x.cust ? esc(fill(t.cust, {n:x.cust})) : "—")+'</span></div>';
+      });
+      if(hp.custWeek) h += '<div class="row" style="grid-template-columns:1fr;color:var(--muted);font-size:.74rem">'+esc(fill(t.custFrom, {w:hp.custWeek}))+'</div>';
+      h += '</div></a>';
 
-    /* Leads: clinic */
-    var pcL = K.paceClass(leadA, leadT, frac), pL = pct(leadA, leadT);
-    var weeks = ac.leadsByWeek, mx = 1;
-    weeks.forEach(function(w){ mx = Math.max(mx, w.n || 0, Math.round(leadT * w.w.frac)); });
-    h += '<a class="kcard '+pcL+'" href="leads/"><div class="kl"><span>'+esc(t.leads)+' <span class="pill p-mock">~</span></span><span class="zoom">'+esc(t.zoom)+'</span></div>'
-      + '<div class="kv">'+leadA.toLocaleString("en-US")+'</div>'
-      + '<div class="kt">'+fill(t.leadsLine, {a:leadA.toLocaleString("en-US"), t:leadT.toLocaleString("en-US")})+'</div>'
-      + '<div class="gauge"><div class="gfill" style="width:'+Math.min(100, Math.max(pL,1))+'%;background:'+paceColour(pcL)+'"></div>'
-      + (frac < 1 ? '<div class="gpace" style="left:'+Math.round(frac*100)+'%"></div>' : '')+'</div>'
-      + '<div class="gl"><span>'+esc(t.achieved)+'</span><span>'+esc(t.target)+'</span></div>'
-      + '<span class="pace p-'+(pcL||'accent')+'">'+esc(frac<1 ? (pcL==="ok"?t.onPace:pcL==="warn"?t.behind:t.offPace) : (pcL==="ok"?t.met:t.missed))+' · '+pL+'% '+esc(t.ofTarget)+'</span>'
-      + '<div class="mini">';
-    weeks.forEach(function(w){
-      var tgt = Math.round(leadT * w.w.frac), th = Math.round(tgt / mx * 54);
-      if(w.n === null) h += '<div class="f" style="height:54px"><span style="bottom:'+th+'px"></span></div>';
-      else h += '<div style="height:'+Math.max(3, Math.round(w.n / mx * 54))+'px;background:'+(w.n >= tgt*0.97 ? 'var(--ok)' : w.n >= tgt*0.85 ? 'var(--warn)' : 'var(--bad)')+'"><span style="bottom:'+(th - Math.max(3, Math.round(w.n / mx * 54)))+'px"></span></div>';
-    });
-    h += '</div><div class="mlab">'+weeks.map(function(w){ return '<span>'+esc(fill(t.wk, {n:w.w.i}))+'</span>'; }).join('')+'</div></a>';
-
+      /* Leads: clinic, modelled until the report carries them */
+      var ld = hp.leads, pcL = K.paceClass(ld.mtd, ld.target, wf), pL = pct(ld.mtd, ld.target);
+      var refC = (hp.seg.referral || {cust:0}).cust;
+      h += '<a class="kcard '+pcL+'" href="leads/"><div class="kl"><span>'+esc(fill(t.leads, {c:cl}))+(ld.modelled ? ' <span class="pill p-mock">~</span>' : '')+'</span><span class="zoom">'+esc(t.zoom)+'</span></div>'
+        + '<div class="kv">'+ld.mtd.toLocaleString("en-US")+'</div>'
+        + '<div class="kt">'+fill(t.leadsLine, {a:ld.mtd, t:ld.target})+' · '+esc(wkLabel)+'</div>'
+        + '<div class="gauge"><div class="gfill" style="width:'+Math.min(100, Math.max(pL,1))+'%;background:'+paceColour(pcL)+'"></div>'
+        + (wf < 1 ? '<div class="gpace" style="left:'+Math.round(wf*100)+'%"></div>' : '')+'</div>'
+        + '<div class="gl"><span>'+esc(t.achieved)+'</span><span>'+esc(t.target)+'</span></div>'
+        + '<span class="pace p-'+(pcL||'accent')+'">'+esc(wf<1 ? (pcL==="ok"?t.onPace:pcL==="warn"?t.behind:t.offPace) : (pcL==="ok"?t.met:t.missed))+' · '+pL+'% '+esc(t.ofTarget)+'</span>'
+        + '<div class="rows"><div class="row" style="grid-template-columns:1fr"><span>'+fill(t.conv, {r:refC, p:pct(refC, ld.mtd)})+'</span></div></div>';
+      /* weekly bars: this-week leads across the weeks of the report month */
+      var wks = K.weeks().filter(function(x){ return x.month === w.month && K.hosp(x, cl); }), mx = 1, bars = [];
+      wks.forEach(function(x){ var v = K.thisWeek(x, cl, function(y){ return y.leads.mtd; }); var tg2 = Math.round(K.hosp(x, cl).leads.target * (7 / K.daysIn(x.month))); bars.push({w:x, v:v, t:tg2}); mx = Math.max(mx, v, tg2); });
+      h += '<div class="mini">';
+      bars.forEach(function(b){ var hb = Math.max(3, Math.round(b.v / mx * 54)), th = Math.round(b.t / mx * 54);
+        h += '<div style="height:54px"><div style="position:absolute;left:0;right:0;bottom:0;height:'+hb+'px;border-radius:2px 2px 0 0;background:'+(b.v >= b.t*0.97 ? 'var(--ok)' : b.v >= b.t*0.85 ? 'var(--warn)' : 'var(--bad)')+'"></div><span style="bottom:'+th+'px"></span></div>'; });
+      h += '</div><div class="mlab">'+bars.map(function(b){ return '<span>'+esc(b.w.id)+'</span>'; }).join('')+'</div></a>';
+    }
     h += '</div>';
     document.getElementById("app").innerHTML = h;
   }

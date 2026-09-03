@@ -1,64 +1,32 @@
-/* DA Dashboard - KPI inputs and helpers shared by the home, sales and
-   leads pages.
+/* DA Dashboard - KPI helpers shared by the home, sales and leads pages.
 
-   ILLUSTRATIVE. Sales and leads have no data source yet: TARGETS are
-   placeholders per clinic per month and actuals() models "achieved" from
-   them. Replace TARGETS with the real monthly targets and point actuals()
-   at the sales tracker / Salework when those are available. Revenue in VND.
-   SOP numbers are real: same rules as the head-office page. */
+   Sales figures come from kpi-data.js, generated from the Optometry
+   Membership Weekly Report (tools/kpi-from-report.py): per week and per
+   hospital, member revenue MTD against target, members, and the
+   repurchase / referral / rescue split. Leads are modelled until the
+   report carries them (leads.modelled). SOP numbers are real: same rules
+   as the head-office page. */
 window.KPI = (function(){
   "use strict";
-  var Z = window.ZSOP, MS = Z.MS;
-  var STREAMS = ["member","repurchase","referral"];
-  var TARGETS = {
-    "CTE D5": { rev:{member:600e6, repurchase:220e6, referral:140e6}, cust:{member:110, repurchase:55, referral:28}, leads:380 },
-    "NGT":    { rev:{member:900e6, repurchase:340e6, referral:210e6}, cust:{member:170, repurchase:85, referral:42}, leads:560 }
-  };
+  var Z = window.ZSOP, D = window.KPI_DATA || { weeks:[], segments:[] };
+  var SEGS = D.segments.length ? D.segments : ["repurchase","referral","rescue"];
+
+  function weeks(){ return D.weeks; }
+  function latest(){ return D.weeks.length ? D.weeks[D.weeks.length-1] : null; }
+  function week(id){ for(var i=0;i<D.weeks.length;i++) if(D.weeks[i].id === id) return D.weeks[i]; return latest(); }
+  function hosp(w, cl){ return w && w.hospitals[cl] ? w.hospitals[cl] : null; }
+  /* the week before w in the same month, for this-week deltas */
+  function prevInMonth(w){
+    var i = D.weeks.indexOf(w);
+    for(var j=i-1;j>=0;j--) if(D.weeks[j].month === w.month) return D.weeks[j];
+    return null;
+  }
+  function thisWeek(w, cl, get){
+    var h = hosp(w, cl); if(!h) return null;
+    var p = prevInMonth(w), ph = p ? hosp(p, cl) : null;
+    return ph ? get(h) - get(ph) : get(h);
+  }
   function daysIn(m){ return new Date(Date.UTC(+m.slice(0,4), +m.slice(5,7), 0)).getUTCDate(); }
-  function monthFrac(m, today){
-    var cur = today.slice(0,7);
-    if(m < cur) return 1;
-    if(m > cur) return 0;
-    return +today.slice(8,10) / daysIn(m);
-  }
-  function weeksOf(m){
-    var n = daysIn(m), out = [], d = m + "-01", i = 1;
-    while(d.slice(0,7) === m){
-      var wd = (new Date(Date.parse(d)).getUTCDay() + 6) % 7, end = Z.addDays(d, 6 - wd);
-      if(end.slice(0,7) !== m) end = m + "-" + String(n).padStart(2,"0");
-      var days = Math.round((Date.parse(end) - Date.parse(d)) / MS) + 1;
-      out.push({ start:d, end:end, frac: days / n, i:i++ });
-      d = Z.addDays(end, 1);
-    }
-    return out;
-  }
-  function empty(m){
-    var out = { rev:{}, cust:{}, leads:0, leadsByWeek: weeksOf(m).map(function(w){ return {w:w, n:null}; }) };
-    STREAMS.forEach(function(s){ out.rev[s] = 0; out.cust[s] = 0; });
-    return out;
-  }
-  function targets(cl){ return TARGETS[cl] || null; }
-  /* achieved so far: a deterministic draw around the target, scaled by
-     how much of the month has elapsed */
-  function actuals(cl, m, today){
-    var t = TARGETS[cl]; if(!t) return empty(m);
-    var r = Z.prng(Z.hash32("kpi│" + cl + "│" + m)), frac = monthFrac(m, today);
-    var out = { rev:{}, cust:{}, leads:0, leadsByWeek:[] };
-    STREAMS.forEach(function(s){
-      var k = 0.72 + r()*0.45;
-      out.rev[s]  = Math.round(t.rev[s]  * frac * k / 1e6) * 1e6;
-      out.cust[s] = Math.round(t.cust[s] * frac * (k*0.9 + r()*0.2));
-    });
-    out.leads = Math.round(t.leads * frac * (0.7 + r()*0.5));
-    var weeks = weeksOf(m), left = out.leads;
-    weeks.forEach(function(w, i){
-      if(w.start > today){ out.leadsByWeek.push({w:w, n:null}); return; }
-      var share = (i === weeks.length-1 || weeks[i+1].start > today) ? left : Math.round(out.leads * w.frac * (0.8 + r()*0.4));
-      share = Math.max(0, Math.min(left, share)); left -= share;
-      out.leadsByWeek.push({w:w, n:share});
-    });
-    return out;
-  }
   function pct(a,b){ return b ? Math.round(a/b*100) : 0; }
   function paceClass(ach, tgt, frac){
     if(!tgt) return "";
@@ -68,8 +36,9 @@ window.KPI = (function(){
   }
   function money(v, lang){
     if(Math.abs(v) >= 1e9){ var b = (v/1e9).toFixed(2).replace(/\.?0+$/,""); return lang === "vi" ? b + " tỷ" : "₫" + b + "bn"; }
-    var mm = Math.round(v/1e6).toLocaleString("en-US"); return lang === "vi" ? mm + " tr" : "₫" + mm + "m";
+    var mm = (Math.round(v/1e5)/10).toLocaleString("en-US"); return lang === "vi" ? mm + " tr" : "₫" + mm + "m";
   }
+  function fmtDay(iso, months){ return +iso.slice(8,10) + " " + months[+iso.slice(5,7)-1]; }
 
   /* ---------------- SOP, same rules as the head-office page ---------------- */
   var STAGES = Z.STAGES, OFF = Z.OFF, CAD = Z.CAD;
@@ -80,7 +49,6 @@ window.KPI = (function(){
     for(var i=0;i<bits.length;i++) if(bits.charAt(i)==="1") got++;
     return got === 0 ? 0 : got === bits.length ? 1 : 0.5;
   }
-  /* closed cadences in month m for the cases that pass keep() */
   function sop(cases, keep, m, today){
     var due=0, pts=0, miss=0, cust={};
     cases.forEach(function(c){
@@ -94,7 +62,6 @@ window.KPI = (function(){
     });
     return { due:due, pts:pts, miss:miss, score:pct(pts, due), n:Object.keys(cust).length };
   }
-  /* cadences due on one day for keep() cases: for the "today" ring */
   function dueOn(cases, keep, day){
     var n=0, full=0, part=0, items=0, sent=0;
     cases.forEach(function(c){
@@ -107,12 +74,6 @@ window.KPI = (function(){
     });
     return { n:n, full:full, part:part, items:items, sent:sent };
   }
-  function clinics(cases){ var s = {}; cases.forEach(function(c){ s[c[0]] = 1; }); return Object.keys(s).sort(); }
-  function months(today){
-    var out = [], m = Z.START.slice(0,7), cur = today.slice(0,7);
-    while(m <= cur){ out.push(m); var y = +m.slice(0,4), mo = +m.slice(5,7)+1; if(mo > 12){ mo = 1; y++; } m = y + "-" + String(mo).padStart(2,"0"); }
-    return out;
-  }
-  return { STREAMS:STREAMS, TARGETS:TARGETS, targets:targets, actuals:actuals, daysIn:daysIn, monthFrac:monthFrac, weeksOf:weeksOf,
-           pct:pct, paceClass:paceClass, money:money, sop:sop, dueOn:dueOn, clinics:clinics, months:months };
+  return { SEGS:SEGS, DATA:D, weeks:weeks, latest:latest, week:week, hosp:hosp, prevInMonth:prevInMonth, thisWeek:thisWeek,
+           daysIn:daysIn, pct:pct, paceClass:paceClass, money:money, fmtDay:fmtDay, sop:sop, dueOn:dueOn };
 })();

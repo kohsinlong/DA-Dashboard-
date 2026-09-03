@@ -32,76 +32,85 @@
 </div>
 
 <script src="../optom-core.js"></script>
+<script src="../kpi-data.js"></script>
 <script src="../kpi-core.js"></script>
 <script src="../shell.js"></script>
 <script>
 (function(){
   "use strict";
   var K = window.KPI, esc = SHELL.esc, fill = SHELL.fill, pct = K.pct;
-  var month = "";
+  var wid = "";
   var L = {
-    en:{ title:"Leads", sub:"{c} · target vs generated", asOf:"as of", dayOf:"day {d} of {n}", mtd:"MTD", mock:"modelled",
-      note:"<b>Placeholder.</b> The lead target is illustrative and the generated count is modelled from it. Point actuals() in kpi-core.js at the Salework lead count and the page fills in.",
-      hLeads:"Leads generated", achieved:"Generated", target:"Target", ofTarget:"of target", onPace:"On pace", behind:"Slightly behind", offPace:"Behind", met:"Target met", missed:"Below target",
-      pWeeks:"By week", pWeeksH:"Bars are leads generated; the dashed line is the week's share of the monthly target", wk:"W{n}", wkTarget:"weekly pace",
-      thWeek:"Week", thDates:"Dates", thTarget:"Target", thGen:"Generated", thPct:"%", thTot:"Total", noTargets:"No targets set for this clinic yet.", coming:"coming",
+    en:{ title:"Leads", sub:"{c} · leads vs target", asOf:"report as of", mock:"modelled",
+      note:"<b>Modelled.</b> The weekly report has no lead counts yet. The target is derived from the clinic's revenue target ({t} ÷ {b} average bill ÷ {p}% lead-to-referral conversion) and the count is a deterministic draw around pace. Once Leads MTD is filled in the report, tools/kpi-from-report.py picks it up and this label disappears.",
+      hLeads:"Leads MTD", achieved:"Generated", target:"Target", ofTarget:"of target", onPace:"On pace", behind:"Slightly behind", offPace:"Behind", met:"Target met", missed:"Below target",
+      sConv:"Lead → referral conversion", sRef:"Referral customers MTD", sWk:"Leads this week", sTarget:"Monthly target",
+      pWeeks:"Week by week", pWeeksH:"Leads generated each report week; the dashed line is the weekly share of the monthly target", wkTarget:"weekly pace",
+      thWeek:"Week", thPeriod:"Period", thMtd:"Leads MTD", thTarget:"Target", thPct:"%", thWk:"This week", thRef:"Referral cust.", thConv:"Conversion", noData:"No report data for {c} yet.", custFrom:"referral customers as of {w}",
       months:["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"] },
-    vi:{ title:"Leads", sub:"{c} · mục tiêu và tạo được", asOf:"tính đến", dayOf:"ngày {d} / {n}", mtd:"Đến nay", mock:"mô phỏng",
-      note:"<b>Số giữ chỗ.</b> Mục tiêu lead là số minh hoạ và số tạo được là mô phỏng từ đó. Nối actuals() trong kpi-core.js với số lead từ Salework là trang tự điền.",
-      hLeads:"Leads tạo được", achieved:"Tạo được", target:"Mục tiêu", ofTarget:"mục tiêu", onPace:"Đúng nhịp", behind:"Hơi chậm", offPace:"Chậm", met:"Đạt mục tiêu", missed:"Dưới mục tiêu",
-      pWeeks:"Theo tuần", pWeeksH:"Cột là số lead tạo được; vạch đứt là phần mục tiêu tháng của tuần đó", wk:"T{n}", wkTarget:"nhịp tuần",
-      thWeek:"Tuần", thDates:"Ngày", thTarget:"Mục tiêu", thGen:"Tạo được", thPct:"%", thTot:"Tổng", noTargets:"Phòng khám này chưa có mục tiêu.", coming:"sắp tới",
+    vi:{ title:"Leads", sub:"{c} · leads và mục tiêu", asOf:"báo cáo tính đến", mock:"mô phỏng",
+      note:"<b>Mô phỏng.</b> Báo cáo tuần chưa có số lead. Mục tiêu suy ra từ mục tiêu doanh thu của phòng khám ({t} ÷ {b} bình quân/khách ÷ {p}% chuyển đổi lead→giới thiệu) và số lead là mô phỏng quanh nhịp tháng. Khi báo cáo điền Leads MTD, tools/kpi-from-report.py sẽ lấy số thật và nhãn này biến mất.",
+      hLeads:"Leads từ đầu tháng", achieved:"Tạo được", target:"Mục tiêu", ofTarget:"mục tiêu", onPace:"Đúng nhịp", behind:"Hơi chậm", offPace:"Chậm", met:"Đạt mục tiêu", missed:"Dưới mục tiêu",
+      sConv:"Chuyển đổi lead → giới thiệu", sRef:"Khách giới thiệu từ đầu tháng", sWk:"Leads tuần này", sTarget:"Mục tiêu tháng",
+      pWeeks:"Theo tuần", pWeeksH:"Lead tạo được mỗi tuần báo cáo; vạch đứt là phần mục tiêu tháng của tuần", wkTarget:"nhịp tuần",
+      thWeek:"Tuần", thPeriod:"Kỳ", thMtd:"Leads từ đầu tháng", thTarget:"Mục tiêu", thPct:"%", thWk:"Tuần này", thRef:"Khách giới thiệu", thConv:"Chuyển đổi", noData:"Chưa có số báo cáo cho {c}.", custFrom:"khách giới thiệu tính đến {w}",
       months:["Th1","Th2","Th3","Th4","Th5","Th6","Th7","Th8","Th9","Th10","Th11","Th12"] },
-    zh:{ title:"线索", sub:"{c} · 目标与生成", asOf:"截至", dayOf:"第 {d} / {n} 天", mtd:"本月至今", mock:"模拟",
-      note:"<b>占位数。</b>线索目标为示意值，生成数由其模拟生成。将 kpi-core.js 中的 actuals() 接到 Salework 的线索数，页面即自动填充。",
-      hLeads:"已生成线索", achieved:"已生成", target:"目标", ofTarget:"目标完成率", onPace:"进度正常", behind:"略落后", offPace:"落后", met:"已达标", missed:"未达标",
-      pWeeks:"按周", pWeeksH:"柱为生成的线索数；虚线为该周应占的月目标份额", wk:"第{n}周", wkTarget:"周进度",
-      thWeek:"周", thDates:"日期", thTarget:"目标", thGen:"已生成", thPct:"%", thTot:"合计", noTargets:"该诊所尚未设置目标。", coming:"即将到来",
+    zh:{ title:"线索", sub:"{c} · 线索与目标", asOf:"周报截至", mock:"模拟",
+      note:"<b>模拟。</b>周报尚无线索数。目标由诊所营收目标推算（{t} ÷ 客单价 {b} ÷ {p}% 线索到转介绍转化率），线索数为围绕进度的确定性模拟。周报填入 Leads MTD 后，tools/kpi-from-report.py 会自动采用真实值，此标签消失。",
+      hLeads:"线索（本月至今）", achieved:"已生成", target:"目标", ofTarget:"目标完成率", onPace:"进度正常", behind:"略落后", offPace:"落后", met:"已达标", missed:"未达标",
+      sConv:"线索 → 转介绍转化率", sRef:"转介绍客户（本月至今）", sWk:"本周线索", sTarget:"月目标",
+      pWeeks:"逐周", pWeeksH:"各周报的新增线索；虚线为该周应占的月目标份额", wkTarget:"周进度",
+      thWeek:"周", thPeriod:"期间", thMtd:"线索（本月至今）", thTarget:"目标", thPct:"%", thWk:"本周", thRef:"转介绍客户", thConv:"转化率", noData:"{c} 尚无周报数据。", custFrom:"转介绍客户数截至 {w}",
       months:["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"] }
   };
   function paceColour(pc){ return pc==="ok" ? "var(--ok)" : pc==="warn" ? "var(--warn)" : "var(--bad)"; }
-  function monthLabel(t, k){ return t.months[+k.slice(5,7)-1] + " " + k.slice(0,4); }
+  function paceText(t, pc, frac){ return frac<1 ? (pc==="ok"?t.onPace:pc==="warn"?t.behind:t.offPace) : (pc==="ok"?t.met:t.missed); }
 
   function render(st){
-    var t = L[st.lang], TODAY = st.today, cur = TODAY.slice(0,7), cl = st.clinic;
-    if(!month) month = cur;
-    var frac = K.monthFrac(month, TODAY);
+    var t = L[st.lang], cl = st.clinic, lang = st.lang, A = K.DATA.assumptions || {avgBill:7e6, conversion:.15};
+    var all = K.weeks().filter(function(w){ return K.hosp(w, cl); });
+    var w = all.filter(function(x){ return x.id === wid; })[0] || all[all.length-1];
     document.title = "DA Dashboard · " + t.title;
-    SHELL.setTitle(t.title, esc(fill(t.sub, {c:cl})) + ' &middot; ' + esc(t.asOf) + ' ' + esc(TODAY));
-    var h = '<div class="frow">' + K.months(TODAY).map(function(m){
-      return '<button data-m="'+m+'" aria-pressed="'+(m===month)+'">'+esc(monthLabel(t, m))+(m===cur ? ' <span class="mtdtag">'+esc(t.mtd)+'</span>' : '')+'</button>'; }).join('') + '</div>';
-    h += '<div class="note"><p>'+t.note+'</p></div>';
-    var tg = K.targets(cl), ac = K.actuals(cl, month, TODAY);
-    if(!tg){ h += '<div class="panel"><div class="empty">'+esc(t.noTargets)+'</div></div>'; document.getElementById("app").innerHTML = h; wire(); return; }
-    var leadT = tg.leads, leadA = ac.leads, pc = K.paceClass(leadA, leadT, frac), p = pct(leadA, leadT);
-    h += '<div class="hero"><div style="font-family:\'IBM Plex Mono\',monospace;font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);font-weight:600">'+esc(t.hLeads)+' <span class="pill p-mock">'+esc(t.mock)+'</span>'
-      + (frac < 1 ? ' · '+esc(fill(t.dayOf, {d:+TODAY.slice(8,10), n:K.daysIn(month)})) : '')+'</div>'
-      + '<div class="hv">'+leadA.toLocaleString("en-US")+'</div><div class="ht"><b>'+leadA.toLocaleString("en-US")+'</b> / <b>'+leadT.toLocaleString("en-US")+'</b></div>'
+    SHELL.setTitle(t.title, esc(fill(t.sub, {c:cl})) + (w ? ' &middot; ' + esc(t.asOf) + ' ' + esc(K.fmtDay(w.cutoff, t.months)) : ''));
+    if(!w){ document.getElementById("app").innerHTML = '<div class="panel"><div class="empty">'+esc(fill(t.noData, {c:cl}))+'</div></div>'; return; }
+    var hp = K.hosp(w, cl), ld = hp.leads, frac = w.frac, mon = t.months[+w.month.slice(5,7)-1];
+    var h = '<div class="frow">' + all.map(function(x){
+      return '<button data-w="'+x.id+'" aria-pressed="'+(x===w)+'">'+esc(x.id)+' <span class="mtdtag">'+esc(x.period)+'</span></button>'; }).join('') + '</div>';
+    if(ld.modelled) h += '<div class="note"><p>'+fill(t.note, {t:esc(K.money(hp.targetRevenue, lang)), b:esc(K.money(A.avgBill, lang)), p:Math.round(A.conversion*100)})+'</p></div>';
+
+    var pc = K.paceClass(ld.mtd, ld.target, frac), p = pct(ld.mtd, ld.target);
+    h += '<div class="hero"><div style="font-family:\'IBM Plex Mono\',monospace;font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);font-weight:600">'+esc(t.hLeads)+(ld.modelled ? ' <span class="pill p-mock">'+esc(t.mock)+'</span>' : '')+' · '+esc(w.id)+' · '+esc(mon)+'</div>'
+      + '<div class="hv">'+ld.mtd.toLocaleString("en-US")+'</div><div class="ht"><b>'+ld.mtd+'</b> / <b>'+ld.target+'</b></div>'
       + '<div class="gauge"><div class="gfill" style="width:'+Math.min(100, Math.max(p,1))+'%;background:'+paceColour(pc)+'"></div>'+(frac<1 ? '<div class="gpace" style="left:'+Math.round(frac*100)+'%"></div>' : '')+'</div>'
       + '<div class="gl"><span>'+esc(t.achieved)+'</span><span>'+esc(t.target)+'</span></div>'
-      + '<span class="pace p-'+(pc||'accent')+'">'+esc(frac<1 ? (pc==="ok"?t.onPace:pc==="warn"?t.behind:t.offPace) : (pc==="ok"?t.met:t.missed))+' · '+p+'% '+esc(t.ofTarget)+'</span></div>';
+      + '<span class="pace p-'+(pc||'accent')+'">'+esc(paceText(t, pc, frac))+' · '+p+'% '+esc(t.ofTarget)+'</span></div>';
 
-    var weeks = ac.leadsByWeek, wkT = weeks.map(function(w){ return Math.round(leadT * w.w.frac); }), mx = 1;
-    weeks.forEach(function(w, i){ mx = Math.max(mx, w.n || 0, wkT[i]); });
-    h += '<div class="panel"><h3><span>'+esc(t.pWeeks)+' <span class="pill p-mock">'+esc(t.mock)+'</span></span><span class="hint">'+esc(t.pWeeksH)+'</span></h3><div class="pad"><div class="wkbars">';
-    weeks.forEach(function(w, i){
-      var a = w.n, hgt = a === null ? 0 : Math.max(3, Math.round(a / mx * 130)), th = Math.round(wkT[i] / mx * 130);
-      h += '<div class="wcol"><span class="wval">'+(a === null ? '—' : a)+'</span>'
-        + '<div style="position:relative;width:100%;max-width:64px"><div class="wbar" style="height:'+hgt+'px;background:'+(a === null ? 'var(--surface-3)' : (a >= wkT[i]*0.97 ? 'var(--ok)' : a >= wkT[i]*0.85 ? 'var(--warn)' : 'var(--bad)'))+'"></div>'
-        + '<div style="position:absolute;left:0;right:0;bottom:'+th+'px;border-top:2px dashed var(--ink);opacity:.5"></div></div>'
-        + '<span class="wlab">'+esc(fill(t.wk, {n:w.w.i}))+' · '+(+w.w.start.slice(8,10))+'–'+(+w.w.end.slice(8,10))+'</span></div>';
+    var refC = (hp.seg.referral || {cust:0}).cust, wk = K.thisWeek(w, cl, function(x){ return x.leads.mtd; });
+    h += '<div class="stats" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px">'
+      + '<div class="stat"><div class="sn">'+pct(refC, ld.mtd)+'%</div><div class="sl">'+esc(t.sConv)+'</div></div>'
+      + '<div class="stat"><div class="sn">'+refC+'</div><div class="sl">'+esc(t.sRef)+(hp.custWeek ? ' · '+esc(hp.custWeek) : '')+'</div></div>'
+      + '<div class="stat"><div class="sn">'+wk+'</div><div class="sl">'+esc(t.sWk)+'</div></div>'
+      + '<div class="stat"><div class="sn">'+ld.target+'</div><div class="sl">'+esc(t.sTarget)+'</div></div></div>';
+
+    var rows = all.map(function(x){ var y = K.hosp(x, cl); return { w:x, y:y, wk:K.thisWeek(x, cl, function(z){ return z.leads.mtd; }), wt:Math.round(y.leads.target * 7 / K.daysIn(x.month)) }; });
+    var mx = 1; rows.forEach(function(r){ mx = Math.max(mx, r.wk, r.wt); });
+    h += '<div class="panel"><h3><span>'+esc(t.pWeeks)+(ld.modelled ? ' <span class="pill p-mock">'+esc(t.mock)+'</span>' : '')+'</span><span class="hint">'+esc(t.pWeeksH)+'</span></h3><div class="pad"><div class="wkbars">';
+    rows.forEach(function(r){
+      var hb = Math.max(3, Math.round(r.wk / mx * 130)), th = Math.round(r.wt / mx * 130);
+      h += '<div class="wcol"><span class="wval">'+r.wk+'</span><div style="position:relative;width:100%;max-width:64px;height:'+(Math.max(hb, th)+3)+'px"><div class="wbar" style="position:absolute;left:0;right:0;bottom:0;height:'+hb+'px;background:'+(r.w===w ? (r.wk >= r.wt*0.97 ? 'var(--ok)' : r.wk >= r.wt*0.85 ? 'var(--warn)' : 'var(--bad)') : 'var(--surface-3)')+'"></div>'
+        + '<div style="position:absolute;left:0;right:0;bottom:'+th+'px;border-top:2px dashed var(--ink);opacity:.5"></div></div><span class="wlab">'+esc(r.w.id)+' · '+esc(t.months[+r.w.month.slice(5,7)-1])+'</span></div>';
     });
     h += '</div><div class="legend" style="margin-top:10px"><span><i style="border-top:2px dashed var(--ink);height:0;width:14px;border-radius:0"></i>'+esc(t.wkTarget)+'</span></div></div>'
-      + '<div class="tblwrap"><table><thead><tr><th>'+esc(t.thWeek)+'</th><th>'+esc(t.thDates)+'</th><th class="n">'+esc(t.thTarget)+'</th><th class="n">'+esc(t.thGen)+'</th><th class="n">'+esc(t.thPct)+'</th></tr></thead><tbody>';
-    weeks.forEach(function(w, i){
-      h += '<tr><td>'+esc(fill(t.wk, {n:w.w.i}))+'</td><td style="color:var(--muted)">'+(+w.w.start.slice(8,10))+'–'+(+w.w.end.slice(8,10))+'</td><td class="n">'+wkT[i]+'</td>'
-        + '<td class="n">'+(w.n === null ? '<span style="color:var(--muted)">'+esc(t.coming)+'</span>' : w.n)+'</td><td class="n">'+(w.n === null ? '' : pct(w.n, wkT[i])+'%')+'</td></tr>';
+      + '<div class="tblwrap"><table><thead><tr><th>'+esc(t.thWeek)+'</th><th>'+esc(t.thPeriod)+'</th><th class="n">'+esc(t.thWk)+'</th><th class="n">'+esc(t.thMtd)+'</th><th class="n">'+esc(t.thTarget)+'</th><th class="n">'+esc(t.thPct)+'</th><th class="n">'+esc(t.thRef)+'</th><th class="n">'+esc(t.thConv)+'</th></tr></thead><tbody>';
+    rows.forEach(function(r){
+      var rc = (r.y.seg.referral || {cust:0}).cust;
+      h += '<tr'+(r.w===w ? ' style="background:var(--accent-soft)"' : '')+'><td><b>'+esc(r.w.id)+'</b></td><td style="color:var(--muted)">'+esc(r.w.period)+'</td><td class="n">'+r.wk+'</td><td class="n">'+r.y.leads.mtd+'</td><td class="n">'+r.y.leads.target+'</td>'
+        + '<td class="n">'+pct(r.y.leads.mtd, r.y.leads.target)+'%</td><td class="n">'+rc+(r.y.custWeek ? ' <span style="color:var(--muted)">('+esc(r.y.custWeek)+')</span>' : '')+'</td><td class="n">'+pct(rc, r.y.leads.mtd)+'%</td></tr>';
     });
-    h += '<tr class="tot"><td>'+esc(t.thTot)+'</td><td></td><td class="n">'+leadT+'</td><td class="n">'+leadA+'</td><td class="n">'+p+'%</td></tr></tbody></table></div></div>';
+    h += '</tbody></table></div></div>';
     document.getElementById("app").innerHTML = h;
-    wire();
+    document.querySelectorAll("[data-w]").forEach(function(b){ b.onclick = function(){ wid = b.dataset.w; SHELL.render(); }; });
   }
-  function wire(){ document.querySelectorAll("[data-m]").forEach(function(b){ b.onclick = function(){ month = b.dataset.m; SHELL.render(); }; }); }
   SHELL.init({ page:"leads", root:"../", onRender:render });
 })();
 </script>

@@ -24,6 +24,16 @@
   .mix{display:flex;height:22px;border-radius:4px;overflow:hidden;background:var(--surface-3);margin:4px 0 10px}
   .mix span{display:flex;align-items:center;justify-content:center;font-family:"IBM Plex Mono",monospace;font-size:10px;color:#fff;font-weight:600;overflow:hidden;white-space:nowrap}
   .tblwrap{overflow-x:auto}
+  .trend{display:flex;align-items:flex-end;gap:10px;height:170px;margin-top:8px}
+  .tcol{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:5px;min-width:0}
+  .tbar{width:100%;max-width:64px;border-radius:2px 2px 0 0}
+  .tval{font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:600}
+  .tlab{font-family:"IBM Plex Mono",monospace;font-size:9px;color:var(--muted);white-space:nowrap}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+  @media (max-width:760px){.stats{grid-template-columns:repeat(2,1fr)}}
+  .stat{background:var(--surface);border:1px solid var(--rule);border-radius:6px;padding:12px 14px;box-shadow:var(--shadow)}
+  .stat .sn{font-size:1.5rem;font-weight:600;letter-spacing:-.03em;line-height:1;font-variant-numeric:tabular-nums}
+  .stat .sl{font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:5px}
 </style>
 
 <div class="wrap" id="wrap" hidden>
@@ -31,81 +41,101 @@
 </div>
 
 <script src="../optom-core.js"></script>
+<script src="../kpi-data.js"></script>
 <script src="../kpi-core.js"></script>
 <script src="../shell.js"></script>
 <script>
 (function(){
   "use strict";
   var K = window.KPI, esc = SHELL.esc, fill = SHELL.fill, pct = K.pct;
-  var month = "";
+  var wid = "";
   var L = {
-    en:{ title:"Sales", sub:"{c} · target vs achieved", asOf:"as of", dayOf:"day {d} of {n}", mtd:"MTD", mock:"modelled",
-      note:"<b>Placeholder.</b> Targets are illustrative and the achieved figures are modelled from them. Replace the TARGETS block in kpi-core.js with the clinic's real monthly targets and point actuals() at the sales tracker.",
-      hRev:"Revenue", achieved:"Achieved", target:"Target", ofTarget:"of target", onPace:"On pace", behind:"Slightly behind", offPace:"Behind", met:"Target met", missed:"Below target",
-      pStreams:"By stream", pStreamsH:"Revenue and customers", thStream:"Stream", thRevenue:"Revenue", thCustomers:"Customers", thTarget:"Target", thAch:"Achieved", thPct:"%", thTot:"Total",
-      st:{member:"Membership", repurchase:"Repurchase", referral:"Referral"}, mixH:"Revenue mix, achieved", noTargets:"No targets set for this clinic yet.",
+    en:{ title:"Sales", sub:"{c} · member revenue vs target", asOf:"report as of", src:"Optometry Membership Weekly Report",
+      note:"<b>Source:</b> the Optometry Membership Weekly Report, {w} (data cut-off {d}). Member revenue and target are month to date; the pace line marks how far through the month the cut-off is. Segment customer counts marked {cw} are carried from that week because the latest report has none.",
+      hRev:"Member revenue MTD", achieved:"Achieved", target:"Target", ofTarget:"of target", onPace:"On pace", behind:"Slightly behind", offPace:"Behind", met:"Target met", missed:"Below target",
+      sMembers:"Members", sNew:"New this week", sRevWk:"Revenue this week", sShare:"Share of clinic revenue",
+      pSeg:"By segment", pSegH:"Month to date", thSeg:"Segment", thCust:"Customers", thRev:"Revenue", thShare:"% of revenue", thBill:"Avg bill", thTot:"Total",
+      seg:{repurchase:"Repurchase", referral:"Referral", rescue:"Rescue"}, custFrom:"Customer counts as of {w}", mixH:"Revenue mix",
+      pTrend:"Week by week", pTrendH:"Member revenue MTD per report week; the dashed line is that month's target", noData:"No report data for {c} yet.",
       months:["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"] },
-    vi:{ title:"Doanh số", sub:"{c} · mục tiêu và đạt được", asOf:"tính đến", dayOf:"ngày {d} / {n}", mtd:"Đến nay", mock:"mô phỏng",
-      note:"<b>Số giữ chỗ.</b> Mục tiêu là số minh hoạ và số đạt được là mô phỏng từ đó. Thay khối TARGETS trong kpi-core.js bằng mục tiêu tháng thật của phòng khám và nối actuals() với bảng doanh số.",
-      hRev:"Doanh thu", achieved:"Đạt", target:"Mục tiêu", ofTarget:"mục tiêu", onPace:"Đúng nhịp", behind:"Hơi chậm", offPace:"Chậm", met:"Đạt mục tiêu", missed:"Dưới mục tiêu",
-      pStreams:"Theo nguồn", pStreamsH:"Doanh thu và số khách", thStream:"Nguồn", thRevenue:"Doanh thu", thCustomers:"Khách hàng", thTarget:"Mục tiêu", thAch:"Đạt", thPct:"%", thTot:"Tổng",
-      st:{member:"Hội viên", repurchase:"Mua lại", referral:"Giới thiệu"}, mixH:"Cơ cấu doanh thu đạt được", noTargets:"Phòng khám này chưa có mục tiêu.",
+    vi:{ title:"Doanh số", sub:"{c} · doanh thu hội viên và mục tiêu", asOf:"báo cáo tính đến", src:"Báo cáo tuần Hội viên Khúc xạ",
+      note:"<b>Nguồn:</b> Báo cáo tuần Hội viên Khúc xạ, {w} (chốt số {d}). Doanh thu hội viên và mục tiêu tính từ đầu tháng; vạch nhịp là vị trí ngày chốt trong tháng. Số khách đánh dấu {cw} lấy từ tuần đó vì báo cáo mới nhất chưa có.",
+      hRev:"Doanh thu hội viên từ đầu tháng", achieved:"Đạt", target:"Mục tiêu", ofTarget:"mục tiêu", onPace:"Đúng nhịp", behind:"Hơi chậm", offPace:"Chậm", met:"Đạt mục tiêu", missed:"Dưới mục tiêu",
+      sMembers:"Hội viên", sNew:"Mới tuần này", sRevWk:"Doanh thu tuần này", sShare:"Tỷ trọng trên doanh thu phòng khám",
+      pSeg:"Theo nguồn", pSegH:"Từ đầu tháng", thSeg:"Nguồn", thCust:"Khách", thRev:"Doanh thu", thShare:"% doanh thu", thBill:"Bình quân/khách", thTot:"Tổng",
+      seg:{repurchase:"Mua lại", referral:"Giới thiệu", rescue:"Giữ chân"}, custFrom:"Số khách tính đến {w}", mixH:"Cơ cấu doanh thu",
+      pTrend:"Theo tuần", pTrendH:"Doanh thu hội viên từ đầu tháng theo tuần báo cáo; vạch đứt là mục tiêu tháng đó", noData:"Chưa có số báo cáo cho {c}.",
       months:["Th1","Th2","Th3","Th4","Th5","Th6","Th7","Th8","Th9","Th10","Th11","Th12"] },
-    zh:{ title:"销售", sub:"{c} · 目标与达成", asOf:"截至", dayOf:"第 {d} / {n} 天", mtd:"本月至今", mock:"模拟",
-      note:"<b>占位数。</b>目标为示意值，达成数由其模拟生成。将 kpi-core.js 中的 TARGETS 块替换为诊所的真实月度目标，并把 actuals() 接到销售追踪表。",
-      hRev:"营收", achieved:"达成", target:"目标", ofTarget:"目标完成率", onPace:"进度正常", behind:"略落后", offPace:"落后", met:"已达标", missed:"未达标",
-      pStreams:"按来源", pStreamsH:"营收与客户数", thStream:"来源", thRevenue:"营收", thCustomers:"客户", thTarget:"目标", thAch:"达成", thPct:"%", thTot:"合计",
-      st:{member:"会员", repurchase:"复购", referral:"转介绍"}, mixH:"达成营收构成", noTargets:"该诊所尚未设置目标。",
+    zh:{ title:"销售", sub:"{c} · 会员营收与目标", asOf:"周报截至", src:"视光会员周报",
+      note:"<b>来源：</b>视光会员周报 {w}（数据截止 {d}）。会员营收与目标为本月至今；进度线为截止日在当月的位置。标注 {cw} 的客户数取自该周，因最新周报尚未填写。",
+      hRev:"会员营收（本月至今）", achieved:"达成", target:"目标", ofTarget:"目标完成率", onPace:"进度正常", behind:"略落后", offPace:"落后", met:"已达标", missed:"未达标",
+      sMembers:"会员", sNew:"本周新增", sRevWk:"本周营收", sShare:"占诊所营收比",
+      pSeg:"按来源", pSegH:"本月至今", thSeg:"来源", thCust:"客户", thRev:"营收", thShare:"营收占比", thBill:"客单价", thTot:"合计",
+      seg:{repurchase:"复购", referral:"转介绍", rescue:"挽回"}, custFrom:"客户数截至 {w}", mixH:"营收构成",
+      pTrend:"逐周", pTrendH:"各周报的会员营收（本月至今）；虚线为当月目标", noData:"{c} 尚无周报数据。",
       months:["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"] }
   };
   function paceColour(pc){ return pc==="ok" ? "var(--ok)" : pc==="warn" ? "var(--warn)" : "var(--bad)"; }
-  function monthLabel(t, k){ return t.months[+k.slice(5,7)-1] + " " + k.slice(0,4); }
+  function paceText(t, pc, frac){ return frac<1 ? (pc==="ok"?t.onPace:pc==="warn"?t.behind:t.offPace) : (pc==="ok"?t.met:t.missed); }
 
   function render(st){
-    var t = L[st.lang], TODAY = st.today, cur = TODAY.slice(0,7), cl = st.clinic;
-    if(!month) month = cur;
-    var frac = K.monthFrac(month, TODAY);
+    var t = L[st.lang], cl = st.clinic, lang = st.lang;
+    var all = K.weeks().filter(function(w){ return K.hosp(w, cl); });
+    var w = all.filter(function(x){ return x.id === wid; })[0] || all[all.length-1];
     document.title = "DA Dashboard · " + t.title;
-    SHELL.setTitle(t.title, esc(fill(t.sub, {c:cl})) + ' &middot; ' + esc(t.asOf) + ' ' + esc(TODAY));
+    SHELL.setTitle(t.title, esc(fill(t.sub, {c:cl})) + (w ? ' &middot; ' + esc(t.asOf) + ' ' + esc(K.fmtDay(w.cutoff, t.months)) : ''));
+    if(!w){ document.getElementById("app").innerHTML = '<div class="panel"><div class="empty">'+esc(fill(t.noData, {c:cl}))+'</div></div>'; return; }
+    var hp = K.hosp(w, cl), frac = w.frac, mon = t.months[+w.month.slice(5,7)-1];
+    var h = '<div class="frow">' + all.map(function(x){
+      return '<button data-w="'+x.id+'" aria-pressed="'+(x===w)+'">'+esc(x.id)+' <span class="mtdtag">'+esc(x.period)+'</span></button>'; }).join('') + '</div>';
+    h += '<div class="note"><p>'+fill(t.note, {w:w.id, d:K.fmtDay(w.cutoff, t.months), cw: hp.custWeek ? "(" + hp.custWeek + ")" : "—"})+'</p></div>';
 
-    var h = '<div class="frow">' + K.months(TODAY).map(function(m){
-      return '<button data-m="'+m+'" aria-pressed="'+(m===month)+'">'+esc(monthLabel(t, m))+(m===cur ? ' <span class="mtdtag">'+esc(t.mtd)+'</span>' : '')+'</button>'; }).join('') + '</div>';
-    h += '<div class="note"><p>'+t.note+'</p></div>';
-
-    var tg = K.targets(cl), ac = K.actuals(cl, month, TODAY);
-    if(!tg){ h += '<div class="panel"><div class="empty">'+esc(t.noTargets)+'</div></div>'; document.getElementById("app").innerHTML = h; wire(); return; }
-    var revT = 0, revA = 0, cusT = 0, cusA = 0, rows = [];
-    K.STREAMS.forEach(function(s){ var r = { st:s, rt:tg.rev[s], ra:ac.rev[s], ct:tg.cust[s], ca:ac.cust[s] }; revT += r.rt; revA += r.ra; cusT += r.ct; cusA += r.ca; rows.push(r); });
-    var pc = K.paceClass(revA, revT, frac), p = pct(revA, revT);
-    h += '<div class="hero"><div class="kl" style="font-family:\'IBM Plex Mono\',monospace;font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);font-weight:600">'+esc(t.hRev)+' <span class="pill p-mock">'+esc(t.mock)+'</span>'
-      + (frac < 1 ? ' · '+esc(fill(t.dayOf, {d:+TODAY.slice(8,10), n:K.daysIn(month)})) : '')+'</div>'
-      + '<div class="hv">'+esc(K.money(revA, st.lang))+'</div><div class="ht"><b>'+esc(K.money(revA, st.lang))+'</b> / <b>'+esc(K.money(revT, st.lang))+'</b></div>'
+    var revA = hp.memberRevenue, revT = hp.targetRevenue, pc = K.paceClass(revA, revT, frac), p = pct(revA, revT);
+    h += '<div class="hero"><div style="font-family:\'IBM Plex Mono\',monospace;font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);font-weight:600">'+esc(t.hRev)+' · '+esc(w.id)+' · '+esc(mon)+'</div>'
+      + '<div class="hv">'+esc(K.money(revA, lang))+'</div><div class="ht"><b>'+esc(K.money(revA, lang))+'</b> / <b>'+esc(K.money(revT, lang))+'</b></div>'
       + '<div class="gauge"><div class="gfill" style="width:'+Math.min(100, Math.max(p,1))+'%;background:'+paceColour(pc)+'"></div>'+(frac<1 ? '<div class="gpace" style="left:'+Math.round(frac*100)+'%"></div>' : '')+'</div>'
       + '<div class="gl"><span>'+esc(t.achieved)+'</span><span>'+esc(t.target)+'</span></div>'
-      + '<span class="pace p-'+(pc||'accent')+'">'+esc(frac<1 ? (pc==="ok"?t.onPace:pc==="warn"?t.behind:t.offPace) : (pc==="ok"?t.met:t.missed))+' · '+p+'% '+esc(t.ofTarget)+'</span></div>';
+      + '<span class="pace p-'+(pc||'accent')+'">'+esc(paceText(t, pc, frac))+' · '+p+'% '+esc(t.ofTarget)+'</span></div>';
 
-    var cols = ["var(--accent)","var(--ok)","var(--warn)"];
-    h += '<div class="panel"><h3><span>'+esc(t.pStreams)+' <span class="pill p-mock">'+esc(t.mock)+'</span></span><span class="hint">'+esc(t.pStreamsH)+'</span></h3>'
-      + '<div class="tblwrap"><table><thead><tr><th rowspan="2"></th><th rowspan="2">'+esc(t.thStream)+'</th>'
-      + '<th class="grp" colspan="4">'+esc(t.thRevenue)+'</th><th class="grp" colspan="3">'+esc(t.thCustomers)+'</th></tr>'
-      + '<tr><th class="n">'+esc(t.thTarget)+'</th><th class="n">'+esc(t.thAch)+'</th><th class="n">'+esc(t.thPct)+'</th><th style="width:18%"></th>'
-      + '<th class="n">'+esc(t.thTarget)+'</th><th class="n">'+esc(t.thAch)+'</th><th class="n">'+esc(t.thPct)+'</th></tr></thead><tbody>';
-    rows.forEach(function(r, i){
-      var rp = pct(r.ra, r.rt), rpc = K.paceClass(r.ra, r.rt, frac);
-      h += '<tr><td class="sw"><i style="background:'+cols[i]+'"></i></td><td><b>'+esc(t.st[r.st])+'</b></td>'
-        + '<td class="n">'+esc(K.money(r.rt, st.lang))+'</td><td class="n">'+esc(K.money(r.ra, st.lang))+'</td><td class="n" style="color:'+paceColour(rpc)+'">'+rp+'%</td>'
-        + '<td><div class="barw"><div class="barf" style="width:'+Math.min(100,rp)+'%;background:'+cols[i]+'"></div>'+(frac<1 ? '<div class="bart" style="left:'+Math.round(frac*100)+'%"></div>' : '')+'</div></td>'
-        + '<td class="n">'+r.ct+'</td><td class="n">'+r.ca+'</td><td class="n">'+pct(r.ca, r.ct)+'%</td></tr>';
+    var memWk = K.thisWeek(w, cl, function(x){ return x.members; }), revWk = K.thisWeek(w, cl, function(x){ return x.memberRevenue; });
+    h += '<div class="stats">'
+      + '<div class="stat"><div class="sn">'+hp.members.toLocaleString("en-US")+'</div><div class="sl">'+esc(t.sMembers)+'</div></div>'
+      + '<div class="stat"><div class="sn" style="color:var(--ok)">'+(memWk>=0?"+":"")+memWk+'</div><div class="sl">'+esc(t.sNew)+'</div></div>'
+      + '<div class="stat"><div class="sn">'+esc(K.money(revWk, lang))+'</div><div class="sl">'+esc(t.sRevWk)+'</div></div>'
+      + '<div class="stat"><div class="sn">'+(hp.totalRevenue ? (Math.round(revA / hp.totalRevenue * 1000) / 10) + '%' : '—')+'</div><div class="sl">'+esc(t.sShare)+'</div></div>'
+      + '</div>';
+
+    var cols = ["var(--accent)","var(--ok)","var(--warn)"], segRev = 0, segCust = 0;
+    K.SEGS.forEach(function(sg){ var x = hp.seg[sg] || {cust:0, rev:0}; segRev += x.rev; segCust += x.cust; });
+    h += '<div class="panel"><h3><span>'+esc(t.pSeg)+'</span><span class="hint">'+esc(t.pSegH)+' · '+esc(w.id)+'</span></h3>'
+      + '<div class="tblwrap"><table><thead><tr><th></th><th>'+esc(t.thSeg)+'</th><th class="n">'+esc(t.thCust)+'</th><th class="n">'+esc(t.thRev)+'</th><th class="n">'+esc(t.thShare)+'</th><th style="width:22%"></th><th class="n">'+esc(t.thBill)+'</th></tr></thead><tbody>';
+    K.SEGS.forEach(function(sg, i){
+      var x = hp.seg[sg] || {cust:0, rev:0}, sh = pct(x.rev, segRev);
+      h += '<tr><td class="sw"><i style="background:'+cols[i]+'"></i></td><td><b>'+esc(t.seg[sg])+'</b></td><td class="n">'+(x.cust || '—')+'</td>'
+        + '<td class="n">'+esc(K.money(x.rev, lang))+'</td><td class="n">'+sh+'%</td>'
+        + '<td><div class="barw"><div class="barf" style="width:'+sh+'%;background:'+cols[i]+'"></div></div></td>'
+        + '<td class="n">'+(x.cust ? esc(K.money(x.rev / x.cust, lang)) : '—')+'</td></tr>';
     });
-    h += '<tr class="tot"><td></td><td>'+esc(t.thTot)+'</td><td class="n">'+esc(K.money(revT, st.lang))+'</td><td class="n">'+esc(K.money(revA, st.lang))+'</td><td class="n">'+pct(revA, revT)+'%</td><td></td>'
-      + '<td class="n">'+cusT+'</td><td class="n">'+cusA+'</td><td class="n">'+pct(cusA, cusT)+'%</td></tr></tbody></table></div>'
-      + '<div class="pad" style="border-top:1px solid var(--rule-2)"><div style="font-size:.78rem;color:var(--muted)">'+esc(t.mixH)+'</div><div class="mix">';
-    rows.forEach(function(r, i){ var w = pct(r.ra, revA); h += '<span style="width:'+w+'%;background:'+cols[i]+'">'+(w >= 12 ? w+'%' : '')+'</span>'; });
-    h += '</div><div class="legend">'+rows.map(function(r, i){ return '<span><i style="background:'+cols[i]+'"></i>'+esc(t.st[r.st])+' '+esc(K.money(r.ra, st.lang))+'</span>'; }).join('')+'</div></div></div>';
+    h += '<tr class="tot"><td></td><td>'+esc(t.thTot)+'</td><td class="n">'+(segCust || '—')+'</td><td class="n">'+esc(K.money(segRev, lang))+'</td><td class="n">100%</td><td></td><td class="n">'+(segCust ? esc(K.money(segRev / segCust, lang)) : '—')+'</td></tr></tbody></table></div>';
+    if(hp.custWeek) h += '<div class="pad" style="padding-top:8px;padding-bottom:8px;font-size:.78rem;color:var(--muted)">'+esc(fill(t.custFrom, {w:hp.custWeek}))+'</div>';
+    h += '<div class="pad" style="border-top:1px solid var(--rule-2)"><div style="font-size:.78rem;color:var(--muted)">'+esc(t.mixH)+'</div><div class="mix">';
+    K.SEGS.forEach(function(sg, i){ var x = hp.seg[sg] || {rev:0}, wd = pct(x.rev, segRev); h += '<span style="width:'+wd+'%;background:'+cols[i]+'">'+(wd >= 12 ? wd+'%' : '')+'</span>'; });
+    h += '</div><div class="legend">'+K.SEGS.map(function(sg, i){ return '<span><i style="background:'+cols[i]+'"></i>'+esc(t.seg[sg])+' '+esc(K.money((hp.seg[sg]||{rev:0}).rev, lang))+'</span>'; }).join('')+'</div></div></div>';
+
+    /* trend across report weeks */
+    var mx = 1; all.forEach(function(x){ var y = K.hosp(x, cl); mx = Math.max(mx, y.memberRevenue, y.targetRevenue); });
+    h += '<div class="panel"><h3><span>'+esc(t.pTrend)+'</span><span class="hint">'+esc(t.pTrendH)+'</span></h3><div class="pad"><div class="trend">';
+    all.forEach(function(x){
+      var y = K.hosp(x, cl), hb = Math.max(3, Math.round(y.memberRevenue / mx * 130)), th = Math.round(y.targetRevenue / mx * 130), pcx = K.paceClass(y.memberRevenue, y.targetRevenue, x.frac);
+      h += '<div class="tcol"><span class="tval">'+esc(K.money(y.memberRevenue, lang))+'</span>'
+        + '<div style="position:relative;width:100%;max-width:64px;height:'+(Math.max(hb, th)+3)+'px"><div class="tbar" style="position:absolute;left:0;right:0;bottom:0;height:'+hb+'px;background:'+(x===w ? paceColour(pcx) : 'var(--surface-3)')+'"></div>'
+        + '<div style="position:absolute;left:0;right:0;bottom:'+th+'px;border-top:2px dashed var(--ink);opacity:.5"></div></div>'
+        + '<span class="tlab">'+esc(x.id)+' · '+esc(t.months[+x.month.slice(5,7)-1])+'</span></div>';
+    });
+    h += '</div></div></div>';
     document.getElementById("app").innerHTML = h;
-    wire();
+    document.querySelectorAll("[data-w]").forEach(function(b){ b.onclick = function(){ wid = b.dataset.w; SHELL.render(); }; });
   }
-  function wire(){ document.querySelectorAll("[data-m]").forEach(function(b){ b.onclick = function(){ month = b.dataset.m; SHELL.render(); }; }); }
   SHELL.init({ page:"sales", root:"../", onRender:render });
 })();
 </script>

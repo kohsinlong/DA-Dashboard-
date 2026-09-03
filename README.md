@@ -11,14 +11,14 @@ root).
 
 | Page | What it shows | Data |
 |---|---|---|
-| `/` KPI | Three cards: Zalo SOP (you), Sales (clinic), Leads (clinic), each with target, pace line and a zoom-in link | SOP real; sales and leads modelled |
+| `/` KPI | Three cards: Zalo SOP (you, month to date), Sales and Leads (clinic, latest report week), each with target, pace line and a zoom-in link | SOP real; sales from the weekly report; leads modelled |
 | `/sop/` Zalo SOP | Your follow-ups: due today, due this week, missed, open queries, data flags, streaks, team | Real (sent marks modelled) |
-| `/sales/` Sales | Revenue and customers by stream (membership, repurchase, referral), target vs achieved, by month | Modelled placeholders |
-| `/leads/` Leads | Leads generated vs target, by week, by month | Modelled placeholders |
+| `/sales/` Sales | Member revenue MTD vs target, members, revenue this week, repurchase / referral / rescue split, week-by-week trend | Weekly report |
+| `/leads/` Leads | Leads MTD vs target, conversion to referral customers, week by week | Modelled until the report carries leads |
 
 Shared pieces: `shell.js` (sign-in, DA picker, session, language, header,
-navigation, live-feed loading), `theme.css`, `kpi-core.js` (targets and
-the modelled actuals, SOP scoring helpers) and `optom-core.js`.
+navigation, live-feed loading), `theme.css`, `kpi-core.js` (report data helpers,
+SOP scoring helpers), `kpi-data.js` (generated from the weekly report) and `optom-core.js`.
 
 ## The Zalo SOP page
 
@@ -63,13 +63,31 @@ in `shell.js`. The password is stored only as a SHA-256 hash (`PW_HASH` in
 once; the phone remembers it. Languages: EN / Tiếng Việt / 中文 (`?lang=vi`
 to open in Vietnamese).
 
-## Sales and leads targets
+## Sales and leads — from the weekly report
 
-`kpi-core.js` holds `TARGETS` per clinic per month (revenue and customers for
-membership, repurchase and referral, plus a lead target) and `actuals()`,
-which currently models the achieved figures from them. Replace `TARGETS`
-with the real monthly targets and point `actuals()` at the sales tracker and
-Salework lead counts; both pages and the KPI cards fill in.
+`kpi-data.js` is generated from the Optometry Membership Weekly Report
+workbook (the one with a `Wnn` sheet per week):
+
+    python3 tools/kpi-from-report.py <report.xlsx> > kpi-data.js
+
+Run it whenever a new week is filled in, commit, and the KPI card, Sales
+and Leads pages pick up the new week. Per week and per hospital it carries
+total members, member revenue MTD, target revenue, the hospital's total
+revenue, and the repurchase / referral / rescue split (customers and
+revenue). The pace line on every gauge is the report's data cut-off day
+as a share of the month.
+
+Two fallbacks, both flagged on the page:
+
+- A week with revenue but no customer counts (W35 as delivered) takes the
+  customer counts of the latest earlier week in the same month, marked
+  "customers as of W34".
+- Leads are not in the report yet. The target is derived as revenue target
+  ÷ 7m average bill ÷ 15% lead-to-referral conversion, and the MTD count is
+  a deterministic draw around pace, marked modelled. Fill in Leads MTD in
+  the report and the real number takes over.
+
+The workbook itself is not in the repo; only the generated numbers are.
 
 ## Data
 
