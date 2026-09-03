@@ -106,10 +106,16 @@ reporting date.
 `tools/chat-queries.gs` is a Google Apps Script that turns Zalo chat logs
 into a ledger of open queries:
 
-1. Paste (or pipe) the conversation export into a **Chat log** sheet:
-   `Thread | Time | Sender (customer / da) | Text | Clinic | DA | Zalo tag`.
-   `sample/chat-log.csv` shows the shape. Strip phone numbers first.
-2. Every 15 minutes `scan()` sends each thread that has new messages to
+1. Paste the Salework message export (columns `ID liên hệ` … `ID Hồ Sơ`)
+   into an **Export** sheet. `importExport()` turns it into **Chat log**
+   rows: `ID Hồ Sơ` = 0 is a DA message, anything else the customer;
+   photos, calls, missed calls and OA templates become short markers;
+   duplicate rows (same `ID tin nhắn`) are dropped; the contact alias
+   (`Biệt danh liên hệ`) is the Zalo tag; phone numbers in the text are
+   masked. The `ACCOUNTS` map ties each Salework account to a clinic and
+   DA. (`sample/chat-log.csv` shows the Chat log shape if you fill it by
+   hand instead.)
+2. Every 15 minutes `sync()` imports new rows and `scan()` sends each thread that has new messages to
    Claude (last 40 messages plus that thread's open queries) and asks, with
    a fixed JSON schema, which customer messages are real questions or
    requests, and whether each open query is now **resolved** (an actual

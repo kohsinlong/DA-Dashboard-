@@ -8,10 +8,17 @@
  * promised and starts a clock. A customer asking again marks it chased.
  *
  * Sheets (created by setup()):
+ *   Export    the Salework message export, pasted as is (columns
+ *             ID liên hệ … ID Hồ Sơ). importExport() turns it into Chat
+ *             log rows: ID Hồ Sơ = 0 means the DA sent it, anything else
+ *             is the customer; photos, calls and OA templates become
+ *             [photo] / [call] / [missed call] / [template] markers;
+ *             duplicate rows (same ID tin nhắn) are dropped; the contact
+ *             alias (Biệt danh liên hệ) is the Zalo tag; phone numbers in
+ *             the text are masked.
  *   Chat log  Thread | Time | Sender | Text | Clinic | DA | Zalo tag
  *             Sender is "customer" or "da". One row per message, any
- *             order. Paste the Salework / Zalo OA export here, or feed
- *             it from a webhook. Phone numbers should be stripped first.
+ *             order. Filled by importExport(), or by hand / a webhook.
  *   Queries   one row per query, written by this script. Status can be
  *             edited by hand (e.g. set to "resolved" after a phone call,
  *             or "dismissed" if it was not a real question).
@@ -20,8 +27,10 @@
  *   1. Make a Google Sheet, Extensions -> Apps Script, paste this file.
  *   2. Project settings -> Script properties: add ANTHROPIC_API_KEY.
  *      Set TOKEN below to match QUERIES.token in the dashboard.
- *   3. Run setup() once (creates the sheets), then scan() by hand to test.
- *   4. Triggers -> add a time-driven trigger: scan() every 15 minutes.
+ *   3. Run setup() once (creates the sheets). Paste an export into
+ *      Export, run importExport(), then scan() by hand to test.
+ *   4. Triggers -> add a time-driven trigger: sync() every 15 minutes
+ *      (import + scan).
  *   5. Deploy -> Web app (execute as me, anyone) and put the /exec URL
  *      into QUERIES.url in index.html. The page then shows each DA's
  *      open queries.
@@ -34,7 +43,11 @@
 var TOKEN = "change-me";            /* must match QUERIES.token in index.html */
 var MODEL = "claude-opus-5";
 var MAX_MESSAGES = 40;              /* context sent per thread */
-var SHEET_LOG = "Chat log", SHEET_Q = "Queries";
+var SHEET_LOG = "Chat log", SHEET_Q = "Queries", SHEET_X = "Export";
+/* Salework account (Tên tài khoản) -> [clinic, DA]. One OA account per
+   clinic; add a line per clinic. Threads under an unknown account keep
+   the account name as clinic and an empty DA. */
+var ACCOUNTS = { "Sw Contact It": ["NGT", "Tiên"] };
 var CATEGORIES = ["price", "delivery", "appointment", "usage", "complaint", "product", "other"];
 var STATUSES = ["open", "promised", "chased", "resolved", "dismissed"];
 var Q_HEADERS = ["ID", "Thread", "Zalo tag", "Clinic", "DA", "Asked at", "Category", "Query",
@@ -46,8 +59,65 @@ function setup() {
   if (log.getLastRow() === 0) log.appendRow(["Thread", "Time", "Sender", "Text", "Clinic", "DA", "Zalo tag"]);
   var q = ss.getSheetByName(SHEET_Q) || ss.insertSheet(SHEET_Q);
   if (q.getLastRow() === 0) q.appendRow(Q_HEADERS);
+  if (!ss.getSheetByName(SHEET_X)) ss.insertSheet(SHEET_X);
   q.setFrozenRows(1); log.setFrozenRows(1);
 }
+
+/* ---------------- Salework export -> Chat log ----------------
+   Reads the Export sheet by header name, so column order does not matter.
+   Appends only messages whose ID tin nhắn is not already in Chat log. */
+var X_TEXT_TYPES = { webchat: 1, chat: 1, text: 1 };
+function importExport() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var x = ss.getSheetByName(SHEET_X), log = ss.getSheetByName(SHEET_LOG);
+  if (!x || x.getLastRow() < 2) { Logger.log("Export is empty"); return 0; }
+  var v = x.getDataRange().getValues(), hdr = v[0].map(function (h) { return String(h || "").trim(); });
+  var col = function (name) { var i = hdr.indexOf(name); if (i < 0) throw new Error("Export: missing column " + name); return i; };
+  var cThread = col("ID liên hệ"), cMsg = col("ID tin nhắn"), cText = col("Tin nhắn"), cTime = col("Thời gian"),
+      cAlias = col("Biệt danh liên hệ"), cZalo = col("Tên Zalo liên hệ"), cAcct = col("Tên tài khoản"),
+      cType = col("Loại tin nhắn"), cProfile = col("ID Hồ Sơ");
+  var have = {}, lv = log.getDataRange().getValues();
+  for (var r = 1; r < lv.length; r++) if (lv[r][7]) have[String(lv[r][7])] = 1;   /* column H = message id */
+  if (log.getLastRow() === 0) log.appendRow(["Thread", "Time", "Sender", "Text", "Clinic", "DA", "Zalo tag", "Message ID"]);
+  var out = [];
+  for (r = 1; r < v.length; r++) {
+    var row = v[r], mid = String(row[cMsg] || "").replace(/^'/, "");
+    if (!mid || have[mid]) continue;
+    have[mid] = 1;
+    var acct = String(row[cAcct] || ""), who = ACCOUNTS[acct] || [acct, ""];
+    var profile = String(row[cProfile] || "0").replace(/^'/, "");
+    var tag = String(row[cAlias] || row[cZalo] || "").trim();
+    out.push([String(row[cThread]), exportTime(row[cTime]), profile === "0" ? "da" : "customer",
+              exportText(String(row[cType] || ""), row[cText]), who[0], who[1], tag, mid]);
+  }
+  if (out.length) log.getRange(log.getLastRow() + 1, 1, out.length, 8).setValues(out);
+  Logger.log("importExport: " + out.length + " new messages");
+  return out.length;
+}
+/* text for the model: real text as is, with phone numbers masked; other
+   message types become a short marker so the model knows what happened */
+function exportText(type, raw) {
+  var s = raw === null || raw === undefined ? "" : String(raw);
+  if (X_TEXT_TYPES[type] && s.charAt(0) !== "{" && s.charAt(0) !== "[") return maskPhones(s);
+  var j = null; try { j = JSON.parse(s); } catch (e) {}
+  if (j && j.length) j = j[0];
+  var action = j && j.action ? String(j.action) : "", desc = j && (j.description || j.title) ? String(j.description || j.title) : "";
+  if (type === "chat.photo") return "[photo]";
+  if (type === "chat.sticker") return "[sticker]";
+  if (type === "chat.file") return "[file]";
+  if (type === "chat.recommended" || /call/i.test(action)) return /miss/i.test(action) ? "[missed call]" : "[call]";
+  if (type === "chat.list.action") return "[template: " + maskPhones(desc).slice(0, 80) + "]";
+  return "[" + type + (desc ? ": " + maskPhones(desc).slice(0, 80) : "") + "]";
+}
+function maskPhones(s) { return s.replace(/(\+?84|0)[\s.\-]?\d(?:[\s.\-]?\d){7,9}/g, "[phone]"); }
+function exportTime(v) {
+  if (v instanceof Date && !isNaN(v)) return v.toISOString();
+  var m = /^(\d{4})\/(\d{2})\/(\d{2}) (\d{2}):(\d{2}):(\d{2})$/.exec(String(v || "").trim());
+  if (m) return new Date(Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4] - 7, +m[5], +m[6])).toISOString();   /* export is Asia/Ho_Chi_Minh */
+  return iso(v);
+}
+/* one call for the time trigger */
+function sync() { importExport(); scan(); }
 
 /* ---------------- scan: new messages -> Claude -> Queries sheet ---------------- */
 function scan() {
