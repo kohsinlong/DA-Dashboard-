@@ -35,7 +35,10 @@
      shows a modelled sample drawn per Zalo tag. */
   var QUERIES = { url: "", token: "change-me" };
   var queryRows = null;              /* live rows from the ledger, else null */
-  var ui = { todayFilter:"", missedShown:PAGE, missedOlder:false, flagsAll:false };
+  var SHORT = 5;
+  function freshUi(){ return { today:{q:"",status:"",prod:""}, flags:{q:"",type:"",prod:"",shown:SHORT},
+    missed:{q:"",status:"",prod:"",cad:"",shown:SHORT,older:false}, reply:{q:"",status:"",cat:"",shown:SHORT} }; }
+  var ui = freshUi();
 
   function store(k, v){
     try{
@@ -290,7 +293,7 @@
       wkNote:"Only cadences whose window has closed count toward your score. Days ahead are shown so you can plan, not scored.",
       wkDue:"due",
       /* today list */
-      pToday:"Due today", pTodayH:"Zalo tag · what to send", fAll:"All", fTodo:"To do", fProg:"In progress", fDone:"Done",
+      pToday:"Due today", pTodayH:"Zalo tag · what to send", fAll:"All", fSearch:"Search Zalo tag…", fShowing:"{a} of {b}", fAllCad:"All cadences", fTodo:"To do", fProg:"In progress", fDone:"Done",
       stDone:"Done", stProg:"In progress", stTodo:"To do",
       winOpen:"window open since {d}", tomorrow:"Due tomorrow: <b>{n}</b>", nothingLeft:"Nothing here.",
       /* missed */
@@ -306,7 +309,7 @@
       qStats:"Answered in the last 2 weeks: <b>{r}</b> · median <b>{m} h</b> to answer · promised and still waiting: <b>{p}</b> · chased by the customer: <b>{c}</b>",
       replyNote:"<b>How it works:</b> every customer message in the Zalo chat log is read by AI. A real question or request is logged as a query. It stays open until you give an actual answer: \"để em kiểm tra\" marks it <i>promised</i>, a customer asking again marks it <i>chased</i>. Answered by phone? Head office can set the row to resolved in the Queries sheet.",
       /* flags */
-      pFlags:"Data flags to fix", pFlagsH:"From the Membership tracker · fix these so the tracker can schedule the customer",
+      pFlags:"Data flags to fix", pFlagsH:"Fix these in the Membership tracker so it can schedule the customer",
       noneFlags:"No data flags on your customers.", showAll:"Show all {n}",
       fl:{twokids:"Two kids on one tag", prodmismatch:"Product ≠ tag", setY:"Collected — set Y",
           nstale:"N tag older than 14 days", missingYN:"Missing Y/N", badtag:"Unreadable tag"},
@@ -352,7 +355,7 @@
       wkSum:"<b>{n}</b> mốc tuần này · <b>{c}</b> đã qua hạn · <b>{t}</b> hôm nay · <b>{f}</b> sắp tới",
       wkNote:"Chỉ các mốc đã qua hạn mới tính vào điểm. Các ngày sắp tới hiển thị để bạn lên kế hoạch, chưa chấm.",
       wkDue:"mốc",
-      pToday:"Tới hạn hôm nay", pTodayH:"Tag Zalo · cần gửi gì", fAll:"Tất cả", fTodo:"Cần làm", fProg:"Đang làm", fDone:"Xong",
+      pToday:"Tới hạn hôm nay", pTodayH:"Tag Zalo · cần gửi gì", fAll:"Tất cả", fSearch:"Tìm tag Zalo…", fShowing:"{a} / {b}", fAllCad:"Tất cả các mốc", fTodo:"Cần làm", fProg:"Đang làm", fDone:"Xong",
       stDone:"Xong", stProg:"Đang làm", stTodo:"Cần làm",
       winOpen:"mở từ {d}", tomorrow:"Tới hạn ngày mai: <b>{n}</b>", nothingLeft:"Không có gì ở đây.",
       pMissed:"Bỏ sót và chưa đủ", pMissedH:"Đã qua hạn, chưa gửi đủ · mới nhất trước",
@@ -410,7 +413,7 @@
       wkSum:"本周 <b>{n}</b> 个到期 · <b>{c}</b> 已过期 · <b>{t}</b> 今天 · <b>{f}</b> 即将到期",
       wkNote:"仅窗口已关闭的触点计入得分。未来几天仅供安排，不评分。",
       wkDue:"到期",
-      pToday:"今日到期", pTodayH:"Zalo 标签 · 需发送内容", fAll:"全部", fTodo:"待办", fProg:"进行中", fDone:"已完成",
+      pToday:"今日到期", pTodayH:"Zalo 标签 · 需发送内容", fAll:"全部", fSearch:"搜索 Zalo 标签…", fShowing:"{a} / {b}", fAllCad:"全部触点", fTodo:"待办", fProg:"进行中", fDone:"已完成",
       stDone:"已完成", stProg:"进行中", stTodo:"待办",
       winOpen:"自 {d} 起可发送", tomorrow:"明日到期：<b>{n}</b>", nothingLeft:"这里没有内容。",
       pMissed:"遗漏与未完成", pMissedH:"已到期、未全部发送 · 最新在前",
@@ -506,6 +509,99 @@
     }
     h += '</div>';
 
+    /* ---- work first: today, flags, missed, open queries ---- */
+    var prods = function(list, get){ var p = {}; list.forEach(function(x){ p[get(x)] = (p[get(x)]||0)+1; }); return PRODUCTS.filter(function(k){ return p[k]; }).map(function(k){ return [k, prodLabel(k), p[k]]; }); };
+    var qmatch = function(q, tag){ return !q || tag.toLowerCase().indexOf(q.trim().toLowerCase()) !== -1; };
+
+    /* today list: full length, filter by status / product / search */
+    var f = ui.today, todayRows = b.today.slice().sort(function(a,b2){ return a.pts - b2.pts || (a.c[6] < b2.c[6] ? -1 : 1); });
+    var cnt = { todo:0, prog:0, done:0 }; todayRows.forEach(function(x){ cnt[statusOf(x)]++; });
+    var shown = todayRows.filter(function(x){ return (!f.status || statusOf(x) === f.status) && (!f.prod || x.c[2] === f.prod) && qmatch(f.q, x.c[6]); });
+    h += '<div class="panel" id="today"><h3><span>'+esc(t.pToday)+' <span class="pill '+(b.today.length ? (perfect ? "p-ok" : "p-accent") : "p-inert")+'">'+b.today.length+'</span></span><span class="hint">'+esc(t.pTodayH)+'</span></h3>';
+    if(b.today.length){
+      h += fbar("today", f, { q:true, chips:[ {key:"status", items:[["todo", t.fTodo, cnt.todo], ["prog", t.fProg, cnt.prog], ["done", t.fDone, cnt.done]]},
+                                                {key:"prod", items:prods(todayRows, function(x){ return x.c[2]; })} ], count:[shown.length, todayRows.length] });
+      if(shown.length) shown.forEach(function(x){ h += taskRow(x); });
+      else h += '<div class="empty">'+esc(t.nothingLeft)+'</div>';
+    } else h += '<div class="empty">'+esc(t.hNone)+'</div>';
+    h += '<div class="tmrw">'+fill(t.tomorrow, {n:b.tomorrow.length})+'</div></div>';
+
+    /* data flags: high up, filter by type / product / search, short pages */
+    f = ui.flags;
+    var fl = b.flags.slice().sort(function(x,y){ return y[7].length - x[7].length || (x[6] < y[6] ? -1 : 1); });
+    var flCounts = {}; fl.forEach(function(c){ c[7].forEach(function(k){ flCounts[k] = (flCounts[k]||0)+1; }); });
+    var flRows = fl.filter(function(c){ return (!f.type || c[7].indexOf(f.type) !== -1) && (!f.prod || c[2] === f.prod) && qmatch(f.q, c[6]); });
+    h += '<div class="panel" id="flags"><h3><span>'+esc(t.pFlags)+' <span class="pill '+(fl.length?'p-warn':'p-ok')+'">'+fl.length+'</span></span><span class="hint">'+esc(t.pFlagsH)+'</span></h3>';
+    if(fl.length){
+      h += fbar("flags", f, { q:true, chips:[ {key:"type", items:FLAGS.filter(function(k){ return flCounts[k]; }).map(function(k){ return [k, t.fl[k], flCounts[k]]; })},
+                                                {key:"prod", items:prods(fl, function(c){ return c[2]; })} ], count:[flRows.length, fl.length] });
+      flRows.slice(0, f.shown).forEach(function(c){
+        h += '<div class="task"><div class="tag">'+esc(c[6])+'</div>'
+          + '<div class="st">'+c[7].map(function(k){ return '<span class="pill p-warn">'+esc(t.fl[k])+'</span>'; }).join(' ')+'</div>'
+          + '<div class="meta"><span class="pill p-prod">'+esc(prodLabel(c[2]))+'</span></div>'
+          + '<div class="items" style="font-size:.8rem;color:var(--ink-2)">'+c[7].map(function(k){ return esc(t.fx[k]); }).join(' ')+'</div></div>';
+      });
+      if(!flRows.length) h += '<div class="empty">'+esc(t.nothingLeft)+'</div>';
+      if(flRows.length > f.shown) h += more("flags", Math.min(SHORT, flRows.length - f.shown), t);
+    } else h += '<div class="empty">'+esc(t.noneFlags)+'</div>';
+    h += '</div>';
+
+    /* missed: this week and last by default, filter by status / product / cadence / search, short pages */
+    f = ui.missed;
+    var mBase = f.older ? b.missed : b.missedRecent;
+    var mCnt = { missed:0, incomplete:0 }; mBase.forEach(function(x){ mCnt[x.pts === 0 ? "missed" : "incomplete"]++; });
+    var cads = {}; mBase.forEach(function(x){ cads[STAGES[x.si]] = 1; });
+    var mList = mBase.filter(function(x){ return (!f.status || (x.pts === 0 ? "missed" : "incomplete") === f.status) && (!f.prod || x.c[2] === f.prod) && (!f.cad || STAGES[x.si] === f.cad) && qmatch(f.q, x.c[6]); });
+    h += '<div class="panel" id="missed"><h3><span>'+esc(t.pMissed)+' <span class="pill '+(b.missedRecent.length?'p-bad':'p-ok')+'">'+b.missedRecent.length+'</span></span>'
+      + '<span class="hint">'+esc(t.pMissedH)+'</span></h3>';
+    if(mBase.length){
+      h += fbar("missed", f, { q:true, chips:[ {key:"status", items:[["missed", t.stMissed, mCnt.missed], ["incomplete", t.stIncomplete, mCnt.incomplete]]},
+                                                {key:"prod", items:prods(mBase, function(x){ return x.c[2]; })} ],
+                               select:{key:"cad", label:t.fAllCad, items:STAGES.filter(function(k){ return cads[k]; }).map(function(k){ return [k, k]; })}, count:[mList.length, mBase.length] });
+      var grp = "";
+      mList.slice(0, f.shown).forEach(function(x){
+        var g2 = x.d === addDays(TODAY,-1) ? t.gYesterday : x.d >= b.mon ? t.gThisWeek : x.d >= b.lastMon ? t.gLastWeek : t.gOlder;
+        if(g2 !== grp){ grp = g2; h += '<div class="grp">'+esc(g2)+'</div>'; }
+        h += taskRow(x, {due:true});
+      });
+      if(!mList.length) h += '<div class="empty">'+esc(t.nothingLeft)+'</div>';
+      if(mList.length > f.shown) h += more("missed", Math.min(SHORT, mList.length - f.shown), t);
+      else if(!f.older && b.missedOlder.length) h += '<button class="more" data-older="1">'+esc(fill(t.showOlder, {n:b.missedOlder.length}))+'</button>';
+      h += '<div class="tmrw">'+esc(t.missedNote)+'</div>';
+    } else if(b.missedOlder.length){
+      h += '<div class="empty">'+esc(t.noneMissedRecent)+'</div><button class="more" data-older="1">'+esc(fill(t.showOlder, {n:b.missedOlder.length}))+'</button>';
+    } else h += '<div class="empty">'+esc(t.noneMissed)+'</div>';
+    h += '</div>';
+
+    /* open queries (ledger, or modelled sample): filter by status / category / search, short pages */
+    f = ui.reply;
+    var rq = b.replies, liveQ = !!queryRows;
+    var qCnt = { open:0, promised:0, chased:0 }, qCats = {}; rq.open.forEach(function(r){ qCnt[r.status]++; qCats[r.cat] = (qCats[r.cat]||0)+1; });
+    var qList = rq.open.filter(function(r){ return (!f.status || r.status === f.status) && (!f.cat || r.cat === f.cat) && qmatch(f.q, r.tag + " " + (r.query||"")); });
+    h += '<div class="panel" id="reply"><h3><span>'+esc(t.pReply)+' <span class="pill '+(liveQ ? (rq.open.length ? "p-warn" : "p-ok") : "p-mock")+'">'+rq.open.length+'</span></span>'
+      + '<span class="hint">'+esc(liveQ ? t.pReplyHLive : t.pReplyH)+'</span></h3>';
+    if(rq.open.length){
+      h += fbar("reply", f, { q:true, chips:[ {key:"status", items:[["chased", t.qChased, qCnt.chased], ["promised", t.qPromised, qCnt.promised], ["open", t.qOpen, qCnt.open]]},
+                                                {key:"cat", items:QCATS.filter(function(k){ return qCats[k]; }).map(function(k){ return [k, t.qCat[k] || k, qCats[k]]; })} ], count:[qList.length, rq.open.length] });
+      qList.slice(0, f.shown).forEach(function(r){
+        var st = r.status === "chased" ? '<span class="pill p-bad">'+esc(t.qChased)+(r.chased>1?' ×'+r.chased:'')+'</span>'
+               : r.status === "promised" ? '<span class="pill p-warn">'+esc(t.qPromised)+'</span>'
+               : '<span class="pill p-accent">'+esc(t.qOpen)+'</span>';
+        var age = r.hours >= 24 ? "color:var(--bad)" : r.hours >= 4 ? "color:var(--warn)" : "";
+        h += '<div class="task"><div class="tag">'+esc(r.tag)+'</div><div class="st">'+st+'</div>'
+          + '<div class="meta">'+(r.prod ? '<span class="pill p-prod">'+esc(prodLabel(r.prod))+'</span>' : '')
+          + '<span class="pill p-inert">'+esc(t.qCat[r.cat] || r.cat)+'</span>'
+          + '<span style="'+age+'">'+esc(fill(t.waiting, {t:waitText(r.hours)}))+'</span></div>'
+          + (r.query ? '<div class="items" style="font-size:.84rem;color:var(--ink-2)">'+esc(r.query)+'</div>' : '')+'</div>';
+      });
+      if(!qList.length) h += '<div class="empty">'+esc(t.nothingLeft)+'</div>';
+      if(qList.length > f.shown) h += more("reply", Math.min(SHORT, qList.length - f.shown), t);
+    } else h += '<div class="empty">'+esc(t.noneReply)+'</div>';
+    h += '<div class="tmrw">'+fill(t.qStats, {r:rq.resolved, m: rq.medianHours === null ? "—" : rq.medianHours, p:rq.promised, c:rq.chased})+'</div>';
+    h += '<div class="tmrw">'+t.replyNote+'</div></div>';
+
+    /* ---- then progress: score, days, week, team ---- */
+
     /* rings + day strip */
     var mA = agg(b.mtd), aA = agg(b.closed);
     var projPts = mA.pts + b.today.length, projDue = mA.due + b.today.length;
@@ -569,64 +665,6 @@
     }
     h += '</div><p style="margin:12px 0 0;font-size:.78rem;color:var(--muted)">'+esc(t.wkNote)+'</p></div></div>';
 
-    /* today list */
-    var todayRows = b.today.slice().sort(function(a,b2){ return a.pts - b2.pts || (a.c[6] < b2.c[6] ? -1 : 1); });
-    var cnt = { todo:0, prog:0, done:0 }; todayRows.forEach(function(x){ cnt[statusOf(x)]++; });
-    var shown = todayRows.filter(function(x){ return !ui.todayFilter || statusOf(x) === ui.todayFilter; });
-    h += '<div class="panel" id="today"><h3><span>'+esc(t.pToday)+'</span><span class="hint">'+esc(t.pTodayH)+'</span></h3>';
-    if(b.today.length){
-      h += '<div class="chips">'
-        + chip("", t.fAll, b.today.length) + chip("todo", t.fTodo, cnt.todo) + chip("prog", t.fProg, cnt.prog) + chip("done", t.fDone, cnt.done)
-        + '</div>';
-      if(shown.length) shown.forEach(function(x){ h += taskRow(x); });
-      else h += '<div class="empty">'+esc(t.nothingLeft)+'</div>';
-    } else {
-      h += '<div class="empty">'+esc(t.hNone)+'</div>';
-    }
-    h += '<div class="tmrw">'+fill(t.tomorrow, {n:b.tomorrow.length})+'</div></div>';
-
-    /* missed */
-    var mList = ui.missedOlder ? b.missed : b.missedRecent;
-    h += '<div class="panel" id="missed"><h3><span>'+esc(t.pMissed)+' <span class="pill '+(b.missedRecent.length?'p-bad':'p-ok')+'">'+b.missedRecent.length+'</span></span>'
-      + '<span class="hint">'+esc(t.pMissedH)+'</span></h3>';
-    if(mList.length){
-      var grp = "", view = mList.slice(0, ui.missedShown);
-      view.forEach(function(x){
-        var g2 = x.d === addDays(TODAY,-1) ? t.gYesterday : x.d >= b.mon ? t.gThisWeek : x.d >= b.lastMon ? t.gLastWeek : t.gOlder;
-        if(g2 !== grp){ grp = g2; h += '<div class="grp">'+esc(g2)+'</div>'; }
-        h += taskRow(x, {due:true});
-      });
-      if(mList.length > ui.missedShown)
-        h += '<button class="more" id="moreMissed">'+esc(fill(t.showMore, {n:Math.min(PAGE, mList.length - ui.missedShown)}))+'</button>';
-      else if(!ui.missedOlder && b.missedOlder.length)
-        h += '<button class="more" id="olderMissed">'+esc(fill(t.showOlder, {n:b.missedOlder.length}))+'</button>';
-      h += '<div class="tmrw">'+esc(t.missedNote)+'</div>';
-    } else if(b.missedOlder.length){
-      h += '<div class="empty">'+esc(t.noneMissedRecent)+'</div>'
-        + '<button class="more" id="olderMissed">'+esc(fill(t.showOlder, {n:b.missedOlder.length}))+'</button>';
-    } else h += '<div class="empty">'+esc(t.noneMissed)+'</div>';
-    h += '</div>';
-
-    /* open queries (ledger, or modelled sample) */
-    var rq = b.replies, liveQ = !!queryRows;
-    h += '<div class="panel" id="reply"><h3><span>'+esc(t.pReply)+' <span class="pill '+(liveQ ? (rq.open.length ? "p-warn" : "p-ok") : "p-mock")+'">'+rq.open.length+'</span></span>'
-      + '<span class="hint">'+esc(liveQ ? t.pReplyHLive : t.pReplyH)+'</span></h3>';
-    if(rq.open.length){
-      rq.open.forEach(function(r){
-        var st = r.status === "chased" ? '<span class="pill p-bad">'+esc(t.qChased)+(r.chased>1?' ×'+r.chased:'')+'</span>'
-               : r.status === "promised" ? '<span class="pill p-warn">'+esc(t.qPromised)+'</span>'
-               : '<span class="pill p-accent">'+esc(t.qOpen)+'</span>';
-        var age = r.hours >= 24 ? "color:var(--bad)" : r.hours >= 4 ? "color:var(--warn)" : "";
-        h += '<div class="task"><div class="tag">'+esc(r.tag)+'</div><div class="st">'+st+'</div>'
-          + '<div class="meta">'+(r.prod ? '<span class="pill p-prod">'+esc(prodLabel(r.prod))+'</span>' : '')
-          + '<span class="pill p-inert">'+esc(t.qCat[r.cat] || r.cat)+'</span>'
-          + '<span style="'+age+'">'+esc(fill(t.waiting, {t:waitText(r.hours)}))+'</span></div>'
-          + (r.query ? '<div class="items" style="font-size:.84rem;color:var(--ink-2)">'+esc(r.query)+'</div>' : '')+'</div>';
-      });
-    } else h += '<div class="empty">'+esc(t.noneReply)+'</div>';
-    h += '<div class="tmrw">'+fill(t.qStats, {r:rq.resolved, m: rq.medianHours === null ? "—" : rq.medianHours, p:rq.promised, c:rq.chased})+'</div>';
-    h += '<div class="tmrw">'+t.replyNote+'</div></div>';
-
     /* team */
     var team = {};
     instancesOf(CASES).forEach(function(x){
@@ -636,7 +674,6 @@
     var trows = Object.keys(team).map(function(k){ var g = agg(team[k]); g.k = k; return g; })
       .sort(function(p,q){ return q.score - p.score || q.due - p.due; });
     var myRank = 0; trows.forEach(function(r, i){ if(r.k === me) myRank = i+1; });
-    h += '<div class="grid2">';
     h += '<div class="panel" id="team"><h3><span>'+esc(t.pTeam)+'</span><span class="hint">'+esc(t.pTeamH)+'</span></h3>'
       + '<div style="overflow-x:auto"><table><thead><tr><th>'+esc(t.thDA)+'</th><th>'+esc(t.thClinic)+'</th><th class="n">'+esc(t.thScore)+'</th>'
       + '<th style="width:26%"></th><th class="n">'+esc(t.thDue)+'</th><th class="n">'+esc(t.thMissed)+'</th></tr></thead><tbody>';
@@ -651,23 +688,6 @@
     h += '</tbody></table></div>'
       + (myRank ? '<div class="tmrw">'+esc(fill(t.rank, {r:myRank, n:trows.length}))+'</div>' : '')+'</div>';
 
-    /* flags */
-    var fl = b.flags.slice().sort(function(x,y){ return y[7].length - x[7].length || (x[6] < y[6] ? -1 : 1); });
-    var flView = ui.flagsAll ? fl : fl.slice(0, 6);
-    h += '<div class="panel" id="flags"><h3><span>'+esc(t.pFlags)+' <span class="pill '+(fl.length?'p-warn':'p-ok')+'">'+fl.length+'</span></span></h3>';
-    if(fl.length){
-      h += '<div class="tmrw" style="border-top:0;border-bottom:1px solid var(--rule-2)">'+esc(t.pFlagsH)+'</div>';
-      flView.forEach(function(c){
-        h += '<div class="task"><div class="tag">'+esc(c[6])+'</div>'
-          + '<div class="st">'+c[7].map(function(f){ return '<span class="pill p-warn">'+esc(t.fl[f])+'</span>'; }).join(' ')+'</div>'
-          + '<div class="meta"><span class="pill p-prod">'+esc(prodLabel(c[2]))+'</span></div>'
-          + '<div class="items" style="font-size:.8rem;color:var(--ink-2)">'+c[7].map(function(f){ return esc(t.fx[f]); }).join(' ')+'</div></div>';
-      });
-      if(!ui.flagsAll && fl.length > flView.length)
-        h += '<button class="more" id="moreFlags">'+esc(fill(t.showAll, {n:fl.length}))+'</button>';
-    } else h += '<div class="empty">'+esc(t.noneFlags)+'</div>';
-    h += '</div>';
-    h += '</div>';
 
     /* footer */
     h += '<p class="foot">'+fill(t.foot, {src: feedState.mode === "live"
@@ -680,19 +700,41 @@
     return '<a class="stat '+cls+'" href="'+href+'" style="text-decoration:none"><span class="sn">'+n+'</span>'
       + '<span class="sl">'+esc(label)+'</span><span class="sx">'+esc(sub)+'</span></a>';
   }
-  function chip(k, label, n){
-    return '<button data-tf="'+k+'" aria-pressed="'+(ui.todayFilter===k)+'">'+esc(label)+' <span class="cn">'+n+'</span></button>';
-  }
-  function wire(){
-    document.querySelectorAll("[data-tf]").forEach(function(el){
-      el.onclick = function(){ ui.todayFilter = el.dataset.tf; render(); };
+  function fbar(id, f, o){
+    var t = T(), h = '<div class="fbar">';
+    if(o.q) h += '<input type="search" data-fq="'+id+'" placeholder="'+esc(t.fSearch)+'" value="'+esc(f.q)+'">';
+    (o.chips || []).forEach(function(g, gi){
+      if(!g.items.length) return;
+      if(gi || o.q) h += '<span class="sep"></span>';
+      g.items.forEach(function(it){
+        h += '<button data-fk="'+id+'" data-key="'+g.key+'" data-val="'+esc(it[0])+'" aria-pressed="'+(f[g.key]===it[0])+'">'+esc(it[1])+(it[2] !== undefined ? ' <span class="cn">'+it[2]+'</span>' : '')+'</button>';
+      });
     });
-    var mm = document.getElementById("moreMissed");
-    if(mm) mm.onclick = function(){ ui.missedShown += PAGE; render(); };
-    var mo = document.getElementById("olderMissed");
-    if(mo) mo.onclick = function(){ ui.missedOlder = true; render(); };
-    var mf = document.getElementById("moreFlags");
-    if(mf) mf.onclick = function(){ ui.flagsAll = true; render(); };
+    if(o.select && o.select.items.length){
+      h += '<select data-fs="'+id+'" data-key="'+o.select.key+'"><option value="">'+esc(o.select.label)+'</option>'
+        + o.select.items.map(function(it){ return '<option value="'+esc(it[0])+'"'+(f[o.select.key]===it[0]?' selected':'')+'>'+esc(it[1])+'</option>'; }).join('')+'</select>';
+    }
+    if(o.count) h += '<span class="cnt">'+esc(fill(t.fShowing, {a:o.count[0], b:o.count[1]}))+'</span>';
+    return h + '</div>';
+  }
+  function more(id, n, t){ return '<button class="more" data-more="'+id+'">'+esc(fill(t.showMore, {n:n}))+'</button>'; }
+  function wire(){
+    document.querySelectorAll("[data-fq]").forEach(function(el){
+      el.oninput = function(){ var f = ui[el.dataset.fq]; f.q = el.value; if(f.shown !== undefined) f.shown = SHORT; render();
+        var q = document.querySelector('[data-fq="'+el.dataset.fq+'"]'); if(q){ q.focus(); q.setSelectionRange(q.value.length, q.value.length); } };
+    });
+    document.querySelectorAll("[data-fk]").forEach(function(el){
+      el.onclick = function(){ var f = ui[el.dataset.fk], k = el.dataset.key; f[k] = (f[k] === el.dataset.val) ? "" : el.dataset.val; if(f.shown !== undefined) f.shown = SHORT; render(); };
+    });
+    document.querySelectorAll("[data-fs]").forEach(function(el){
+      el.onchange = function(){ var f = ui[el.dataset.fs]; f[el.dataset.key] = el.value; if(f.shown !== undefined) f.shown = SHORT; render(); };
+    });
+    document.querySelectorAll("[data-more]").forEach(function(el){
+      el.onclick = function(){ ui[el.dataset.more].shown += SHORT; render(); };
+    });
+    document.querySelectorAll("[data-older]").forEach(function(el){
+      el.onclick = function(){ ui.missed.older = true; ui.missed.shown = SHORT; render(); };
+    });
   }
 
   /* ================= shell ================= */
