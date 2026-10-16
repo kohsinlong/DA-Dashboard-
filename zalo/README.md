@@ -1,6 +1,6 @@
 # DA Zalo Dashboard — design, operations and change log
 
-**Status:** v1.1.5 live: script deployed 16 Oct 2026, address baked into `zalo/app.js` · **Go-live:** 16 Oct 2026 · **Clinic:** NGT · **Last updated:** 16 Oct 2026
+**Status:** v1.1.6 live: script deployed 16 Oct 2026, address baked into `zalo/app.js` · **Go-live:** 16 Oct 2026 · **Clinic:** NGT · **Last updated:** 16 Oct 2026
 
 This file is the single source of truth for the DA Zalo Dashboard. Part 1 is the view at a
 glance, Part 2 the granular rules, Part 3 the change log. Every change to the dashboard updates
@@ -314,9 +314,17 @@ MCY&KTY 261023 Mẹ bé An & Bình 0909123456   two kids on one Zalo
 
 ### 2.7 Import (QK NGT Daily report)
 
-**File.** The workbook as downloaded (.xlsx, parsed in the browser with SheetJS, which ships
-with the page in `zalo/vendor/` so no CDN is needed) or a .csv of the order tab. The page finds the tab named `SO TTKSCT`, or any tab whose header row begins
-`Ngày Đặt · Ngày Hẹn · Mã Đơn Hàng · Mã BN · Thông Tin KH · Sản Phẩm · Tình Trạng`.
+**File.** The workbook as downloaded (.xlsx or .xls, parsed in the browser with SheetJS, which
+ships with the page in `zalo/vendor/` so no CDN is needed) or the order tab saved as text
+(.csv, .txt or .tsv). Text is decoded as UTF-8, UTF-16 (Excel "Unicode Text") or the Windows
+Vietnamese code page (Excel's plain "CSV"), whichever fits, and the delimiter (comma,
+semicolon or tab) is detected from the first lines. The page prefers the tab named `SO TTKSCT`
+when its header is found, else the first tab with the header, searching the first 80 rows. The
+header is matched by meaning after stripping accents, so renamed, reordered or extra columns
+still work (`Ngày đặt cọc`, `Mã ĐH`, an `STT` column in front, `Trạng thái`, a phone column of
+its own); the deposit date, the order code and the customer column are the minimum. When
+nothing matches, the error names the tabs seen and the first filled row, so the file can be
+diagnosed from a screenshot.
 
 **Columns.** A deposit date · B appointment ("Ngày Hẹn", the promised pickup) · C order code
 (unique) · D patient code (current format) or name (old format) · E customer info · F lens ·
@@ -458,6 +466,7 @@ Newest first. Each entry: date · version · what changed · why · files.
 
 | Date | Version | Change | Why | Files |
 |---|---|---|---|---|
+| 2026-10-16 | 1.1.6 | Import reader hardened after a "could not read the file" report: text files decoded as UTF-8, UTF-16 or Windows Vietnamese (Excel's plain CSV); comma, semicolon or tab delimiter detected; the header found anywhere in the first 80 rows and matched by meaning (renamed, reordered or extra columns, a separate phone column); the error now says which tabs and first row were seen. | A real export failed on live with the exact-match header check. | `zalo/core.js`, `zalo/app.js`, `zalo/index.html`, `zalo/tools/test-core.js` |
 | 2026-10-16 | 1.1.5 | QK import: the tag is suggested only once **Zalo added** is ticked (empty with a hint before); new entries listed newest first; repeat purchases (same child and phone, bought again after collecting) come up as entries with a chip and the parent's details pre-filled, and confirming writes a second row so the cadence restarts; the same child twice within a month counts as one purchase; a line under the file name links the same upload's other half (collection confirmations ↔ new members). | DA review of the first live import. | `zalo/app.js`, `zalo/zalo.css`, `zalo/index.html` |
 | 2026-10-16 | 1.1.4 | Fix: choosing an .xlsx failed silently since 1.1.0 (the reader's source list was lost in the page restructure); the browser walkthrough now uploads the real workbook. | Excel upload hung on live. | `zalo/app.js` |
 | 2026-10-16 | 1.1.3 | Excel reader shipped with the page instead of fetched from a CDN; real progress text while a workbook is read; a 30-second timeout with a CSV hint instead of a silent hang. | Upload appeared stuck on first use. | `zalo/vendor/`, `zalo/app.js`, `zalo/index.html` |

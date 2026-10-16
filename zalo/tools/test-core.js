@@ -162,5 +162,27 @@ var known = [{ code: "A", status: "Chờ Lấy", appt: "2026-10-17", state: "par
 var dd = Z.dedupe([{ code: "A", status: "DONE", appt: "2026-10-17", collected: "2026-10-17" }, { code: "B", status: "DONE", appt: "2026-10-14", collected: "2026-10-14" }, { code: "C", status: "DONE", appt: "2026-10-21", collected: "2026-10-21" }, { code: "D", status: "DONE", appt: "2026-10-21" }, { code: "A2", status: "Chờ Lấy", appt: "2026-10-17" }], known.concat([{ code: "A2", status: "Chờ Lấy", appt: "2026-10-17", state: "parked" }]));
 eq(dd.map(function (o) { return o.code + ":" + o.seen; }), ["A:changed", "B:done", "C:changed", "D:new", "A2:seen"], "dedupe states");
 
+
+/* ---- 1.1.6: tolerant header, delimiters, column map ---- */
+var std = ["Ngày Đặt", "Ngày Hẹn", "Mã Đơn Hàng", "Mã BN", "Thông Tin KH", "Sản Phẩm", "Tình Trạng"];
+eq(Z.headerMap(std), { dep: 0, appt: 1, code: 2, patient: 3, info: 4, phone: -1, lens: 5, status: 6 }, "standard header maps A-G");
+eq(Z.headerMap(["STT", "Ngày đặt cọc", "Ngày hẹn", "Mã ĐH", "Tên KH", "SĐT", "Sản phẩm", "Trạng thái"]), { dep: 1, appt: 2, code: 3, patient: -1, info: 4, phone: 5, lens: 6, status: 7 }, "renamed, reordered and extra columns");
+eq(Z.headerMap(["Ngày Đặt", "Mã Đơn Hàng"]), null, "two columns is not the header");
+eq(Z.headerMap(["Họ tên", "Ngày sinh", "Mã BN"]), null, "a patient list is not the order header");
+eq(Z.headerMap(["", "", "", "", 2529, 1786, ""]), null, "the count row is not the header");
+eq(Z.csvDelimiter("a;b;c\n1;2;3\n"), ";", "semicolon csv detected");
+eq(Z.csvDelimiter("a\tb\tc\n1\t2\t3\n"), "\t", "tab-separated text detected");
+eq(Z.csvDelimiter("a,b,c\n"), ",", "comma stays the default");
+eq(Z.parseCSV("Ngày Đặt;Ngày Hẹn;Mã Đơn Hàng;Mã BN;Thông Tin KH;Sản Phẩm;Tình Trạng\n2026-10-01;2026-10-03;DT1;;\"Nguyễn A, Nguyễn B\n0909\";Stellest;DONE\n")[1][4], "Nguyễn A, Nguyễn B\n0909", "semicolon csv keeps commas inside cells");
+var deep = { name: "Report", rows: [] }; for (var di = 0; di < 25; di++) deep.rows.push(["", "report line " + di]);
+deep.rows.push(["STT", "Ngày Đặt", "Ngày Hẹn", "Mã ĐH", "Mã BN", "Thông Tin KH", "Sản Phẩm", "Tình Trạng"]); deep.rows.push([1, "2026-10-01", "2026-10-03", "DT309-1", "", "Lê Bé\n0909123456", "Stellest", "DONE"]);
+var fd = Z.findOrderSheet([deep]); eq(fd.header, 25, "header found 25 rows down");
+var po = Z.parseOrders(fd.rows.slice(fd.header + 1), { today: "2026-10-16", map: fd.map });
+eq([po[0].code, po[0].dep, po[0].collected, po[0].name, po[0].phone, po[0].product], ["DT309-1", "2026-10-01", "2026-10-03", "Lê Bé", "0909123456", "MC"], "orders read through the column map");
+var sep = Z.findOrderSheet([{ name: "x", rows: [["Ngày đặt", "Ngày hẹn", "Mã ĐH", "Tên KH", "SĐT", "Sản phẩm", "Tình trạng"], ["2026-10-01", "2026-10-03", "DT2", "Trần Bé", "0912345678", "Myocare", "DONE"]] }]);
+var po2 = Z.parseOrders(sep.rows.slice(sep.header + 1), { today: "2026-10-16", map: sep.map }); eq([po2[0].name, po2[0].phone, po2[0].product], ["Trần Bé", "0912345678", "MC"], "phone column of its own");
+eq(Z.findOrderSheet([{ name: "SO TTKSCT", rows: [["nothing", "here", "at all"]] }, { name: "Data", rows: [std] }]).name, "Data", "a SO TTKSCT tab without the header yields to a tab that has it");
+eq(Z.findOrderSheet([{ name: "SO TTKSCT", rows: [["nothing", "here", "at all"]] }]).header, -1, "a lone SO TTKSCT tab without the header reports -1");
+
 console.log(n + " checks, " + bad + " failed");
 process.exit(bad ? 1 : 0);

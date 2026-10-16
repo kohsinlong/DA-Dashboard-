@@ -377,43 +377,68 @@
   /* ======================================================================
      CSV (for .csv uploads and for the Node tests).
      ====================================================================== */
-  function parseCSV(text){
+  /* delim: "," ";" or "\t"; detected from the first lines when omitted (Excel writes ";" in
+     locales with a comma decimal point, and tabs for "Unicode Text"). */
+  function csvDelimiter(s){
+    var head = String(s || "").split(/\r?\n/).slice(0, 12).join("\n"), best = ",", n = 0;
+    [",", ";", "\t"].forEach(function (d) { var c = head.split(d).length - 1; if (c > n) { n = c; best = d; } });
+    return best;
+  }
+  function parseCSV(text, delim){
     var rows = [], row = [], cell = "", q = false, i = 0, s = String(text || "");
     if (s.charCodeAt(0) === 0xFEFF) s = s.slice(1);
+    delim = delim || csvDelimiter(s);
     for (; i < s.length; i++) {
       var ch = s[i];
       if (q) { if (ch === '"') { if (s[i + 1] === '"') { cell += '"'; i++; } else q = false; } else cell += ch; }
       else if (ch === '"') q = true;
-      else if (ch === ",") { row.push(cell); cell = ""; }
+      else if (ch === delim) { row.push(cell); cell = ""; }
       else if (ch === "\n" || ch === "\r") { if (ch === "\r" && s[i + 1] === "\n") i++; row.push(cell); rows.push(row); row = []; cell = ""; }
       else cell += ch;
     }
     if (cell !== "" || row.length) { row.push(cell); rows.push(row); }
     return rows;
   }
-  Z.parseCSV = parseCSV;
+  Z.parseCSV = parseCSV; Z.csvDelimiter = csvDelimiter;
 
   /* ======================================================================
      QK NGT Daily report → orders.
      ====================================================================== */
   Z.ORDER_HEADER = ["ngay dat", "ngay hen", "ma don hang", "ma bn", "thong tin kh", "san pham", "tinh trang"];
-  function isOrderHeader(row){
-    if (!row || row.length < 7) return false;
-    for (var i = 0; i < 7; i++) if (stripAccents(String(row[i] || "")).toLowerCase().trim() !== Z.ORDER_HEADER[i]) return false;
-    return true;
+  /* Where each order column sits in a header row. Labels are matched after stripping accents,
+     so renamed, reordered or extra columns still work (Mã ĐH, an STT column in front, a phone
+     column of its own). Needs at least the deposit date, the order code and the customer
+     column; returns null for anything else. */
+  var HEADER_PATTERNS = {
+    dep: /^ngay\s*(dat|coc)/, appt: /^ngay\s*hen|^hen/, code: /^ma\s*(don|dh)|^(so\s*)?don\s*hang|^order/,
+    patient: /^ma\s*(bn|benh)|benh nhan|^patient/, info: /thong tin|khach hang|^kh$|^ten|^ho\s*(va\s*)?ten|^customer/,
+    phone: /^sdt|dien thoai|^phone|^so dt/, lens: /san pham|^trong|^lens|^product/, status: /tinh trang|trang thai|^status/
+  };
+  var HEADER_KEYS = ["dep", "appt", "code", "patient", "info", "phone", "lens", "status"];
+  function headerMap(row){
+    if (!row || row.length < 3) return null;
+    var map = {}; HEADER_KEYS.forEach(function (k) { map[k] = -1; });
+    for (var i = 0; i < row.length; i++) {
+      var cell = stripAccents(String(row[i] === undefined || row[i] === null ? "" : row[i])).toLowerCase().replace(/\s+/g, " ").trim();
+      if (!cell) continue;
+      for (var k = 0; k < HEADER_KEYS.length; k++) if (map[HEADER_KEYS[k]] === -1 && HEADER_PATTERNS[HEADER_KEYS[k]].test(cell)) { map[HEADER_KEYS[k]] = i; break; }
+    }
+    return map.dep !== -1 && map.code !== -1 && map.info !== -1 ? map : null;
   }
-  /* sheets: [{name, rows}] (rows = arrays of cell values). Picks the SO TTKSCT tab or the first
-     tab with the order header. Returns {name, rows, header} or null. */
+  function isOrderHeader(row){ return !!headerMap(row); }
+  var HEADER_LOOK = 80;                                  /* rows searched for the header */
+  function headerAt(s){ for (var r = 0; r < Math.min(HEADER_LOOK, (s.rows || []).length); r++) { var m = headerMap(s.rows[r]); if (m) return { row: r, map: m }; } return null; }
+  /* sheets: [{name, rows}] (rows = arrays of cell values). Prefers the SO TTKSCT tab when it has
+     the header, else the first tab with one. Returns {name, rows, header, map} or null; a
+     SO TTKSCT tab without a header comes back with header -1. */
   function findOrderSheet(sheets){
-    var pick = null;
-    (sheets || []).forEach(function (s) { if (!pick && /^\s*so\s+ttksct\s*$/i.test(stripAccents(s.name || ""))) pick = s; });
-    if (!pick) (sheets || []).forEach(function (s) { if (!pick) for (var r = 0; r < Math.min(10, (s.rows || []).length); r++) if (isOrderHeader(s.rows[r])) { pick = s; break; } });
+    var named = (sheets || []).filter(function (s) { return /^\s*so\s+ttksct\s*$/i.test(stripAccents(s.name || "")); })[0];
+    var pick = named || null, hit = named ? headerAt(named) : null;
+    if (!hit) (sheets || []).forEach(function (s) { if (hit) return; var h = headerAt(s); if (h) { pick = s; hit = h; } });
     if (!pick) return null;
-    var header = -1;
-    for (var r = 0; r < Math.min(10, pick.rows.length); r++) if (isOrderHeader(pick.rows[r])) { header = r; break; }
-    return { name: pick.name, rows: pick.rows, header: header };
+    return { name: pick.name, rows: pick.rows, header: hit ? hit.row : -1, map: hit ? hit.map : null };
   }
-  Z.isOrderHeader = isOrderHeader; Z.findOrderSheet = findOrderSheet;
+  Z.isOrderHeader = isOrderHeader; Z.headerMap = headerMap; Z.findOrderSheet = findOrderSheet; Z.HEADER_LOOK = HEADER_LOOK;
 
   function normStatus(s){
     var t = stripAccents(String(s || "")).toLowerCase().trim();
@@ -426,12 +451,16 @@
   }
   Z.normStatus = normStatus;
 
-  /* rows after the header. opts: {cutoff, today}. */
+  /* rows after the header. opts: {cutoff, today, map}; map from headerMap (standard layout
+     A–G when omitted). */
+  var STANDARD_MAP = { dep: 0, appt: 1, code: 2, patient: 3, info: 4, phone: -1, lens: 5, status: 6 };
   function parseOrders(rows, opts){
-    opts = opts || {}; var today = opts.today || todayISO(), out = [];
+    opts = opts || {}; var today = opts.today || todayISO(), out = [], m = opts.map || STANDARD_MAP;
+    function at(r, k){ var i = m[k]; return i === undefined || i < 0 ? "" : (r[i] === undefined || r[i] === null ? "" : r[i]); }
     (rows || []).forEach(function (r, i) {
       if (!r) return;
-      var A = r[0], B = r[1], C = cleanCell(r[2]), D = cleanCell(r[3]), E = String(r[4] === undefined || r[4] === null ? "" : r[4]), F = cleanCell(r[5]), G = r[6];
+      var A = at(r, "dep"), B = at(r, "appt"), C = cleanCell(at(r, "code")), D = cleanCell(at(r, "patient")), E = String(at(r, "info")), F = cleanCell(at(r, "lens")), G = at(r, "status");
+      if (m.phone >= 0 && at(r, "phone") !== "") E += "\n" + String(at(r, "phone"));
       if (!C && !A && !E.trim()) return;
       var dep = toISO(A, today), appt = toISO(B, today);
       if (!dep) return;                                   /* the sheet's trailing status-only rows */

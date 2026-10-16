@@ -6,7 +6,7 @@
   /* Paste the Apps Script /exec URL here after deploying (README §2.10). ?api=<url> and the
      "Connect" box on the sign-in card override it for testing. */
   var API = { url: "https://script.google.com/macros/s/AKfycbwselLgmfAg8ffK5IqBpXVvY8Ppqv2hDNCOStNABLLNfSalUvx5UKR7GC6LIxKuVEO9kg/exec" };
-  var VERSION = "1.1.5";
+  var VERSION = "1.1.6";
 
   /* ------------------------------------------------------------------ strings */
   var L = {
@@ -22,7 +22,7 @@
       aZaloAdded: "Đã kết bạn Zalo", iConfirmM: "Ghi {n} khách đã có Zalo", iNewHint2: "chưa có trong CRM · tick những khách đã kết bạn Zalo rồi điền phần còn thiếu; khách không tick sẽ vào danh sách chưa kết bạn Zalo",
       tSkipped: "Đã giữ nguyên tag", iUndoWrite: "Hoàn tác lần ghi này", aUndo: "Hoàn tác (xoá khách vừa ghi)", undoneRow: "Đã hoàn tác: dòng vừa ghi đã được xoá", undoneImport: "Đã hoàn tác lần ghi", collUndone: "Đã bỏ ngày nhận kính",
       iLibFail: "Không tải được bộ đọc Excel. Thử lại, hoặc lưu tab SO TTKSCT thành .csv rồi tải lên.", iReading: "Đang đọc {f}… (file lớn có thể mất tới một phút)",
-      iRepeatOf: "mua lại · lần trước nhận {d}", iTagAfterTick: "gợi ý sau khi tick Đã kết bạn Zalo", iAlsoColl: "Cùng file này: {n} khách cần xác nhận ngày nhận kính →", iAlsoNew: "Cùng file này: {n} khách mới →",
+      iRepeatOf: "mua lại · lần trước nhận {d}", iTagAfterTick: "gợi ý sau khi tick Đã kết bạn Zalo", iAlsoColl: "Cùng file này: {n} khách cần xác nhận ngày nhận kính →", iReadAs: "Đã đọc được — tab: {tabs} · dòng đầu: {row}", iAlsoNew: "Cùng file này: {n} khách mới →",
       nav: { overview: "Tổng quan", add: "Thêm khách", collections: "Nhận kính", members: "Danh sách khách", legacy: "Chưa kết bạn Zalo" },
       aSection: "Thêm từng khách", iTitleM: "Nhập khách mới từ báo cáo QK", iTitleC: "Cập nhật ngày nhận kính từ báo cáo QK", iChange: "Đổi file", iLoaded: "File {f} · {n} đơn từ {d}",
       iWhy: { same: "đã có trong CRM", expected: "chưa DONE (chỉ có ngày hẹn)", parked: "đã ở danh sách chưa kết bạn Zalo", parkedOther: "đã ở danh sách chưa kết bạn Zalo", dup: "trùng trong file", done: "đã nhập lần trước", dismissed: "đã ẩn", update: "ngày nhận đã ghi", "update-checkphone": "ngày nhận đã ghi" },
@@ -71,7 +71,7 @@
       aZaloAdded: "Zalo added", iConfirmM: "Write {n} members with Zalo", iNewHint2: "not in the CRM · tick the ones you have on Zalo and complete their details; the rest go to the No Zalo Add List",
       tSkipped: "Tag kept as is", iUndoWrite: "Undo this write", aUndo: "Undo (remove the row just written)", undoneRow: "Undone: the row just written was cleared", undoneImport: "The write was undone", collUndone: "Collected date removed",
       iLibFail: "The Excel reader could not be loaded. Try again, or save the SO TTKSCT tab as .csv and upload that.", iReading: "Reading {f}… (a large file can take up to a minute)",
-      iRepeatOf: "repeat purchase · last collected {d}", iTagAfterTick: "suggested once Zalo added is ticked", iAlsoColl: "Same file: {n} collection confirmations →", iAlsoNew: "Same file: {n} new members →",
+      iRepeatOf: "repeat purchase · last collected {d}", iTagAfterTick: "suggested once Zalo added is ticked", iAlsoColl: "Same file: {n} collection confirmations →", iReadAs: "What was read — tabs: {tabs} · first row: {row}", iAlsoNew: "Same file: {n} new members →",
       nav: { overview: "Overview", add: "Add members", collections: "Glass collections", members: "Member list", legacy: "No Zalo Add List" },
       aSection: "Add one member", iTitleM: "New members from the QK report", iTitleC: "Collection updates from the QK report", iChange: "Change file", iLoaded: "File {f} · {n} orders since {d}",
       iWhy: { same: "already in the CRM", expected: "not DONE yet (appointment only)", parked: "already on the No Zalo Add List", parkedOther: "already on the No Zalo Add List", dup: "duplicate within the file", done: "imported earlier", dismissed: "dismissed", update: "collected date already recorded", "update-checkphone": "collected date already recorded" },
@@ -120,7 +120,7 @@
       aZaloAdded: "已加 Zalo", iConfirmM: "写入 {n} 位已加 Zalo 的会员", iNewHint2: "不在 CRM · 勾选已加 Zalo 的客户并补齐信息；未勾选的进入“未加 Zalo 名单”",
       tSkipped: "已保留标签", iUndoWrite: "撤销本次写入", aUndo: "撤销（删除刚写入的行）", undoneRow: "已撤销：刚写入的行已清除", undoneImport: "已撤销本次写入", collUndone: "已移除取镜日期",
       iLibFail: "无法加载 Excel 读取器。请重试，或将 SO TTKSCT 工作表另存为 .csv 后上传。", iReading: "正在读取 {f}…（大文件可能需要一分钟）",
-      iRepeatOf: "复购 · 上次取镜 {d}", iTagAfterTick: "勾选“已加 Zalo”后给出建议", iAlsoColl: "同一文件：{n} 位需确认取镜日期 →", iAlsoNew: "同一文件：{n} 位新会员 →",
+      iRepeatOf: "复购 · 上次取镜 {d}", iTagAfterTick: "勾选“已加 Zalo”后给出建议", iAlsoColl: "同一文件：{n} 位需确认取镜日期 →", iReadAs: "已读取 — 工作表：{tabs} · 首行：{row}", iAlsoNew: "同一文件：{n} 位新会员 →",
       nav: { overview: "总览", add: "新增会员", collections: "取镜", members: "会员列表", legacy: "未加 Zalo 名单" },
       aSection: "逐个新增", iTitleM: "从 QK 报表导入新会员", iTitleC: "从 QK 报表更新取镜日期", iChange: "更换文件", iLoaded: "文件 {f} · {d} 起 {n} 条订单",
       iWhy: { same: "已在 CRM", expected: "尚未 DONE（仅预约）", parked: "已在“未加 Zalo 名单”", parkedOther: "已在“未加 Zalo 名单”", dup: "文件内重复", done: "之前已导入", dismissed: "已忽略", update: "取镜日期已记录", "update-checkphone": "取镜日期已记录" },
@@ -662,7 +662,7 @@
     var h = '<div class="panel">' + foldHead(id, esc(title), t.iHint);
     if (isFolded(id)) return h + "</div>";
     if (!st.ui.impRaw) {
-      h += '<div class="pad"><label class="drop" id="drop"><input type="file" id="impFile" accept=".xlsx,.xls,.csv">' + esc(st.ui.impStatus || t.iDrop) + "</label>"
+      h += '<div class="pad"><label class="drop" id="drop"><input type="file" id="impFile" accept=".xlsx,.xls,.csv,.txt,.tsv">' + esc(st.ui.impStatus || t.iDrop) + "</label>"
         + '<div class="row2" style="margin-top:14px"><div class="field"><label>' + esc(t.iFrom) + '</label><input type="date" id="impFrom" value="' + esc(st.ui.impFrom || "") + '"></div><div class="field"><label>' + esc(t.iTo) + '</label><input type="date" id="impTo" value="' + esc(st.ui.impTo || "") + '"></div></div><p class="hint">' + esc(t.iRangeHint) + " " + esc(fill(t.iCutoff, { d: dmy(st.settings.import_cutoff || "") })) + "</p>"
         + (st.ui.impError ? '<div class="setup">' + esc(st.ui.impError) + "</div>" : "") + "</div></div>";
       return h;
@@ -727,29 +727,54 @@
       var sc = document.createElement("script"); sc.src = list[i++]; sc.onload = function () { if (!done) { done = true; clearTimeout(timer); res(); } }; sc.onerror = next; document.head.appendChild(sc); })();
   }); }
   function nextTick(v){ return new Promise(function (res) { setTimeout(function () { res(v); }, 30); }); }
+  /* Text saved by Excel can be UTF-8 (with or without BOM), UTF-16 ("Unicode Text") or the
+     Windows Vietnamese code page (plain "CSV"); tried in that order. */
+  function decodeText(ab){
+    var b = new Uint8Array(ab);
+    function dec(label, fatal){ try { return new TextDecoder(label, { fatal: !!fatal }).decode(b); } catch (e) { return null; } }
+    if (b[0] === 0xFF && b[1] === 0xFE) return dec("utf-16le");
+    if (b[0] === 0xFE && b[1] === 0xFF) return dec("utf-16be");
+    if (b.length > 3 && b[0] !== 0 && b[1] === 0 && b[3] === 0) return dec("utf-16le");
+    var t = dec("utf-8", true); if (t !== null) return t;
+    return dec("windows-1258") || dec("windows-1252") || dec("utf-8");
+  }
+  /* Resolves to [{name, rows}]: the order tab in full, or, when no tab has the header, the first
+     rows of every tab so the error can say what was seen. */
   function readWorkbook(file){
     var name = file.name.toLowerCase();
-    if (/\.csv$/.test(name)) return file.text().then(function (txt) { return [{ name: "csv", rows: Z.parseCSV(txt) }]; });
+    if (/\.(csv|txt|tsv)$/.test(name)) return file.arrayBuffer().then(function (ab) { return [{ name: "csv", rows: Z.parseCSV(decodeText(ab)) }]; });
     st.ui.impStatus = T().iLibLoading; render();
     return loadScript(XLSX_SRC).then(function () { st.ui.impStatus = fill(T().iReading, { f: file.name }); render(); return nextTick(); }).then(function () { return file.arrayBuffer(); }).then(function (ab) {
-      var X = window.XLSX, peek = X.read(ab, { type: "array", bookSheets: true }), names = peek.SheetNames || [];
-      var target = names.filter(function (n) { return /^\s*so\s+ttksct\s*$/i.test(Z.stripAccents(n)); })[0];
-      if (!target) {
-        var probe = X.read(ab, { type: "array", sheetRows: 12 });
-        probe.SheetNames.forEach(function (n) { if (target) return; var rows = X.utils.sheet_to_json(probe.Sheets[n], { header: 1, raw: true, defval: "" }); for (var r = 0; r < rows.length; r++) if (Z.isOrderHeader(rows[r])) { target = n; break; } });
+      var X = window.XLSX, peek = X.read(ab, { type: "array", bookSheets: true }), names = peek.SheetNames || [], probed = {};
+      var target = names.filter(function (n) { return /^\s*so\s+ttksct\s*$/i.test(Z.stripAccents(n)); })[0] || null;
+      function rowsOf(wb, n){ return X.utils.sheet_to_json(wb.Sheets[n], { header: 1, raw: true, defval: "" }); }
+      function hasHeader(n){ var f = Z.findOrderSheet([{ name: n, rows: probed[n] || [] }]); return !!(f && f.header >= 0); }
+      if (target) probed[target] = rowsOf(X.read(ab, { type: "array", sheets: [target], sheetRows: Z.HEADER_LOOK }), target);
+      if (!(target && hasHeader(target))) {
+        var probe = X.read(ab, { type: "array", sheetRows: Z.HEADER_LOOK });
+        probe.SheetNames.forEach(function (n) { probed[n] = rowsOf(probe, n); });
+        target = names.filter(hasHeader)[0] || null;
       }
-      if (!target) return [];
+      if (!target) return names.map(function (n) { return { name: n, rows: probed[n] || [] }; });
       var wb = X.read(ab, { type: "array", cellDates: true, sheets: [target] });
-      return [{ name: target, rows: X.utils.sheet_to_json(wb.Sheets[target], { header: 1, raw: true, defval: "" }) }];
+      return [{ name: target, rows: rowsOf(wb, target) }];
     });
+  }
+  /* for the "could not read" message: tab names and the first row with three filled cells */
+  function seenText(sheets){
+    var names = (sheets || []).map(function (s) { return s.name; }).filter(Boolean), first = "";
+    (sheets || []).forEach(function (s) { if (first) return; for (var r = 0; r < Math.min(Z.HEADER_LOOK, (s.rows || []).length); r++) {
+      var cells = (s.rows[r] || []).map(function (c) { return String(c === undefined || c === null ? "" : c).replace(/\s+/g, " ").trim(); }).filter(Boolean);
+      if (cells.length >= 3) { first = cells.slice(0, 8).join(" | ").slice(0, 120); break; } } });
+    return fill(T().iReadAs, { tabs: names.join(", ").slice(0, 80) || "—", row: first || "—" });
   }
   function importFile(file){
     var t = T(); st.ui.impError = ""; st.ui.impStatus = t.iParsing; render();
     st.ui.impFrom = ($("impFrom") || {}).value || st.ui.impFrom; st.ui.impTo = ($("impTo") || {}).value || st.ui.impTo;
     Promise.resolve().then(function () { return readWorkbook(file); }).then(function (sheets) {
       var found = Z.findOrderSheet(sheets);
-      if (!found || found.header < 0) throw new Error(t.iNoSheet);
-      var cutoff = st.settings.import_cutoff || "", all = Z.parseOrders(found.rows.slice(found.header + 1), { today: st.today }), kept = all.filter(function (o) { return !cutoff || o.dep >= cutoff; });
+      if (!found || found.header < 0) throw new Error(t.iNoSheet + " " + seenText(sheets));
+      var cutoff = st.settings.import_cutoff || "", all = Z.parseOrders(found.rows.slice(found.header + 1), { today: st.today, map: found.map }), kept = all.filter(function (o) { return !cutoff || o.dep >= cutoff; });
       if (st.ui.impFrom || st.ui.impTo) kept = Z.inRange(kept, st.ui.impFrom, st.ui.impTo);
       st.ui.impRaw = { orders: kept, sheetName: found.name, skipped: all.length - kept.length, fileName: file.name }; st.ui.imp = null; st.ui.impResult = {};
       st.ui.impStatus = ""; render();
