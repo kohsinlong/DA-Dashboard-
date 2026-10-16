@@ -1,6 +1,6 @@
 # DA Zalo Dashboard — design, operations and change log
 
-**Status:** v1.1.1 built and tested, waiting for the Apps Script to be deployed (§2.10) · **Go-live:** 16 Oct 2026 · **Clinic:** NGT · **Last updated:** 16 Oct 2026
+**Status:** v1.1.1 live: script deployed 16 Oct 2026, address baked into `zalo/app.js` · **Go-live:** 16 Oct 2026 · **Clinic:** NGT · **Last updated:** 16 Oct 2026
 
 This file is the single source of truth for the DA Zalo Dashboard. Part 1 is the view at a
 glance, Part 2 the granular rules, Part 3 the change log. Every change to the dashboard updates

@@ -5,7 +5,7 @@
   var Z = window.ZALO, DEMO = window.ZALO_DEMO;
   /* Paste the Apps Script /exec URL here after deploying (README §2.10). ?api=<url> and the
      "Connect" box on the sign-in card override it for testing. */
-  var API = { url: "" };
+  var API = { url: "https://script.google.com/macros/s/AKfycbwselLgmfAg8ffK5IqBpXVvY8Ppqv2hDNCOStNABLLNfSalUvx5UKR7GC6LIxKuVEO9kg/exec" };
   var VERSION = "1.0.0";
 
   /* ------------------------------------------------------------------ strings */
