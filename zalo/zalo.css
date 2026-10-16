@@ -193,4 +193,6 @@ details summary{cursor:pointer;color:var(--muted);font-size:.8rem}
 .fbar input[type=date]{font-family:inherit;font-size:.8rem;padding:4px 8px;background:var(--surface);color:var(--ink);border:1px solid var(--rule);border-radius:20px}
 .zck{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:.66rem;color:var(--muted);text-align:center;width:52px}
 .zck input{width:22px;height:22px;accent-color:var(--ok);margin:0}
-.irow:has(.zck input:checked){background:var(--ok-soft)}
+.irow.on,.irow:has(.zck input:checked){background:var(--ok-soft)}
+.xpage{color:var(--accent);font-weight:600;text-decoration:none;font-size:.82rem}
+.xpage:hover{text-decoration:underline}

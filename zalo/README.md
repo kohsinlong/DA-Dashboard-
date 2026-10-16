@@ -1,6 +1,6 @@
 # DA Zalo Dashboard — design, operations and change log
 
-**Status:** v1.1.1 live: script deployed 16 Oct 2026, address baked into `zalo/app.js` · **Go-live:** 16 Oct 2026 · **Clinic:** NGT · **Last updated:** 16 Oct 2026
+**Status:** v1.1.5 live: script deployed 16 Oct 2026, address baked into `zalo/app.js` · **Go-live:** 16 Oct 2026 · **Clinic:** NGT · **Last updated:** 16 Oct 2026
 
 This file is the single source of truth for the DA Zalo Dashboard. Part 1 is the view at a
 glance, Part 2 the granular rules, Part 3 the change log. Every change to the dashboard updates
@@ -257,19 +257,30 @@ exact content items to send.
 **Add members** — the single-member form (child name*, gender, parent name, relation, birthday,
 deposit date* with "not applicable / unconverted", collection date, product*, Zalo tag*
 suggested and editable, "Zalo not added", note), then **New members from the QK report**
-underneath: the upload, and the new entries the file contains. Nothing is pre-ticked and there is
-no select-all: the DA ticks **Zalo added** on the customers she actually has on Zalo, completes
-product, relation (empty until she picks it) and tag, and writes those; every unticked row goes
-to the No Zalo Add List. Orders already in the member list, already on that list, or repeated
-within the file never come up as new. Relation labels follow the page language while the stored
-value and the tag stay Vietnamese (Mẹ bé …). Parent's name is optional.
+underneath: the upload, and the new entries the file contains, newest deposit first. Nothing is
+pre-ticked and there is no select-all: the DA ticks **Zalo added** on the customers she actually
+has on Zalo; the tag is suggested at that moment (until then the box stays empty with a hint),
+she completes product and relation (empty until she picks it), and writes those; every unticked
+row goes to the No Zalo Add List. A line under the file name counts the same upload's collection
+confirmations and links to Glass collections. **Repeat purchases** (same child and phone, the
+member's row already collected, the new deposit after that collection) are listed like new
+entries with a "repeat purchase · last collected …" chip and the parent's name and relation
+pre-filled; confirming writes a second row for the child with the new deposit date, so the
+cadence starts again, and the old row stays as it is. The same child twice within a month is one
+purchase (the later order is skipped as a duplicate); months apart is another purchase and comes
+up again. Orders already in the member list, already on that list, or imported earlier never
+come up as new. Relation labels follow the page language while the stored value and the tag stay
+Vietnamese (Mẹ bé …). Parent's name is optional.
 
 **Glass collections** — **Pending collection** (every row with a deposit and no collected date:
 Collected ✓ | date | Save, with the expected pickup from the last upload when known), then
 **Zalo tag updates** (renames waiting for the DA: N → Y after a collection, the & form after a
 sibling, edits made on a member card; the DA renames in Zalo, taps confirmed, then the sheet
 is written), then **Collection updates from the QK report** underneath: the same upload, and
-the rows of members whose glasses the report says are collected. One upload serves both pages.
+the rows of members whose glasses the report says are collected (members with a deposit and no
+collected date in the form, DONE in the report), newest first, ticked by default. One upload
+serves both pages; a line under the file name counts the upload's new members and links to Add
+members.
 
 **Member list** — search that filters as you type, chips for product, **To fix** and **No tag**,
 a date filter on deposit or collected date, and a sort (newest, name, deposit date, collected
@@ -333,11 +344,12 @@ date, shown on Pending collection. A DONE date later than today must be confirme
 | phone and child name agree | Collection update for that row |
 | name agrees, phone differs or blank in the form | Collection update with a "check phone" note |
 | phone agrees, different child | New entry with a "sibling of …" chip; confirming adds a separate row with the parent's phone, fills V on both rows, proposes the & tag |
-| same child, row already has a collected date | Repeat order, listed on Not in CRM; the DA decides |
+| same child, row already collected, new deposit after that collection | Repeat purchase: a new entry with a chip and the parent's details pre-filled; confirming adds a second row (key suffixed `#yymmdd`, written with `allowDuplicate`); unticked it goes to the No Zalo Add List under Repeat orders |
 | nothing agrees | New entry |
 
-**Screens.** New entries (pre-filled; product, relation and tag to complete; tick box per row;
-select all; mandatory fields enforced before confirm) · Collection updates (date editable; tick
+**Screens.** New entries (pre-filled, newest first; product and relation to complete, the tag
+suggested once **Zalo added** is ticked; one tick box per row, no select all; mandatory fields
+enforced before confirm) · Collection updates (date editable; tick
 box; select all) · Submit writes only ticked rows. Everything not ticked is stored as `parked`
 and appears on Not in CRM. Two orders for the same new child in one file are offered once
 (the second lands under Nothing to do). Rows ticked by default: new entries whose product
@@ -446,6 +458,7 @@ Newest first. Each entry: date · version · what changed · why · files.
 
 | Date | Version | Change | Why | Files |
 |---|---|---|---|---|
+| 2026-10-16 | 1.1.5 | QK import: the tag is suggested only once **Zalo added** is ticked (empty with a hint before); new entries listed newest first; repeat purchases (same child and phone, bought again after collecting) come up as entries with a chip and the parent's details pre-filled, and confirming writes a second row so the cadence restarts; the same child twice within a month counts as one purchase; a line under the file name links the same upload's other half (collection confirmations ↔ new members). | DA review of the first live import. | `zalo/app.js`, `zalo/zalo.css`, `zalo/index.html` |
 | 2026-10-16 | 1.1.4 | Fix: choosing an .xlsx failed silently since 1.1.0 (the reader's source list was lost in the page restructure); the browser walkthrough now uploads the real workbook. | Excel upload hung on live. | `zalo/app.js` |
 | 2026-10-16 | 1.1.3 | Excel reader shipped with the page instead of fetched from a CDN; real progress text while a workbook is read; a 30-second timeout with a CSV hint instead of a silent hang. | Upload appeared stuck on first use. | `zalo/vendor/`, `zalo/app.js`, `zalo/index.html` |
 | 2026-10-16 | 1.1.2 | Username changed to `NGT_DA1` with a new password; the generic `<CLINIC>_DA` sign-in rule removed so only listed usernames work; page files carry a version tag so phones fetch new releases. | Launch. | `zalo/tools/zalo-sop.gs`, `zalo/app.js`, `zalo/index.html` |
