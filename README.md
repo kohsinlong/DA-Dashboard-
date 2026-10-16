@@ -15,6 +15,7 @@ root).
 | `/sop/` Zalo SOP | Your follow-ups: due today, due this week, missed, open queries, data flags, streaks, team | Real (sent marks modelled) |
 | `/sales/` Sales | Member revenue MTD vs target, members, revenue this week, repurchase / referral / rescue split, week-by-week trend | Weekly report |
 | `/leads/` Leads | Leads MTD vs target, conversion to referral customers, week by week | Modelled until the report carries leads |
+| `/zalo/` DA Zalo Dashboard | The DA's own Zalo SOP to-do list that writes back to the CRM form: due today, mass sends, add customer, pending collection, tag updates, QK import, Not in CRM. Own sign-in, own Apps Script. See `zalo/README.md`. | Live from the CRM workbook through `zalo/tools/zalo-sop.gs` |
 
 Shared pieces: `shell.js` (sign-in, DA picker, session, language, header,
 navigation, live-feed loading), `theme.css`, `kpi-core.js` (report data helpers,
@@ -95,7 +96,10 @@ The workbook itself is not in the repo; only the generated numbers are.
 (https://github.com/kohsinlong/zalo-sop-dashboard): the embedded snapshot of
 the Membership trackers, the live-feed settings (`LIVE`), and the rules that
 turn tracker rows into scored cases. Keep the two copies identical so a
-customer scores the same on every page. Whether each message was actually
+customer scores the same on every page. Since 16 Oct 2026 the cadences anchor
+on the tracker's deposit date (K) and collected date (L), with the date inside
+the Zalo tag only as a fallback; the feed (`tools/live-feed.gs` in the
+head-office repo) serves both columns. Whether each message was actually
 sent is modelled until the Salework Zalo API is connected.
 
 `?feed=<url>` overrides the feed for testing; `?asof=YYYY-MM-DD` moves the

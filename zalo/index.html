@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#2438B8">
+<title>DA Zalo Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:wght@500;600&display=swap">
+<link rel="stylesheet" href="../theme.css">
+<link rel="stylesheet" href="zalo.css">
+</head>
+<body>
+<!-- sign-in -->
+<div id="gate">
+  <form class="gatecard" id="gateform" autocomplete="on">
+    <div class="gatehead"><div class="brand">Bệnh viện Mắt Sài Gòn</div>
+      <div class="seg mini" id="gateLang" role="group" aria-label="Language"><button type="button" data-l="vi">VI</button><button type="button" data-l="en">EN</button><button type="button" data-l="zh">中文</button></div></div>
+    <h2 id="gTitle">DA Zalo Dashboard</h2>
+    <p class="lede" id="gateLede"></p>
+    <div class="gateerr" id="gateErr"></div>
+    <div class="field"><label for="gu" id="luser"></label><input type="text" id="gu" name="username" autocomplete="username" autocapitalize="characters" required autofocus placeholder="NGT_DA"></div>
+    <div class="field"><label for="gp" id="lpass"></label><input type="password" id="gp" name="password" autocomplete="current-password" required></div>
+    <button type="submit" class="gatebtn" id="gateBtn"></button>
+    <div class="gatefoot">
+      <button type="button" class="linkbtn" id="demoBtn"></button>
+      <details id="gateAdv"><summary id="advSum"></summary>
+        <div class="field" style="margin-top:10px"><label for="apiUrl" id="lapi"></label><input type="url" id="apiUrl" placeholder="https://script.google.com/macros/s/…/exec"></div>
+        <p class="hint" id="apiHint"></p>
+      </details>
+    </div>
+  </form>
+</div>
+<!-- who are you -->
+<div id="pick" class="gone">
+  <div class="gatecard pickcard"><div class="brand">Bệnh viện Mắt Sài Gòn</div><h2 id="pickTitle"></h2><p class="lede" id="pickLede"></p><div id="pickBody"></div></div>
+</div>
+<!-- the app -->
+<div class="wrap" id="wrap" hidden>
+  <header class="top">
+    <div class="titleblock"><h1 id="pgTitle">DA Zalo Dashboard</h1><div class="sub" id="pgSub"></div></div>
+    <div class="controls"><span class="feed" id="feed"></span><span class="who" id="whoami"></span>
+      <div class="seg" id="langseg" role="group" aria-label="Language"><button data-l="vi">VI</button><button data-l="en">EN</button><button data-l="zh">中文</button></div></div>
+  </header>
+  <nav class="nav" id="nav"></nav>
+  <main id="app"></main>
+  <footer class="foot" id="foot"></footer>
+</div>
+<div id="sheet" class="sheet gone" role="dialog" aria-modal="true"><div class="sheetcard"><button class="sheetx" id="sheetClose" aria-label="Close">×</button><div id="sheetBody"></div></div></div>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<canvas id="confetti" aria-hidden="true"></canvas>
+<script src="core.js"></script>
+<script src="demo-data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,869 @@
+/* DA Zalo Dashboard — the page: sign-in, screens, API calls. All rules live in core.js.
+   See zalo/README.md. */
+(function () {
+  "use strict";
+  var Z = window.ZALO, DEMO = window.ZALO_DEMO;
+  /* Paste the Apps Script /exec URL here after deploying (README §2.10). ?api=<url> and the
+     "Connect" box on the sign-in card override it for testing. */
+  var API = { url: "" };
+  var VERSION = "1.0.0";
+
+  /* ------------------------------------------------------------------ strings */
+  var L = {
+    vi: {
+      brand: "DA Zalo Dashboard", sub: "{c} · {d}", glede: "Đăng nhập bằng tên đăng nhập của phòng khám, ví dụ NGT_DA.", luser: "Tên đăng nhập", lpass: "Mật khẩu",
+      signin: "Đăng nhập", signingin: "Đang đăng nhập…", badlogin: "Tên đăng nhập hoặc mật khẩu không đúng.", neterr: "Không kết nối được với Google Sheets: {e}",
+      demo: "Xem bản demo (dữ liệu giả)", adv: "Kết nối script (nâng cao)", lapi: "Địa chỉ Apps Script (/exec)", apiHint: "Chỉ cần nhập một lần trên mỗi thiết bị. Để trống để dùng địa chỉ đã cài sẵn.",
+      noapi: "Chưa kết nối Google Sheets. Triển khai script theo hướng dẫn trong README rồi dán địa chỉ /exec vào mục nâng cao, hoặc xem bản demo.",
+      pickTitle: "Bạn là ai?", pickLede: "Chọn tên của bạn. Thiết bị này sẽ ghi nhớ.", kh: "khách",
+      feedLive: "Đã kết nối · đọc lúc {t}", feedDemo: "Bản demo · dữ liệu giả", feedFailed: "Không đọc được sheet", feedLoading: "Đang đọc sheet…", feedOffline: "Chưa kết nối",
+      signout: "Đăng xuất", switchWho: "Không phải bạn?", reload: "Tải lại",
+      nav: { tasks: "Việc hôm nay", customers: "Khách hàng", add: "Thêm khách", pending: "Chờ nhận kính", tags: "Đổi tag", import: "Nhập QK", legacy: "Chưa có Zalo" },
+      tToday: "Hôm nay", tTodayX: "{d}/{n} high touch đã gửi", tMissed: "Bỏ lỡ cá nhân", tMissedX: "high touch quá hạn chưa gửi", tMass: "Gửi hàng loạt", tMassX: "{g}/{G} nhóm · {p}/{P} khách tuần này",
+      secOverdue: "Quá hạn", overdueHint: "chưa gửi, cũ nhất trước", secToday: "Đến hạn hôm nay", todayHint: "high touch · gửi riêng từng khách", secUp: "Sắp tới trong tuần", upHint: "high touch · từ ngày mai đến Chủ nhật",
+      secMass: "Gửi hàng loạt tuần này", massHint: "low touch · gửi chung cả nhóm, bất kỳ lúc nào trong tuần", secDone: "Đã gửi hôm nay",
+      perfect: "Xong hết việc hôm nay. Tuyệt vời!", nothingToday: "Hôm nay không có việc high touch nào.", nothingUp: "Không còn việc nào trong tuần.", nothingMass: "Tuần này không có nhóm gửi hàng loạt.",
+      nothingOver: "Không có việc quá hạn. Rất tốt.", showOlder: "Xem {n} việc cũ hơn", hideOlder: "Ẩn việc cũ", late: "trễ", overdueBy: "trễ {n} ngày", dueOn: "hạn {d}", opens: "mở từ {d}", dep: "cọc", coll: "nhận", noDate: "chưa có ngày",
+      undo: "Hoàn tác", markSent: "Đã gửi ({n})", selectAll: "Chọn tất cả", copyNames: "Sao chép tên", copied: "Đã sao chép {n} tên", sentToast: "Đã ghi {n} tin đã gửi", undoneToast: "Đã hoàn tác", errToast: "Không ghi được: {e}",
+      massDone: "Nhóm này đã gửi xong", sendBtn: "Gửi xong", high: "High touch", low: "Low touch", missedMass: "mass send bỏ lỡ", sendTo: "Gửi cho {n} khách", mins: "mỗi khách",
+      search: "Tìm tên, số điện thoại hoặc tag…", fAll: "Tất cả", fFix: "Cần sửa", fNoTag: "Chưa có tag", fExam: "Khám", showing: "{a}/{b}", noCust: "Không có khách nào.",
+      lPhone: "Điện thoại", lProduct: "Sản phẩm", lDA: "Trợ lý", lDep: "Ngày đặt cọc", lColl: "Ngày nhận kính", lStatus: "Trạng thái", lTag: "Zalo tag", lNote: "Ghi chú", lParent: "Phụ huynh", lRel: "Quan hệ", lGender: "Giới tính", lDob: "Ngày sinh", lRow: "Dòng", lKid2: "Bé thứ 2",
+      timeline: "Lịch chăm sóc", edit: "Sửa", save: "Lưu", saving: "Đang lưu…", saved: "Đã lưu", cancel: "Huỷ", close: "Đóng", pendingTag: "Tag mới đang chờ đổi trên Zalo", tagChangeNote: "Tag mới sẽ vào mục Đổi tag; sheet chỉ đổi sau khi bạn đổi trên Zalo và xác nhận.",
+      fix: { nodates: "Thiếu ngày cọc và ngày nhận", notag: "Chưa có Zalo tag", nophone: "Thiếu số điện thoại", noprod: "Sản phẩm không rõ", future: "Ngày nhận kính ở tương lai", badtag: "Tag không đọc được" },
+      stSent: "đã gửi", stPartial: "gửi một phần", stMissed: "bỏ lỡ", stToday: "hôm nay", stUp: "sắp tới", stOpen: "đang mở",
+      addTitle: "Thêm khách mới", aChild: "Tên bé", aGender: "Giới tính", aParent: "Tên phụ huynh", aRel: "Quan hệ với bé", aDob: "Ngày sinh", aDep: "Ngày đặt cọc", aNA: "Chưa chuyển đổi / không áp dụng",
+      aColl: "Ngày nhận kính", aProduct: "Sản phẩm", aTag: "Zalo tag", aTagHint: "Gợi ý theo quy ước; sửa được.", aNoZalo: "Chưa kết bạn Zalo / không có tag", aNote: "Ghi chú", aSubmit: "Ghi khách mới", aSubmitting: "Đang ghi…",
+      aRecorded: "Đã ghi khách mới", aRecordedX: "{n} đã vào CRM form, dòng {r}.", aParked: "Đã lưu vào Chưa có Zalo", aParkedX: "{n} sẽ nằm ở trang Chưa có Zalo cho đến khi có tag.", aAnother: "Thêm khách khác", aBack: "Về việc hôm nay",
+      req: "bắt buộc", genders: { "": "—", "Nam": "Nam", "Nữ": "Nữ" }, other: "Khác", relText: "Ghi rõ (ví dụ: Cô Lan)", today: "hôm nay", dupWarn: "Khách này hình như đã có trong CRM (dòng {r}).",
+      pTitle: "Chờ nhận kính", pHint: "đã đặt cọc, chưa có ngày nhận", pCollected: "Đã nhận", pSubmit: "Ghi", pExpected: "QK hẹn {d}", pNone: "Không có khách nào đang chờ nhận kính.", pDone: "Đã ghi ngày nhận kính cho {n}.",
+      tTitle: "Đổi tag Zalo", tHint: "đổi trên điện thoại trước, rồi xác nhận để sheet cập nhật", tOld: "Tag hiện tại", tNew: "Tag mới", tCopy: "Sao chép", tConfirm: "Đã đổi trên Zalo", tSkip: "Giữ nguyên", tNone: "Không có tag nào cần đổi.",
+      tWhyNY: "đã nhận kính, tag còn N", tWhySib: "thêm bé thứ 2 cùng Zalo", tWhyEdit: "bạn đã sửa tag", tConfirmed: "Đã cập nhật tag trong sheet",
+      iTitle: "Nhập báo cáo QK", iHint: "tải file QK NGT Daily report (.xlsx) hoặc tab SO TTKSCT dạng .csv", iDrop: "Bấm để chọn file, hoặc kéo thả vào đây", iFrom: "Từ ngày", iTo: "Đến ngày", iRangeHint: "Tuỳ chọn. Lấy đơn có ngày đặt hoặc ngày hẹn trong khoảng.",
+      iParsing: "Đang đọc file…", iFound: "{n} đơn trong tab “{s}” (sau {c} bỏ qua vì trước {d})", iNoSheet: "Không thấy tab SO TTKSCT hay tab có cột Ngày Đặt / Ngày Hẹn / Mã Đơn Hàng…", iBadFile: "Không đọc được file: {e}",
+      iNew: "Khách mới", iNewHint: "chưa có trong CRM · điền phần còn thiếu, tick để ghi", iColl: "Cập nhật ngày nhận kính", iCollHint: "khách đã có trong CRM, QK báo DONE", iRepeat: "Mua lại", iRepeatHint: "khách đã có ngày nhận trước đó", iInfo: "Không cần làm gì",
+      iInfoHint: "đã có trong CRM với cùng thông tin, hoặc chưa DONE", iSibling: "cùng SĐT với {n}", iCheckPhone: "SĐT khác với CRM ({p})", iSeen: "đã nhập lần trước", iChanged: "có thay đổi", iFuture: "ngày nhận ở tương lai — kiểm tra",
+      iConfirm: "Ghi {n} dòng đã chọn", iSubmitting: "Đang ghi…", iDone: "Đã ghi xong", iDoneX: "{a} khách mới · {c} ngày nhận · {p} để ở Chưa có Zalo · {e} lỗi", iNoneSel: "Chưa chọn dòng nào", iAgain: "Nhập file khác", iToTasks: "Về việc hôm nay",
+      iPick: "— chọn —", iSteps: ["Chọn file", "Kiểm tra", "Ghi vào sheet"], iDismiss: "Bỏ qua", iCutoff: "Đơn trước {d} không được nhập (cài đặt import_cutoff).", iExpectedOnly: "chỉ cập nhật ngày hẹn", iLibLoading: "Đang tải bộ đọc Excel…",
+      lTitle: "Chưa có Zalo", lHint: "khách từ QK chưa có trong CRM · nhóm theo tháng nhận kính", lAdd: "Thêm vào CRM", lDismiss: "Ẩn", lRestore: "Khôi phục", lShowDismissed: "Xem đã ẩn ({n})", lHideDismissed: "Ẩn danh sách đã ẩn",
+      lRepeat: "Mua lại", lRepeatHint: "đơn mới của khách đã có trong CRM", lStartNew: "Tạo chu kỳ mới", lUpcoming: "Sắp đến", lNone: "Không có khách nào chờ. Tải báo cáo QK ở mục Nhập QK.", lNoColl: "Chưa nhận kính", lManual: "nhập tay",
+      prod: { MC: "MC", "Kính": "Kính", OK: "Ortho-K", Atropine: "Atropine", Exam: "Khám" }, months: ["Th1", "Th2", "Th3", "Th4", "Th5", "Th6", "Th7", "Th8", "Th9", "Th10", "Th11", "Th12"], days: ["T2", "T3", "T4", "T5", "T6", "T7", "CN"],
+      foot: "Ngày đến hạn tính từ ngày đặt cọc (K) và ngày nhận kính (L) trong CRM form. Mọi thay đổi ở đây được ghi vào Google Sheet và lưu lại trong DA_Log. Phiên bản {v}.",
+      setupTitle: "Chưa kết nối Google Sheets", confettiMsg: "🎉 Xong hết việc hôm nay!", demoWrite: "Bản demo: thay đổi chỉ lưu trên trình duyệt này.", notConnected: "Chưa kết nối sheet: không ghi được."
+    },
+    en: {
+      brand: "DA Zalo Dashboard", sub: "{c} · {d}", glede: "Sign in with your clinic's username, e.g. NGT_DA.", luser: "Username", lpass: "Password",
+      signin: "Sign in", signingin: "Signing in…", badlogin: "Incorrect username or password.", neterr: "Could not reach Google Sheets: {e}",
+      demo: "Try the demo (sample data)", adv: "Connect the script (advanced)", lapi: "Apps Script address (/exec)", apiHint: "Needed once per device. Leave empty to use the built-in address.",
+      noapi: "Google Sheets is not connected yet. Deploy the script as described in the README and paste its /exec address under Advanced, or try the demo.",
+      pickTitle: "Who are you?", pickLede: "Pick your name. This device will remember it.", kh: "customers",
+      feedLive: "Connected · read at {t}", feedDemo: "Demo · sample data", feedFailed: "Sheets unreachable", feedLoading: "Reading the sheets…", feedOffline: "Not connected",
+      signout: "Sign out", switchWho: "Not you?", reload: "Reload",
+      nav: { tasks: "Tasks", customers: "Customers", add: "Add customer", pending: "Pending collection", tags: "Tag updates", import: "Import QK", legacy: "Not in CRM" },
+      tToday: "Today", tTodayX: "{d}/{n} high touch sent", tMissed: "Missed personal", tMissedX: "high touch overdue, not sent", tMass: "Mass sends", tMassX: "{g}/{G} groups · {p}/{P} people this week",
+      secOverdue: "Overdue", overdueHint: "not sent, oldest first", secToday: "Due today", todayHint: "high touch · one by one", secUp: "Upcoming this week", upHint: "high touch · tomorrow to Sunday",
+      secMass: "Mass sends this week", massHint: "low touch · send the whole group any day this week", secDone: "Sent today",
+      perfect: "Everything due today is sent. Nice!", nothingToday: "No high-touch tasks fall due today.", nothingUp: "Nothing more this week.", nothingMass: "No mass sends this week.",
+      nothingOver: "Nothing overdue. Great.", showOlder: "Show {n} older", hideOlder: "Hide older", late: "late", overdueBy: "{n} d overdue", dueOn: "due {d}", opens: "opens {d}", dep: "deposit", coll: "collected", noDate: "no date",
+      undo: "Undo", markSent: "Mark sent ({n})", selectAll: "Select all", copyNames: "Copy names", copied: "Copied {n} names", sentToast: "Recorded {n} sent", undoneToast: "Undone", errToast: "Could not save: {e}",
+      massDone: "This group is done", sendBtn: "Sent", high: "High touch", low: "Low touch", missedMass: "missed mass send", sendTo: "Send to {n} people", mins: "per person",
+      search: "Search name, phone or tag…", fAll: "All", fFix: "To fix", fNoTag: "No tag", fExam: "Exam", showing: "{a}/{b}", noCust: "No customers.",
+      lPhone: "Phone", lProduct: "Product", lDA: "DA", lDep: "Deposit date", lColl: "Collected date", lStatus: "Status", lTag: "Zalo tag", lNote: "Note", lParent: "Parent", lRel: "Relation", lGender: "Gender", lDob: "Birthday", lRow: "Row", lKid2: "2nd child",
+      timeline: "Cadence timeline", edit: "Edit", save: "Save", saving: "Saving…", saved: "Saved", cancel: "Cancel", close: "Close", pendingTag: "New tag waiting to be renamed in Zalo", tagChangeNote: "A new tag goes to Tag updates; the sheet changes only after you rename it in Zalo and confirm.",
+      fix: { nodates: "No deposit and no collected date", notag: "No Zalo tag", nophone: "No phone", noprod: "Unknown product", future: "Collected date in the future", badtag: "Tag cannot be read" },
+      stSent: "sent", stPartial: "partly sent", stMissed: "missed", stToday: "today", stUp: "upcoming", stOpen: "open",
+      addTitle: "Add a customer", aChild: "Child's name", aGender: "Gender", aParent: "Parent's name", aRel: "Relation to the child", aDob: "Birthday", aDep: "Deposit date", aNA: "Not applicable / unconverted",
+      aColl: "Collection date", aProduct: "Product", aTag: "Zalo tag", aTagHint: "Suggested from the convention; editable.", aNoZalo: "Zalo not added / no tag yet", aNote: "Note", aSubmit: "Record customer", aSubmitting: "Recording…",
+      aRecorded: "Customer recorded", aRecordedX: "{n} is in the CRM form, row {r}.", aParked: "Saved to Not in CRM", aParkedX: "{n} stays on the Not in CRM page until a tag exists.", aAnother: "Add another", aBack: "Back to tasks",
+      req: "required", genders: { "": "—", "Nam": "Male", "Nữ": "Female" }, other: "Other", relText: "Specify (e.g. Cô Lan)", today: "today", dupWarn: "This customer seems to be in the CRM already (row {r}).",
+      pTitle: "Pending collection", pHint: "deposit paid, no collected date yet", pCollected: "Collected", pSubmit: "Save", pExpected: "QK expects {d}", pNone: "Nobody is waiting for glasses.", pDone: "Collected date saved for {n}.",
+      tTitle: "Zalo tag updates", tHint: "rename on your phone first, then confirm so the sheet follows", tOld: "Current tag", tNew: "New tag", tCopy: "Copy", tConfirm: "Renamed in Zalo", tSkip: "Keep as is", tNone: "No tags waiting.",
+      tWhyNY: "collected, tag still N", tWhySib: "second child on the same Zalo", tWhyEdit: "you edited the tag", tConfirmed: "Tag updated in the sheet",
+      iTitle: "Import the QK report", iHint: "upload QK NGT Daily report (.xlsx) or the SO TTKSCT tab as .csv", iDrop: "Tap to choose a file, or drop it here", iFrom: "From", iTo: "To", iRangeHint: "Optional. Keeps orders whose deposit or appointment date is in range.",
+      iParsing: "Reading the file…", iFound: "{n} orders in tab “{s}” ({c} skipped: before {d})", iNoSheet: "No SO TTKSCT tab, and no tab with the Ngày Đặt / Ngày Hẹn / Mã Đơn Hàng… header", iBadFile: "Could not read the file: {e}",
+      iNew: "New entries", iNewHint: "not in the CRM · fill what's missing, tick to write", iColl: "Collection updates", iCollHint: "already in the CRM, QK says DONE", iRepeat: "Repeat orders", iRepeatHint: "customers already collected earlier", iInfo: "Nothing to do",
+      iInfoHint: "in the CRM with the same data, or not DONE yet", iSibling: "same phone as {n}", iCheckPhone: "phone differs from the CRM ({p})", iSeen: "uploaded before", iChanged: "changed", iFuture: "collected date in the future — check",
+      iConfirm: "Write {n} selected rows", iSubmitting: "Writing…", iDone: "Written", iDoneX: "{a} new · {c} collected dates · {p} parked on Not in CRM · {e} errors", iNoneSel: "Nothing selected", iAgain: "Import another file", iToTasks: "Back to tasks",
+      iPick: "— pick —", iSteps: ["Choose file", "Review", "Write to sheet"], iDismiss: "Dismiss", iCutoff: "Orders before {d} are ignored (setting import_cutoff).", iExpectedOnly: "expected date only", iLibLoading: "Loading the Excel reader…",
+      lTitle: "Not in CRM", lHint: "QK customers without a Zalo yet · by collection month", lAdd: "Add to CRM", lDismiss: "Dismiss", lRestore: "Restore", lShowDismissed: "Show dismissed ({n})", lHideDismissed: "Hide dismissed",
+      lRepeat: "Repeat orders", lRepeatHint: "new orders for customers already in the CRM", lStartNew: "Start a new cadence", lUpcoming: "Upcoming", lNone: "Nobody parked. Upload the QK report under Import QK.", lNoColl: "Not collected yet", lManual: "typed in",
+      prod: { MC: "MC", "Kính": "Glasses", OK: "Ortho-K", Atropine: "Atropine", Exam: "Exam" }, months: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"], days: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+      foot: "Due dates come from the deposit date (K) and collected date (L) in the CRM form. Every change here is written to the Google Sheet and recorded in DA_Log. Version {v}.",
+      setupTitle: "Google Sheets not connected", confettiMsg: "🎉 Everything due today is done!", demoWrite: "Demo: changes stay in this browser only.", notConnected: "Not connected to the sheet: nothing was saved."
+    },
+    zh: {
+      brand: "助理 Zalo 看板", sub: "{c} · {d}", glede: "使用诊所的用户名登录，例如 NGT_DA。", luser: "用户名", lpass: "密码",
+      signin: "登录", signingin: "正在登录…", badlogin: "用户名或密码不正确。", neterr: "无法连接 Google Sheets：{e}",
+      demo: "查看演示（示例数据）", adv: "连接脚本（高级）", lapi: "Apps Script 地址（/exec）", apiHint: "每台设备只需输入一次。留空则使用内置地址。",
+      noapi: "尚未连接 Google Sheets。请按 README 部署脚本并在“高级”中粘贴 /exec 地址，或查看演示。",
+      pickTitle: "你是谁？", pickLede: "选择你的姓名。本设备会记住。", kh: "位客户",
+      feedLive: "已连接 · 读取于 {t}", feedDemo: "演示 · 示例数据", feedFailed: "无法读取表格", feedLoading: "正在读取表格…", feedOffline: "未连接",
+      signout: "退出", switchWho: "不是你？", reload: "刷新",
+      nav: { tasks: "今日任务", customers: "客户", add: "新增客户", pending: "待取镜", tags: "改标签", import: "导入 QK", legacy: "未加 Zalo" },
+      tToday: "今天", tTodayX: "{d}/{n} 高触达已发", tMissed: "遗漏个人跟进", tMissedX: "高触达逾期未发", tMass: "群发", tMassX: "{g}/{G} 组 · {p}/{P} 人本周",
+      secOverdue: "逾期", overdueHint: "未发送，最早在前", secToday: "今日到期", todayHint: "高触达 · 逐一发送", secUp: "本周即将到期", upHint: "高触达 · 明天到周日",
+      secMass: "本周群发", massHint: "低触达 · 本周任意一天整组发送", secDone: "今日已发",
+      perfect: "今天的任务全部完成，太棒了！", nothingToday: "今天没有高触达任务。", nothingUp: "本周没有更多任务。", nothingMass: "本周没有群发。",
+      nothingOver: "没有逾期任务。很好。", showOlder: "显示 {n} 条更早", hideOlder: "隐藏更早", late: "延迟", overdueBy: "逾期 {n} 天", dueOn: "到期 {d}", opens: "{d} 开始", dep: "定金", coll: "取镜", noDate: "无日期",
+      undo: "撤销", markSent: "已发送（{n}）", selectAll: "全选", copyNames: "复制名单", copied: "已复制 {n} 个名字", sentToast: "已记录 {n} 条发送", undoneToast: "已撤销", errToast: "保存失败：{e}",
+      massDone: "本组已完成", sendBtn: "已发", high: "高触达", low: "低触达", missedMass: "遗漏的群发", sendTo: "发送给 {n} 人", mins: "每人",
+      search: "搜索姓名、电话或标签…", fAll: "全部", fFix: "待修正", fNoTag: "无标签", fExam: "检查", showing: "{a}/{b}", noCust: "没有客户。",
+      lPhone: "电话", lProduct: "产品", lDA: "助理", lDep: "定金日期", lColl: "取镜日期", lStatus: "状态", lTag: "Zalo 标签", lNote: "备注", lParent: "家长", lRel: "关系", lGender: "性别", lDob: "生日", lRow: "行", lKid2: "第二个孩子",
+      timeline: "跟进时间线", edit: "编辑", save: "保存", saving: "保存中…", saved: "已保存", cancel: "取消", close: "关闭", pendingTag: "新标签待在 Zalo 中改名", tagChangeNote: "新标签进入“改标签”；在 Zalo 改名并确认后表格才会更新。",
+      fix: { nodates: "缺定金和取镜日期", notag: "没有 Zalo 标签", nophone: "缺电话", noprod: "产品不明", future: "取镜日期在未来", badtag: "标签无法解析" },
+      stSent: "已发", stPartial: "部分发送", stMissed: "遗漏", stToday: "今天", stUp: "即将", stOpen: "进行中",
+      addTitle: "新增客户", aChild: "孩子姓名", aGender: "性别", aParent: "家长姓名", aRel: "与孩子的关系", aDob: "生日", aDep: "定金日期", aNA: "未转化 / 不适用",
+      aColl: "取镜日期", aProduct: "产品", aTag: "Zalo 标签", aTagHint: "按规则建议；可修改。", aNoZalo: "尚未加 Zalo / 无标签", aNote: "备注", aSubmit: "记录客户", aSubmitting: "记录中…",
+      aRecorded: "已记录客户", aRecordedX: "{n} 已进入 CRM 表，第 {r} 行。", aParked: "已存入“未加 Zalo”", aParkedX: "{n} 会留在“未加 Zalo”页面直到有标签。", aAnother: "再加一位", aBack: "返回任务",
+      req: "必填", genders: { "": "—", "Nam": "男", "Nữ": "女" }, other: "其他", relText: "请注明（例如 Cô Lan）", today: "今天", dupWarn: "此客户似乎已在 CRM 中（第 {r} 行）。",
+      pTitle: "待取镜", pHint: "已付定金，尚无取镜日期", pCollected: "已取镜", pSubmit: "保存", pExpected: "QK 预约 {d}", pNone: "没有待取镜的客户。", pDone: "已保存 {n} 的取镜日期。",
+      tTitle: "Zalo 标签更新", tHint: "先在手机上改名，再确认，表格随之更新", tOld: "当前标签", tNew: "新标签", tCopy: "复制", tConfirm: "已在 Zalo 改名", tSkip: "保持不变", tNone: "没有待改的标签。",
+      tWhyNY: "已取镜，标签仍为 N", tWhySib: "同一 Zalo 的第二个孩子", tWhyEdit: "你编辑了标签", tConfirmed: "表格中的标签已更新",
+      iTitle: "导入 QK 报表", iHint: "上传 QK NGT Daily report（.xlsx）或 SO TTKSCT 工作表的 .csv", iDrop: "点击选择文件，或拖放到此处", iFrom: "起", iTo: "止", iRangeHint: "可选。保留定金或预约日期在范围内的订单。",
+      iParsing: "正在读取文件…", iFound: "工作表“{s}”中 {n} 条订单（{c} 条早于 {d} 已跳过）", iNoSheet: "没有 SO TTKSCT 工作表，也没有带 Ngày Đặt / Ngày Hẹn / Mã Đơn Hàng… 表头的工作表", iBadFile: "无法读取文件：{e}",
+      iNew: "新客户", iNewHint: "不在 CRM · 补齐缺项，勾选后写入", iColl: "取镜日期更新", iCollHint: "已在 CRM，QK 显示 DONE", iRepeat: "复购", iRepeatHint: "之前已取镜的客户", iInfo: "无需处理",
+      iInfoHint: "CRM 中信息相同，或尚未 DONE", iSibling: "与 {n} 同一电话", iCheckPhone: "电话与 CRM 不同（{p}）", iSeen: "之前已导入", iChanged: "有变化", iFuture: "取镜日期在未来 — 请检查",
+      iConfirm: "写入 {n} 条所选", iSubmitting: "写入中…", iDone: "已写入", iDoneX: "{a} 位新客户 · {c} 个取镜日期 · {p} 条留在“未加 Zalo” · {e} 个错误", iNoneSel: "未选择任何行", iAgain: "导入另一个文件", iToTasks: "返回任务",
+      iPick: "— 选择 —", iSteps: ["选择文件", "核对", "写入表格"], iDismiss: "忽略", iCutoff: "早于 {d} 的订单不导入（设置 import_cutoff）。", iExpectedOnly: "仅更新预约日期", iLibLoading: "正在加载 Excel 读取器…",
+      lTitle: "未加 Zalo", lHint: "QK 中尚未进入 CRM 的客户 · 按取镜月份分组", lAdd: "加入 CRM", lDismiss: "忽略", lRestore: "恢复", lShowDismissed: "查看已忽略（{n}）", lHideDismissed: "隐藏已忽略",
+      lRepeat: "复购", lRepeatHint: "CRM 已有客户的新订单", lStartNew: "开始新周期", lUpcoming: "即将", lNone: "没有待处理的客户。请在“导入 QK”上传报表。", lNoColl: "尚未取镜", lManual: "手动录入",
+      prod: { MC: "MC", "Kính": "眼镜", OK: "Ortho-K", Atropine: "阿托品", Exam: "检查" }, months: ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"], days: ["一", "二", "三", "四", "五", "六", "日"],
+      foot: "到期日期根据 CRM 表中的定金日期（K）和取镜日期（L）计算。此处的每项更改都会写入 Google 表格并记录在 DA_Log。版本 {v}。",
+      setupTitle: "尚未连接 Google Sheets", confettiMsg: "🎉 今天的任务全部完成！", demoWrite: "演示：更改仅保存在本浏览器。", notConnected: "未连接表格：未保存。"
+    }
+  };
+
+  /* ------------------------------------------------------------------ state */
+  var st = { lang: "vi", clinic: "", da: "", u: "", h: "", session: false, demo: false, data: null, cust: [], byKey: {}, det: {}, tasks: [], imports: [], cadence: [], settings: {},
+             today: "", feed: { mode: "offline", at: "" }, route: "tasks", busy: false,
+             ui: { search: "", cfilter: "all", overdueOpen: false, foldOpen: false, massSel: {}, imp: null, importStep: 0, showDismissed: false, addPrefill: null, addDone: null, sheetKey: "" } };
+
+  /* ------------------------------------------------------------------ utils */
+  function $(id){ return document.getElementById(id); }
+  function esc(s){ return String(s === undefined || s === null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  function fill(s, o){ Object.keys(o || {}).forEach(function (k) { s = s.split("{" + k + "}").join(o[k]); }); return s; }
+  function T(){ return L[st.lang] || L.vi; }
+  function store(k, v){ try { if (v === undefined) return localStorage.getItem(k) || ""; if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) {} return v; }
+  function sstore(k, v){ try { if (v === undefined) return sessionStorage.getItem(k) || ""; if (v === null) sessionStorage.removeItem(k); else sessionStorage.setItem(k, v); } catch (e) {} return v; }
+  var toastTimer;
+  function toast(msg, bad){ var el = $("toast"); el.textContent = msg; el.className = "toast on" + (bad ? " bad" : ""); clearTimeout(toastTimer); toastTimer = setTimeout(function () { el.className = "toast"; }, bad ? 5000 : 2600); }
+  function prodLabel(p){ return T().prod[p] || p || "?"; }
+  function itemLabel(k){ return (Z.CP[st.lang] || Z.CP.vi)[k] || k; }
+  function dm(iso){ return iso ? Z.fmtDM(iso) : ""; }
+  function dmy(iso){ return iso ? Z.fmtDMY(iso) : ""; }
+  function dayName(iso){ return T().days[Z.dow(iso)] + " " + dm(iso); }
+  function tel(p){ return p ? '<a href="tel:' + esc(p) + '" class="mono">' + esc(p) + "</a>" : ""; }
+  function nowIso(){ return new Date().toISOString(); }
+  function copyText(text){
+    function legacy(){ var ta = document.createElement("textarea"); ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0"; document.body.appendChild(ta); ta.select();
+      try { document.execCommand("copy"); } catch (e) {} document.body.removeChild(ta); }
+    if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(text).catch(function () { legacy(); });
+    legacy(); return Promise.resolve();
+  }
+  /* sha256: WebCrypto when available (https), tiny fallback otherwise */
+  function utf8(str){ var o = "", i, c; for (i = 0; i < str.length; i++) { c = str.charCodeAt(i); if (c < 128) o += String.fromCharCode(c); else if (c < 2048) o += String.fromCharCode(192 | (c >> 6), 128 | (c & 63)); else o += String.fromCharCode(224 | (c >> 12), 128 | ((c >> 6) & 63), 128 | (c & 63)); } return o; }
+  function sha256sync(a){ function rr(v, x){ return (v >>> x) | (v << (32 - x)); }
+    var mm = Math.pow, mp = mm(2, 32), i, j, res = "", w = [], bl = a.length * 8, h = sha256sync.h, k = sha256sync.k;
+    if (!h) { h = sha256sync.h = []; k = sha256sync.k = []; var nn = 0, ic = {}; for (var cd = 2; nn < 64; cd++) { if (!ic[cd]) { for (i = 0; i < 313; i += cd) ic[i] = cd; h[nn] = (mm(cd, .5) * mp) | 0; k[nn++] = (mm(cd, 1 / 3) * mp) | 0; } } h = h.slice(0, 8); sha256sync.h = h; }
+    a += "\x80"; while (a.length % 64 - 56) a += "\x00";
+    for (i = 0; i < a.length; i++) { j = a.charCodeAt(i); if (j >> 8) return null; w[i >> 2] |= j << ((3 - i) % 4) * 8; }
+    w[w.length] = (bl / mp) | 0; w[w.length] = bl; var H = h.slice(0);
+    for (j = 0; j < w.length;) { var ww = w.slice(j, j += 16), old = H.slice(0);
+      for (i = 0; i < 64; i++) { var w15 = ww[i - 15], w2 = ww[i - 2], A = H[0], E = H[4];
+        var t1 = H[7] + (rr(E, 6) ^ rr(E, 11) ^ rr(E, 25)) + ((E & H[5]) ^ ((~E) & H[6])) + k[i] + (ww[i] = (i < 16) ? ww[i] : (ww[i - 16] + (rr(w15, 7) ^ rr(w15, 18) ^ (w15 >>> 3)) + ww[i - 7] + (rr(w2, 17) ^ rr(w2, 19) ^ (w2 >>> 10))) | 0);
+        var t2 = (rr(A, 2) ^ rr(A, 13) ^ rr(A, 22)) + ((A & H[1]) ^ (A & H[2]) ^ (H[1] & H[2]));
+        H = [(t1 + t2) | 0].concat(H); H[4] = (H[4] + t1) | 0; H.length = 8; }
+      for (i = 0; i < 8; i++) H[i] = (H[i] + old[i]) | 0; }
+    for (i = 0; i < 8; i++) for (j = 3; j + 1; j--) { var b = (H[i] >> (j * 8)) & 255; res += ((b < 16) ? "0" : "") + b.toString(16); }
+    return res; }
+  function sha256(t){ if (window.crypto && crypto.subtle && window.isSecureContext) { try { return crypto.subtle.digest("SHA-256", new TextEncoder().encode(t)).then(function (b) { return Array.prototype.map.call(new Uint8Array(b), function (x) { return x.toString(16).padStart(2, "0"); }).join(""); }).catch(function () { return sha256sync(utf8(t)); }); } catch (e) {} } return Promise.resolve(sha256sync(utf8(t))); }
+
+  /* ------------------------------------------------------------------ API */
+  function apiUrl(){ var q = /[?&]api=([^&]+)/.exec(location.search); if (q) return decodeURIComponent(q[1]); return store("zalo_api") || API.url; }
+  function creds(){ return { u: st.u, h: st.h, da: st.da }; }
+  function apiGet(params){
+    if (st.demo) return Promise.resolve(DemoAPI.get(params));
+    var url = apiUrl(); if (!url) return Promise.reject(new Error("no api"));
+    var p = Object.assign({}, creds(), params || {}, { t: Date.now() });
+    var qs = Object.keys(p).map(function (k) { return encodeURIComponent(k) + "=" + encodeURIComponent(p[k] === undefined ? "" : p[k]); }).join("&");
+    return fetch(url + (url.indexOf("?") === -1 ? "?" : "&") + qs, { method: "GET", redirect: "follow" })
+      .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+      .then(function (j) { if (j.error) throw new Error(j.error); return j; });
+  }
+  function apiPost(body){
+    if (st.demo) return Promise.resolve().then(function () { return DemoAPI.post(body); });
+    var url = apiUrl(); if (!url) return Promise.reject(new Error(T().notConnected));
+    return fetch(url, { method: "POST", redirect: "follow", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(Object.assign({}, creds(), body)) })
+      .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+      .then(function (j) { if (j.error) throw new Error(j.error); return j; });
+  }
+
+  /* ------------------------------------------------------------------ demo engine (mirrors the script, in memory) */
+  var DemoAPI = {
+    load: function () {
+      var saved = store("zalo_demo_state"), today = st.today;
+      if (saved) { try { var d = JSON.parse(saved); if (d.today === today) return d; } catch (e) {} }
+      var fresh = DEMO.build(Z, today); store("zalo_demo_state", JSON.stringify(fresh)); return fresh;
+    },
+    save: function () { try { store("zalo_demo_state", JSON.stringify(st.data)); } catch (e) {} },
+    get: function () { return DemoAPI.load(); },
+    post: function (b) {
+      var d = st.data, at = nowIso();
+      function keyOf(ph, nm){ return Z.customerKey(ph, nm); }
+      function find(ref){ var c = d.customers.filter(function (x) { return x.row === ref.row; })[0]; if (!c || Z.normName(c.name) !== Z.normName(ref.name)) { c = d.customers.filter(function (x) { return Z.normName(x.name) === Z.normName(ref.name) && Z.normPhone(x.phone) === Z.normPhone(ref.phone); })[0]; } if (!c) throw new Error("row not found"); return c; }
+      function addC(f, det){
+        if (!f.name) throw new Error("name is required"); if (Z.PRODUCTS.indexOf(f.product) === -1) throw new Error("bad product");
+        var key = f.key || keyOf(f.phone, f.name);
+        if (!f.allowDuplicate && d.customers.some(function (c) { return keyOf(c.phone, c.name) === keyOf(f.phone, f.name); })) throw new Error("already in the form");
+        var row = d.customers.reduce(function (m, c) { return Math.max(m, c.row); }, 1) + 1;
+        d.customers.push({ row: row, stt: String(row - 1), friend: Z.fmtDMY(st.today), name: f.name, dob: f.dob || "", phone: f.phone || "", product: f.product, da: f.da || st.da, tag: f.tag || "", status: f.coll ? "Đã là hội viên" : "", dep: f.dep || "", coll: f.coll || "", note: f.note || "", kid2: f.kid2 || "" });
+        if (det) upsert(key, det);
+        return { ok: 1, row: row, key: key };
+      }
+      function upsert(key, det){ var cur = d.details.filter(function (x) { return x.key === key; })[0]; if (!cur) { cur = { key: key, clinic: "NGT", parent_name: "", relation: "", gender: "", pending_tag: "" }; d.details.push(cur); } Object.keys(det).forEach(function (k) { if (det[k] !== undefined) cur[k] = det[k]; }); cur.updated_at = at; return { ok: 1 }; }
+      function upd(ref, ch){ var c = find(ref); if (ch.coll && c.dep && Z.toISO(ch.coll) < c.dep) throw new Error("collection date is before the deposit date"); Object.keys(ch).forEach(function (k) { c[k] = k === "dep" || k === "coll" || k === "dob" ? (Z.toISO(ch[k]) || "") : ch[k]; }); return { ok: 1, row: c.row, changes: ch }; }
+      function storeImports(orders){ var added = 0, updated = 0; (orders || []).forEach(function (o) { var cur = d.imports.filter(function (x) { return x.code === o.code; })[0]; if (cur) { if (o.status) cur.status = o.status; if (o.appointment || o.appt) cur.appointment = o.appointment || o.appt; if (o.state) cur.state = o.state; if (o.result !== undefined) cur.result = o.result; if (o.collected !== undefined) cur.collected = o.collected; if (o.product) cur.product = o.product; cur.last_seen = at; updated++; } else { d.imports.push({ code: o.code, clinic: "NGT", uploaded_at: at, uploaded_by: st.da, deposit: o.deposit || o.dep || "", appointment: o.appointment || o.appt || "", status: o.status || "", name: o.name || "", phone: o.phone || "", patient_code: o.patient || "", lens: o.lens || "", product: o.product || "", state: o.state || "parked", result: o.result || "", last_seen: at, collected: o.collected || "" }); added++; } }); return { ok: 1, added: added, updated: updated }; }
+      var res;
+      switch (b.action) {
+        case "addCustomer": res = addC(b.fields || {}, b.details); break;
+        case "updateCustomer": res = upd(b.ref, b.changes || {}); break;
+        case "setCollected": res = upd(b.ref, { coll: b.date, status: "Đã là hội viên" }); break;
+        case "confirmTag": res = upd(b.ref, { tag: b.tag }); break;
+        case "markSent": (b.items || []).forEach(function (it) { d.tasks.push({ key: it.key, clinic: "NGT", da: st.da, stage: it.stage, due: it.due, bits: it.bits, score: it.score, sent_at: at, undone_at: "" }); });
+          (b.undo || []).forEach(function (u) { for (var i = d.tasks.length - 1; i >= 0; i--) if (d.tasks[i].key === u.key && d.tasks[i].stage === u.stage && !d.tasks[i].undone_at) { d.tasks[i].undone_at = at; break; } }); res = { ok: 1 }; break;
+        case "storeImports": res = storeImports(b.orders); break;
+        case "confirmImports": var results = {}, states = [];
+          (b.adds || []).forEach(function (a) { try { var r = addC(a.fields || {}, a.details); results[a.code] = r; states.push({ code: a.code, state: "confirmed", result: "added:" + r.key, collected: (a.fields || {}).coll || "" }); } catch (e) { results[a.code] = { error: e.message }; } });
+          (b.collections || []).forEach(function (c) { try { var r = upd(c.ref, { coll: c.date, status: "Đã là hội viên" }); results[c.code] = r; states.push({ code: c.code, state: "confirmed", result: "collected:" + keyOf(c.ref.phone, c.ref.name), collected: c.date }); } catch (e) { results[c.code] = { error: e.message }; } });
+          (b.park || []).forEach(function (code) { states.push({ code: code, state: "parked" }); results[code] = { ok: 1, parked: 1 }; });
+          (b.dismiss || []).forEach(function (code) { states.push({ code: code, state: "dismissed" }); results[code] = { ok: 1, dismissed: 1 }; });
+          var byCode = {}; (b.orders || []).forEach(function (o) { byCode[o.code] = o; }); states.forEach(function (s) { byCode[s.code] = Object.assign({}, byCode[s.code] || { code: s.code }, s); });
+          res = { ok: 1, results: results, stored: storeImports(Object.keys(byCode).map(function (k) { return byCode[k]; })) }; break;
+        case "saveDetails": res = upsert(b.key, b.details || {}); break;
+        default: throw new Error("unknown action");
+      }
+      DemoAPI.save(); return res;
+    }
+  };
+
+  /* ------------------------------------------------------------------ data shaping */
+  function shape(data){
+    st.data = data; st.cadence = data.cadence || []; st.settings = data.settings || {}; st.tasks = data.tasks || []; st.imports = data.imports || [];
+    var q = /[?&]asof=(\d{4}-\d{2}-\d{2})/.exec(location.search); st.today = q ? q[1] : (data.today || Z.todayISO());
+    var seen = {};
+    st.cust = (data.customers || []).map(function (c) {
+      var parsed = Z.parseTag(c.tag), product = Z.normProduct(c.product) || (parsed && parsed.product) || "";
+      var base = Z.customerKey(c.phone, c.name), key = base;
+      if (seen[base]) key = base + "#" + (c.dep ? Z.yymmdd(c.dep) : c.coll ? Z.yymmdd(c.coll) : c.row);
+      seen[base] = 1;
+      return Object.assign({}, c, { key: key, base: base, names: Z.splitNames(c.name), product: product, phone: Z.normPhone(c.phone) || String(c.phone || "").trim(), exam: product === "Exam", parsed: parsed });
+    });
+    st.byKey = {}; st.cust.forEach(function (c) { st.byKey[c.key] = c; });
+    st.det = {}; (data.details || []).forEach(function (dd) { st.det[dd.key] = dd; });
+  }
+  function planOpts(){ return { today: st.today, goLive: st.settings.go_live || "", lateGraceWeeks: +(st.settings.late_grace_weeks || 1), foldDays: +(st.settings.overdue_fold_days || 14), cadenceTab: st.cadence, da: st.da }; }
+  function currentPlan(){ return Z.plan(st.cust, st.tasks, planOpts()); }
+  function detailsOf(c){ return st.det[c.key] || st.det[c.base] || {}; }
+  function fixes(c){
+    var f = [];
+    if (c.exam) return f;
+    if (!c.dep && !c.coll) f.push("nodates");
+    if (!c.tag) f.push("notag"); else if (!c.parsed) f.push("badtag");
+    if (!c.phone) f.push("nophone");
+    if (!c.product) f.push("noprod");
+    if (c.coll && c.coll > st.today) f.push("future");
+    return f;
+  }
+  /* tag proposals: pending_tag from details, else N tag with a collected date */
+  function tagProposals(){
+    var out = [];
+    st.cust.forEach(function (c) {
+      var d = detailsOf(c), pending = (d.pending_tag || "").trim();
+      if (pending && pending !== c.tag) { out.push({ cust: c, from: c.tag, to: pending, why: /&/.test(pending) && !/&/.test(c.tag || "") ? "tWhySib" : "tWhyEdit", pending: true }); return; }
+      if (pending && pending === c.tag) return;                      /* "keep as is" */
+      if (c.parsed && c.parsed.yn === "N" && c.coll && c.product && c.product !== "Exam") {
+        var to = [(Z.PREFIX[c.product] || c.parsed.prefix) + "Y" + (c.parsed.second ? "&" + Z.PREFIX[c.parsed.second] + "Y" : ""), Z.yymmdd(c.coll), c.parsed.who, c.parsed.phone || c.phone].filter(Boolean).join(" ");
+        if (to !== c.tag) out.push({ cust: c, from: c.tag, to: to, why: "tWhyNY", pending: false });
+      }
+    });
+    return out;
+  }
+  function parkedImports(){ return st.imports.filter(function (i) { return i.state === "parked"; }); }
+
+  /* ------------------------------------------------------------------ chrome */
+  function applyGateLang(){
+    var t = T();
+    $("gTitle").textContent = t.brand; $("gateLede").textContent = t.glede; $("luser").textContent = t.luser; $("lpass").textContent = t.lpass;
+    $("demoBtn").textContent = t.demo; $("advSum").textContent = t.adv; $("lapi").textContent = t.lapi; $("apiHint").textContent = t.apiHint;
+    $("pickTitle").textContent = t.pickTitle; $("pickLede").textContent = t.pickLede;
+    var b = $("gateBtn"); if (!b.disabled) b.textContent = t.signin;
+    document.querySelectorAll("#gateLang button, #langseg button").forEach(function (x) { x.setAttribute("aria-pressed", String(x.dataset.l === st.lang)); });
+    document.body.className = st.lang === "zh" ? "lang-zh" : ""; document.documentElement.lang = st.lang;
+  }
+  function renderChrome(){
+    var t = T(), p = st.plan;
+    var counts = { tasks: p ? (p.tiles.today.due - p.tiles.today.done) + p.tiles.missed : 0, pending: st.cust.filter(function (c) { return c.dep && !c.coll && !c.exam; }).length, tags: tagProposals().length, legacy: parkedImports().length };
+    $("nav").innerHTML = ["tasks", "customers", "add", "pending", "tags", "import", "legacy"].map(function (r) {
+      return '<a href="#/' + r + '"' + (st.route === r ? ' aria-current="page"' : "") + ">" + esc(t.nav[r]) + (counts[r] ? '<span class="cn">' + counts[r] + "</span>" : "") + "</a>";
+    }).join("");
+    $("pgSub").innerHTML = esc(fill(t.sub, { c: st.clinic, d: st.da })) + " · " + esc(dmy(st.today));
+    $("whoami").innerHTML = '<button type="button" id="rlBtn">' + esc(t.reload) + '</button><button type="button" id="swBtn">' + esc(t.switchWho) + '</button><button type="button" id="soBtn">' + esc(t.signout) + "</button>";
+    $("soBtn").onclick = signOut; $("swBtn").onclick = showPick; $("rlBtn").onclick = function () { reload(); };
+    var f = $("feed"), m = st.feed.mode;
+    f.className = "feed " + (m === "live" ? "live" : m === "demo" ? "live" : m === "loading" ? "loading" : m === "failed" ? "failed" : "");
+    f.innerHTML = "<i></i>" + esc(m === "live" ? fill(t.feedLive, { t: st.feed.at }) : m === "demo" ? t.feedDemo : m === "loading" ? t.feedLoading : m === "failed" ? t.feedFailed : t.feedOffline);
+    $("foot").innerHTML = fill(t.foot, { v: VERSION });
+  }
+  function render(){
+    if (!st.session) return;
+    st.plan = currentPlan();
+    renderChrome();
+    var r = st.route, h = r === "customers" ? pageCustomers() : r === "add" ? pageAdd() : r === "pending" ? pagePending() : r === "tags" ? pageTags() : r === "import" ? pageImport() : r === "legacy" ? pageLegacy() : pageTasks();
+    $("app").innerHTML = h;
+    afterRender();
+    maybeConfetti();
+  }
+  function route(){ var m = /^#\/([a-z]+)/.exec(location.hash || ""); st.route = m ? m[1] : "tasks"; if (["tasks", "customers", "add", "pending", "tags", "import", "legacy"].indexOf(st.route) === -1) st.route = "tasks"; render(); window.scrollTo(0, 0); }
+
+  /* ------------------------------------------------------------------ shared pieces */
+  function section(title, hint, cnt){ return '<div class="sec"><h2>' + esc(title) + "</h2>" + (hint ? '<span class="hint">' + esc(hint) + "</span>" : "") + (cnt !== undefined && cnt !== "" ? '<span class="cnt">' + esc(cnt) + "</span>" : "") + "</div>"; }
+  function tile(cls, big, label, sub, frac){ return '<div class="stat ' + cls + '"><div class="sn">' + big + '</div><div class="sl">' + esc(label) + '</div><div class="sx">' + esc(sub) + "</div>" + (frac === null ? "" : '<div class="bar"><i style="width:' + Math.round(frac * 100) + '%"></i></div>') + "</div>"; }
+  function setupNotice(){ var t = T(); return '<div class="setup"><b>' + esc(t.setupTitle) + "</b><br>" + esc(t.noapi) + "</div>"; }
+  function custLabel(c){ return c.names.length > 1 ? c.names.join(" & ") : c.name; }
+
+  function cardsHtml(tasks, ctx){ return Z.mergeByContact(tasks).map(function (card, i) { return cardHtml(card, ctx + "-" + i); }).join(""); }
+  function cardHtml(card, id){
+    var t = T(), c0 = card.custs[0]; st.cards[id] = card;
+    var allDone = card.done, anyPartial = card.partial;
+    var one = card.custs.length === 1;
+    var meta = [tel(card.phone), one && c0.dep ? t.dep + " " + dm(c0.dep) : "", one && c0.coll ? t.coll + " " + dm(c0.coll) : "", '<span class="pill p-prod">' + esc(card.custs.map(function (c) { return prodLabel(c.product); }).filter(function (v, i, a) { return a.indexOf(v) === i; }).join(" + ")) + "</span>"].filter(Boolean);
+    var lines = card.tasks.map(function (tk, ti) {
+      var who = (one ? "" : esc(tk.cust.names[0] || tk.cust.name) + " · ") + esc(tk.stage);
+      var flags = (tk.daysOver ? '<span class="pill overflag">' + esc(fill(t.overdueBy, { n: tk.daysOver })) + "</span>" : "")
+        + (!tk.daysOver && tk.open > st.today ? '<span class="pill p-inert">' + esc(fill(t.opens, { d: dm(tk.open) })) + "</span>" : "")
+        + (!tk.daysOver && tk.open <= st.today && tk.due !== st.today ? '<span class="pill p-inert">' + esc(fill(t.dueOn, { d: dm(tk.due) })) + "</span>" : "")
+        + (tk.late ? '<span class="pill p-late">' + esc(t.late) + "</span>" : "") + (tk.touch !== "High" ? '<span class="pill p-low">' + esc(t.low) + "</span>" : "");
+      var bits = tk.done ? String(tk.done.bits || "") : "";
+      var items = tk.items.map(function (it, i) { return '<span class="it' + (bits.charAt(i) === "1" ? " on" : "") + '" data-act="item" data-card="' + id + '" data-task="' + ti + '" data-i="' + i + '">' + esc(itemLabel(it[0])) + "</span>"; }).join("");
+      return '<div class="line"><span class="who">' + who + "</span>" + flags + '<span class="items">' + items + "</span></div>";
+    }).join("");
+    return '<div class="card' + (allDone ? " done" : "") + '" id="' + id + '"><div class="pbar p-' + esc(c0.product) + '"></div><div class="main"><div class="tag">' + esc(card.tag || custLabel(c0)) + '</div><div class="meta">' + meta.join(" · ") + '</div><div class="lines">' + lines + "</div></div>"
+      + '<button type="button" class="check' + (allDone ? " on" : anyPartial ? " half" : "") + '" data-act="tick" data-card="' + id + '" aria-label="' + esc(allDone ? t.undo : t.sendBtn) + '">✓</button></div>';
+  }
+  function massHtml(g){
+    var t = T(), id = "g-" + g.key.replace(/[^a-z0-9]/gi, "_"); st.groups[id] = g;
+    var sel = st.ui.massSel[id] || {}, open = g.tasks.filter(function (x) { return !x.full; }), nsel = open.filter(function (x) { return sel[x.key + "|" + x.stage]; }).length;
+    var text = g.products.map(function (p) { return (g.products.length > 1 ? "<b>" + esc(prodLabel(p)) + ":</b> " : "") + esc(g.texts[p] || ""); }).join("<br>");
+    var chips = g.items.map(function (it) { return '<span class="it">' + esc(itemLabel(it[0])) + "</span>"; }).join(" ");
+    var h = '<div class="panel mass" id="' + id + '"><h3><div class="gtitle"><span class="gname">' + esc(g.stage) + " · " + esc(g.products.map(prodLabel).join(" + ")) + ' <span class="dsub">' + g.tasks.length + " " + esc(t.kh) + "</span></span>"
+      + '<span class="gtext">' + text + '</span><span class="items" style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px">' + chips + "</span></div>"
+      + '<div class="gtools"><button type="button" class="btn sm" data-act="copy-group" data-g="' + id + '">' + esc(t.copyNames) + "</button></div></h3>";
+    h += '<div class="ihead"><label><input type="checkbox" data-act="sel-all" data-g="' + id + '"' + (open.length && nsel === open.length ? " checked" : "") + (open.length ? "" : " disabled") + "> " + esc(t.selectAll) + '</label><span class="cnt">' + g.done + "/" + g.tasks.length + " " + esc(t.stSent) + "</span></div>";
+    g.tasks.forEach(function (x) {
+      var k = x.key + "|" + x.stage;
+      h += '<div class="mrow' + (x.full ? " done" : "") + '"><input type="checkbox" data-act="sel" data-g="' + id + '" data-k="' + esc(k) + '"' + (x.full ? " disabled" : "") + (sel[k] && !x.full ? " checked" : "") + '><span class="prodchip">' + esc(prodLabel(x.product)) + "</span>"
+        + '<span><div class="tag">' + esc(x.cust.tag || custLabel(x.cust)) + '</div><div class="meta">' + [x.cust.phone, x.cust.coll ? t.coll + " " + dm(x.cust.coll) : "", t.dueOn.replace("{d}", dm(x.due))].filter(Boolean).map(esc).join(" · ") + (x.late ? ' · <span class="pill p-late">' + esc(t.late) + "</span>" : "") + "</div></span>"
+        + (x.done ? '<button type="button" class="btn sm" data-act="undo-one" data-k="' + esc(k) + '">' + esc(t.undo) + (x.partial ? " ½" : "") + "</button>" : "<span></span>") + "</div>";
+    });
+    h += '<div class="mfoot"><button type="button" class="btn good" data-act="send-group" data-g="' + id + '"' + (nsel ? "" : " disabled") + ">" + esc(fill(t.markSent, { n: nsel })) + '</button><span class="cnt">' + esc(open.length ? fill(t.sendTo, { n: open.length }) : t.massDone) + "</span></div></div>";
+    return h;
+  }
+
+  /* ------------------------------------------------------------------ page: tasks */
+  function pageTasks(){
+    var t = T(), p = st.plan, h = "";
+    st.cards = {}; st.groups = {};
+    if (!st.demo && !apiUrl()) h += setupNotice();
+    var td = p.tiles.today, m = p.tiles.mass;
+    h += '<div class="tiles">' + tile(td.due ? (td.done === td.due ? "ok" : "acc") : "", td.done + "<small>/" + td.due + "</small>", t.tToday, fill(t.tTodayX, { d: td.done, n: td.due }), td.due ? td.done / td.due : 0)
+      + tile(p.tiles.missed ? "bad" : "ok", String(p.tiles.missed), t.tMissed, t.tMissedX, null)
+      + tile(m.groups ? (m.groupsDone === m.groups ? "ok" : "warn") : "", m.groupsDone + "<small>/" + m.groups + "</small>", t.tMass, fill(t.tMassX, { g: m.groupsDone, G: m.groups, p: m.peopleDone, P: m.people }), m.people ? m.peopleDone / m.people : 0) + "</div>";
+    if (p.overdue.length) {
+      h += '<button type="button" class="band" data-act="toggle-overdue"><span class="bn">' + p.overdue.length + '</span><span><div class="bt">' + esc(t.secOverdue) + '</div><div class="bs">' + esc(t.overdueHint) + (p.tiles.missedMass ? " · " + p.tiles.missedMass + " " + esc(t.missedMass) : "") + '</div></span><span class="chev">' + (st.ui.overdueOpen ? "▲" : "▼") + "</span></button>";
+      if (st.ui.overdueOpen) h += '<div class="panel">' + cardsHtml(p.overdueRecent, "over") + (p.overdueOld.length ? (st.ui.foldOpen ? cardsHtml(p.overdueOld, "overold") + '<button type="button" class="more" data-act="fold">' + esc(t.hideOlder) + "</button>" : '<button type="button" class="more" data-act="fold">' + esc(fill(t.showOlder, { n: p.overdueOld.length })) + "</button>") : "") + "</div>";
+    } else h += '<div class="band ok"><span class="bn">0</span><span><div class="bt">' + esc(t.secOverdue) + '</div><div class="bs">' + esc(t.nothingOver) + "</div></span></div>";
+    var open = p.dueToday.filter(function (x) { return !x.full; }), done = p.dueToday.filter(function (x) { return x.full; });
+    h += section(t.secToday, t.todayHint, p.dueToday.length ? td.done + "/" + td.due : "");
+    h += '<div class="panel">' + (open.length ? cardsHtml(open, "today") : '<div class="empty' + (p.dueToday.length ? " good" : "") + '">' + esc(p.dueToday.length ? t.perfect : t.nothingToday) + "</div>") + (done.length ? '<div class="grpd">' + esc(t.secDone) + "</div>" + cardsHtml(done, "todaydone") : "") + "</div>";
+    h += section(t.secUp, t.upHint, p.upcoming.reduce(function (n, u) { return n + u.tasks.length; }, 0) || "");
+    h += '<div class="panel">' + (p.upcoming.length ? p.upcoming.map(function (u, i) { return '<div class="grpd">' + esc(dayName(u.day)) + "</div>" + cardsHtml(u.tasks, "up" + i); }).join("") : '<div class="empty">' + esc(t.nothingUp) + "</div>") + "</div>";
+    h += section(t.secMass, t.massHint, m.groups ? m.peopleDone + "/" + m.people : "");
+    if (!p.mass.length) h += '<div class="panel"><div class="empty">' + esc(t.nothingMass) + "</div></div>"; else p.mass.forEach(function (g) { h += massHtml(g); });
+    return h;
+  }
+
+  /* ------------------------------------------------------------------ page: customers */
+  function pageCustomers(){
+    var t = T(), q = Z.normName(st.ui.search), f = st.ui.cfilter;
+    var list = st.cust.filter(function (c) {
+      if (f === "fix") { if (!fixes(c).length) return false; }
+      else if (f === "notag") { if (c.tag) return false; }
+      else if (f !== "all" && c.product !== f) return false;
+      if (q) { var hay = Z.normName(c.name + " " + c.tag + " " + c.phone + " " + (detailsOf(c).parent_name || "")); if (hay.indexOf(q) === -1 && String(c.phone).indexOf(st.ui.search.trim()) === -1) return false; }
+      return true;
+    }).sort(function (a, b) { return b.row - a.row; });
+    var chips = [["all", t.fAll], ["MC", "MC"], ["Kính", prodLabel("Kính")], ["OK", prodLabel("OK")], ["Atropine", prodLabel("Atropine")], ["Exam", t.fExam], ["fix", t.fFix], ["notag", t.fNoTag]];
+    var nfix = st.cust.filter(function (c) { return fixes(c).length; }).length;
+    var h = '<input type="search" class="search" id="custSearch" placeholder="' + esc(t.search) + '" value="' + esc(st.ui.search) + '">';
+    h += '<div class="panel"><div class="chips">' + chips.map(function (c) { return '<button type="button" data-act="cfilter" data-f="' + c[0] + '" aria-pressed="' + (f === c[0]) + '">' + esc(c[1]) + (c[0] === "fix" && nfix ? ' <span class="cn">' + nfix + "</span>" : "") + "</button>"; }).join("") + '<span class="cnt">' + esc(fill(t.showing, { a: list.length, b: st.cust.length })) + "</span></div>";
+    if (!list.length) h += '<div class="empty">' + esc(t.noCust) + "</div>";
+    list.slice(0, 300).forEach(function (c) {
+      var fx = fixes(c);
+      h += '<div class="lrow" data-act="open-cust" data-key="' + esc(c.key) + '"><div><div class="nm">' + esc(custLabel(c)) + (c.tag ? ' <span class="mono" style="font-weight:400;color:var(--muted);font-size:.78rem">' + esc(c.tag) + "</span>" : "") + '</div><div class="meta">' + [c.phone, prodLabel(c.product), c.dep ? t.dep + " " + dm(c.dep) : "", c.coll ? t.coll + " " + dm(c.coll) : t.lNoColl].filter(Boolean).map(esc).join(" · ") + "</div></div>"
+        + '<div class="right">' + (fx.length ? '<span class="pill p-bad">' + fx.length + " " + esc(t.fFix.toLowerCase()) + "</span>" : "#" + esc(c.stt || c.row)) + "</div></div>";
+    });
+    if (list.length > 300) h += '<div class="empty">' + esc(fill(t.showing, { a: 300, b: list.length })) + "</div>";
+    return h + "</div>";
+  }
+  function timelineHtml(c){
+    var t = T(), idx = Z.doneIndex(st.tasks), ms = Z.milestones(c, { goLive: "", cadenceTab: st.cadence });
+    if (!ms.length) return "";
+    return '<h3 style="margin:14px 0 4px;font-size:.9rem">' + esc(t.timeline) + '</h3><div class="tl">' + ms.map(function (m) {
+      var d = idx[c.key + "|" + m.stage], done = d && !d.undone_at, cls, lab;
+      if (done) { cls = +d.score === 0.5 ? "partial" : "sent"; lab = +d.score === 0.5 ? t.stPartial : t.stSent; }
+      else if (m.due < st.today) { cls = "missed"; lab = t.stMissed; }
+      else if (m.open <= st.today) { cls = "today"; lab = m.due === st.today ? t.stToday : t.stOpen; }
+      else { cls = ""; lab = t.stUp; }
+      return '<div class="tr ' + cls + '"><i></i><span>' + esc(m.stage) + ' <span class="pill ' + (m.touch === "High" ? "p-high" : "p-low") + '">' + esc(m.touch === "High" ? t.high : t.low) + "</span> " + m.items.map(function (it) { return esc(itemLabel(it[0])); }).join(", ") + '</span><span class="d">' + esc(dm(m.due)) + " · " + esc(lab) + "</span></div>";
+    }).join("") + "</div>";
+  }
+  function custSheetHtml(c, editing){
+    var t = T(), d = detailsOf(c), fx = fixes(c), pending = (d.pending_tag || "").trim();
+    var h = "<h2>" + esc(custLabel(c)) + '</h2><div class="sub">' + esc(t.lRow + " " + (c.stt || c.row) + " · " + prodLabel(c.product) + " · " + c.da) + "</div>";
+    if (fx.length) h += '<div class="setup" style="margin-top:10px">' + fx.map(function (k) { return esc(t.fix[k]); }).join("<br>") + "</div>";
+    if (pending && pending !== c.tag) h += '<div class="note" style="margin-top:10px"><p><b>' + esc(t.pendingTag) + ":</b> " + esc(pending) + "</p></div>";
+    if (!editing) {
+      h += '<dl class="kv"><dt>' + esc(t.lTag) + '</dt><dd class="mono">' + esc(c.tag || "—") + "</dd><dt>" + esc(t.lPhone) + "</dt><dd>" + (tel(c.phone) || "—") + "</dd><dt>" + esc(t.lDep) + "</dt><dd>" + esc(dmy(c.dep) || "—") + "</dd><dt>" + esc(t.lColl) + "</dt><dd>" + esc(dmy(c.coll) || "—") + "</dd>"
+        + "<dt>" + esc(t.lStatus) + "</dt><dd>" + esc(c.status || "—") + "</dd><dt>" + esc(t.lDob) + "</dt><dd>" + esc(dmy(c.dob) || "—") + "</dd><dt>" + esc(t.lParent) + "</dt><dd>" + esc([d.parent_name, d.relation].filter(Boolean).join(" · ") || "—") + "</dd><dt>" + esc(t.lGender) + "</dt><dd>" + esc(t.genders[d.gender] || d.gender || "—") + "</dd>"
+        + (c.kid2 ? "<dt>" + esc(t.lKid2) + "</dt><dd>" + esc(c.kid2) + "</dd>" : "") + "<dt>" + esc(t.lNote) + "</dt><dd>" + esc(c.note || "—") + "</dd></dl>";
+      h += '<div class="acts" style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn primary" data-act="edit-cust" data-key="' + esc(c.key) + '">' + esc(t.edit) + "</button></div>";
+      h += timelineHtml(c);
+    } else {
+      var rel = d.relation || "", relKnown = Z.RELATIONS.indexOf(rel) !== -1 || !rel;
+      h += '<form id="custForm" data-key="' + esc(c.key) + '"><div class="row2"><div class="field"><label>' + esc(t.lDep) + '</label><input type="date" name="dep" value="' + esc(c.dep) + '"></div><div class="field"><label>' + esc(t.lColl) + '</label><input type="date" name="coll" value="' + esc(c.coll) + '"></div></div>'
+        + '<div class="row2"><div class="field"><label>' + esc(t.lProduct) + '</label><select name="product">' + Z.PRODUCTS.map(function (p) { return '<option value="' + p + '"' + (c.product === p ? " selected" : "") + ">" + esc(prodLabel(p)) + "</option>"; }).join("") + '</select></div><div class="field"><label>' + esc(t.lPhone) + '</label><input type="tel" name="phone" value="' + esc(c.phone) + '"></div></div>'
+        + '<div class="field"><label>' + esc(t.lTag) + '</label><input type="text" name="tag" value="' + esc(pending && pending !== c.tag ? pending : c.tag) + '"><p class="hint">' + esc(t.tagChangeNote) + "</p></div>"
+        + '<div class="row2"><div class="field"><label>' + esc(t.lParent) + '</label><input type="text" name="parent_name" value="' + esc(d.parent_name || "") + '"></div><div class="field"><label>' + esc(t.lRel) + '</label><select name="relation">' + ['<option value="">—</option>'].concat(Z.RELATIONS.map(function (r) { return '<option value="' + esc(r) + '"' + (rel === r ? " selected" : "") + ">" + esc(r === "Khác" ? t.other : r) + "</option>"; })).join("") + (relKnown ? "" : '<option value="' + esc(rel) + '" selected>' + esc(rel) + "</option>") + "</select></div></div>"
+        + '<div class="row2"><div class="field"><label>' + esc(t.lGender) + '</label><select name="gender">' + ["", "Nam", "Nữ"].map(function (g) { return '<option value="' + g + '"' + ((d.gender || "") === g ? " selected" : "") + ">" + esc(t.genders[g]) + "</option>"; }).join("") + '</select></div><div class="field"><label>' + esc(t.lDob) + '</label><input type="date" name="dob" value="' + esc(c.dob) + '"></div></div>'
+        + '<div class="field"><label>' + esc(t.lNote) + '</label><textarea name="note">' + esc(c.note) + "</textarea></div>"
+        + '<div style="display:flex;gap:8px"><button type="submit" class="btn primary">' + esc(t.save) + '</button><button type="button" class="btn" data-act="open-cust" data-key="' + esc(c.key) + '">' + esc(t.cancel) + "</button></div></form>";
+    }
+    return h;
+  }
+  function openSheet(html){ $("sheetBody").innerHTML = html; $("sheet").classList.remove("gone"); document.body.style.overflow = "hidden"; }
+  function closeSheet(){ $("sheet").classList.add("gone"); document.body.style.overflow = ""; st.ui.sheetKey = ""; }
+
+  /* ------------------------------------------------------------------ page: add */
+  function newAddForm(pre){
+    var f = { child: "", gender: "", parent: "", relation: "Mẹ", relText: "", dob: "", dep: st.today, depNA: false, coll: "", product: "", tag: "", tagManual: false, noZalo: false, note: "", code: "", allowDuplicate: false, key: "", phone: "", sibling: "" };
+    if (pre) Object.keys(pre).forEach(function (k) { f[k] = pre[k]; });
+    f.tag = f.tagManual ? f.tag : suggest(f);
+    return f;
+  }
+  function suggest(f){
+    var prod = f.depNA ? "Exam" : f.product;
+    return Z.suggestTag({ product: prod, dep: f.depNA ? "" : f.dep, coll: f.depNA ? "" : f.coll, relation: f.relation, relationText: f.relText, child: f.child, phone: f.phone, date: st.today });
+  }
+  function pageAdd(){
+    var t = T();
+    if (st.ui.addDone) {
+      var dn = st.ui.addDone;
+      return '<div class="panel donecard"><div class="big">' + (dn.parked ? "📥" : "✅") + "</div><h2>" + esc(dn.parked ? t.aParked : t.aRecorded) + "</h2><p>" + esc(fill(dn.parked ? t.aParkedX : t.aRecordedX, { n: dn.name, r: dn.row })) + '</p><div class="acts"><button type="button" class="btn primary" data-act="add-another">' + esc(t.aAnother) + '</button><a class="btn" href="#/tasks">' + esc(t.aBack) + "</a></div></div>";
+    }
+    if (!st.ui.addForm) st.ui.addForm = newAddForm(st.ui.addPrefill); st.ui.addPrefill = null;
+    var f = st.ui.addForm, dup = !f.allowDuplicate && f.child && st.cust.filter(function (c) { return c.base === Z.customerKey(f.phone, f.child); })[0];
+    function opts(name, list, val, labels){ return '<div class="opts">' + list.map(function (v) { return '<button type="button" data-act="add-opt" data-name="' + name + '" data-v="' + esc(v) + '" aria-pressed="' + (val === v) + '">' + esc(labels ? labels(v) : v) + "</button>"; }).join("") + "</div>"; }
+    var h = '<div class="panel"><h3>' + esc(t.addTitle) + (f.code ? ' <span class="hint">' + esc(f.code) + "</span>" : "") + '</h3><form id="addForm" class="pad" autocomplete="off">';
+    h += '<div class="row2"><div class="field' + (f.err && f.err.child ? " err" : "") + '"><label>' + esc(t.aChild) + ' <span class="req">*</span></label><input type="text" name="child" value="' + esc(f.child) + '"></div><div class="field"><label>' + esc(t.aGender) + "</label>" + opts("gender", ["Nam", "Nữ"], f.gender, function (v) { return t.genders[v]; }) + "</div></div>";
+    h += '<div class="row2"><div class="field' + (f.err && f.err.parent ? " err" : "") + '"><label>' + esc(t.aParent) + ' <span class="req">*</span></label><input type="text" name="parent" value="' + esc(f.parent) + '"></div><div class="field"><label>' + esc(t.lPhone) + ' <span class="req">*</span></label><input type="tel" name="phone" value="' + esc(f.phone) + '"' + (f.err && f.err.phone ? ' class="bad"' : "") + "></div></div>";
+    h += '<div class="field"><label>' + esc(t.aRel) + "</label>" + opts("relation", Z.RELATIONS, f.relation, function (v) { return v === "Khác" ? t.other : v; }) + (f.relation === "Khác" ? '<input type="text" name="relText" style="margin-top:8px" placeholder="' + esc(t.relText) + '" value="' + esc(f.relText) + '">' : "") + "</div>";
+    h += '<div class="row2"><div class="field"><label>' + esc(t.aDob) + '</label><input type="date" name="dob" value="' + esc(f.dob) + '"></div><div class="field' + (f.err && f.err.dep ? " err" : "") + '"><label>' + esc(t.aDep) + ' <span class="req">*</span></label><input type="date" name="dep" value="' + esc(f.dep) + '"' + (f.depNA ? " disabled" : "") + '><label style="display:flex;gap:6px;align-items:center;margin-top:6px;text-transform:none;letter-spacing:0;font-family:inherit;font-size:.82rem"><input type="checkbox" name="depNA"' + (f.depNA ? " checked" : "") + "> " + esc(t.aNA) + "</label></div></div>";
+    h += '<div class="row2"><div class="field"><label>' + esc(t.aColl) + '</label><input type="date" name="coll" value="' + esc(f.coll) + '"' + (f.depNA ? " disabled" : "") + '></div><div class="field' + (f.err && f.err.product ? " err" : "") + '"><label>' + esc(t.aProduct) + ' <span class="req">*</span></label>' + opts("product", Z.PRODUCTS, f.depNA ? "Exam" : f.product, prodLabel) + "</div></div>";
+    h += '<div class="field' + (f.err && f.err.tag ? " err" : "") + '"><label>' + esc(t.aTag) + ' <span class="req">*</span></label><input type="text" name="tag" value="' + esc(f.tag) + '"' + (f.noZalo ? " disabled" : "") + '><p class="hint">' + esc(t.aTagHint) + '</p><label style="display:flex;gap:6px;align-items:center;margin-top:6px;text-transform:none;letter-spacing:0;font-family:inherit;font-size:.82rem"><input type="checkbox" name="noZalo"' + (f.noZalo ? " checked" : "") + "> " + esc(t.aNoZalo) + "</label></div>";
+    h += '<div class="field"><label>' + esc(t.aNote) + '</label><input type="text" name="note" value="' + esc(f.note) + '"></div>';
+    if (f.sibling) h += '<p class="hint">' + esc(fill(t.iSibling, { n: f.sibling })) + "</p>";
+    if (dup) h += '<div class="setup">' + esc(fill(t.dupWarn, { r: dup.stt || dup.row })) + "</div>";
+    h += '<button type="submit" class="btn primary block" id="addSubmit"' + (st.busy ? " disabled" : "") + ">" + esc(st.busy ? t.aSubmitting : t.aSubmit) + "</button></form></div>";
+    return h;
+  }
+  function readAddForm(){
+    var form = $("addForm"), f = st.ui.addForm; if (!form) return f;
+    ["child", "parent", "phone", "relText", "dob", "dep", "coll", "tag", "note"].forEach(function (k) { var el = form.elements[k]; if (el) f[k] = el.value; });
+    f.depNA = !!form.elements.depNA.checked; f.noZalo = !!form.elements.noZalo.checked;
+    return f;
+  }
+  function submitAdd(){
+    var t = T(), f = readAddForm(); f.err = {};
+    f.child = Z.cleanCell(f.child); f.parent = Z.cleanCell(f.parent); f.phone = Z.normPhone(f.phone) || f.phone.trim();
+    var product = f.depNA ? "Exam" : f.product;
+    if (!f.child) f.err.child = 1; if (!f.parent) f.err.parent = 1; if (!product) f.err.product = 1; if (!f.phone) f.err.phone = 1;
+    if (!f.depNA && !f.dep) f.err.dep = 1; if (!f.noZalo && !f.tag.trim()) f.err.tag = 1;
+    if (Object.keys(f.err).length) { render(); toast(T().req, true); return; }
+    st.busy = true; render();
+    var p;
+    if (f.noZalo) {
+      var code = f.code || ("MAN-" + Date.now());
+      p = apiPost({ action: "storeImports", orders: [{ code: code, deposit: f.depNA ? "" : f.dep, appointment: f.coll, status: f.coll ? "DONE" : "", name: f.child, phone: f.phone, lens: "", product: product, state: "parked", result: f.code ? "" : "manual", collected: f.coll }] })
+        .then(function () { st.ui.addDone = { parked: true, name: f.child }; });
+    } else {
+      var fields = { name: f.child, phone: f.phone, product: product, tag: f.tag.trim(), dep: f.depNA ? "" : f.dep, coll: f.depNA ? "" : f.coll, dob: f.dob, note: f.note, da: st.da, kid2: f.kid2 || "" };
+      if (f.allowDuplicate) { fields.allowDuplicate = true; fields.key = f.key || (Z.customerKey(f.phone, f.child) + "#" + Z.yymmdd(f.dep || st.today)); }
+      var details = { parent_name: f.parent, relation: f.relation === "Khác" ? f.relText : f.relation, gender: f.gender };
+      p = apiPost({ action: "addCustomer", fields: fields, details: details }).then(function (res) {
+        st.ui.addDone = { parked: false, name: f.child, row: res.row };
+        if (f.code) return apiPost({ action: "storeImports", orders: [{ code: f.code, state: "confirmed", result: "added:" + res.key, collected: fields.coll, product: product }] });
+      });
+    }
+    p.then(function () { return reload(true); }).then(function () { st.busy = false; st.ui.addForm = null; render(); })
+      .catch(function (e) { st.busy = false; render(); toast(fill(t.errToast, { e: e.message }), true); });
+  }
+
+  /* ------------------------------------------------------------------ page: pending collection */
+  function expectedFor(c){
+    var hit = st.imports.filter(function (i) { return i.status && i.status !== "DONE" && i.appointment && Z.normPhone(i.phone) === c.phone && c.names.some(function (n) { return Z.normName(n) === Z.normName(i.name); }); })[0];
+    return hit ? Z.toISO(hit.appointment) : "";
+  }
+  function pagePending(){
+    var t = T(), list = st.cust.filter(function (c) { return c.dep && !c.coll && !c.exam; }).sort(function (a, b) { return a.dep < b.dep ? -1 : a.dep > b.dep ? 1 : 0; });
+    var h = '<div class="panel"><h3>' + esc(t.pTitle) + ' <span class="hint">' + esc(t.pHint) + " · " + list.length + "</span></h3>";
+    if (!list.length) h += '<div class="empty">' + esc(t.pNone) + "</div>";
+    list.forEach(function (c) {
+      var ex = expectedFor(c), id = "p-" + c.row;
+      h += '<div class="prow" id="' + id + '"><div><div class="nm" style="font-weight:600">' + esc(custLabel(c)) + ' <span class="mono" style="font-weight:400;color:var(--muted);font-size:.78rem">' + esc(c.tag) + '</span></div><div class="meta" style="font-size:.76rem;color:var(--muted)">' + [c.phone, prodLabel(c.product), t.dep + " " + dm(c.dep), ex ? fill(t.pExpected, { d: dm(ex) }) : ""].filter(Boolean).map(esc).join(" · ") + "</div></div>"
+        + '<div class="act"><label style="display:flex;gap:6px;align-items:center;font-size:.84rem"><input type="checkbox" data-act="p-check" data-row="' + c.row + '"> ' + esc(t.pCollected) + '</label><input type="date" data-pdate="' + c.row + '" value="' + esc(ex && ex <= st.today ? ex : st.today) + '" max="' + esc(st.today) + '" min="' + esc(c.dep) + '"><button type="button" class="btn primary sm" data-act="p-submit" data-key="' + esc(c.key) + '" disabled>' + esc(t.pSubmit) + "</button></div></div>";
+    });
+    return h + "</div>";
+  }
+
+  /* ------------------------------------------------------------------ page: tag updates */
+  function pageTags(){
+    var t = T(), list = tagProposals();
+    var h = '<div class="panel"><h3>' + esc(t.tTitle) + ' <span class="hint">' + esc(t.tHint) + "</span></h3>";
+    if (!list.length) h += '<div class="empty">' + esc(t.tNone) + "</div>";
+    list.forEach(function (p) {
+      h += '<div class="tagup"><div style="font-weight:600">' + esc(custLabel(p.cust)) + ' <span class="hint">' + esc(t[p.why]) + '</span></div><div class="old">' + esc(p.from || "—") + '</div><div class="new">' + esc(p.to) + '</div><div class="act"><button type="button" class="btn sm" data-act="tag-copy" data-tag="' + esc(p.to) + '">' + esc(t.tCopy) + '</button><button type="button" class="btn good sm" data-act="tag-confirm" data-key="' + esc(p.cust.key) + '" data-tag="' + esc(p.to) + '">' + esc(t.tConfirm) + '</button><button type="button" class="btn sm" data-act="tag-skip" data-key="' + esc(p.cust.key) + '">' + esc(t.tSkip) + "</button></div></div>";
+    });
+    return h + "</div>";
+  }
+
+  /* ------------------------------------------------------------------ page: import */
+  function pageImport(){
+    var t = T(), imp = st.ui.imp, step = st.ui.importStep;
+    var h = '<div class="steps">' + t.iSteps.map(function (s, i) { return '<span class="' + (i === step ? "on" : i < step ? "done" : "") + '">' + (i + 1) + " · " + esc(s) + "</span>"; }).join("") + "</div>";
+    if (step === 0) {
+      h += '<div class="panel"><h3>' + esc(t.iTitle) + ' <span class="hint">' + esc(t.iHint) + '</span></h3><div class="pad">'
+        + '<label class="drop" id="drop"><input type="file" id="impFile" accept=".xlsx,.xls,.csv">' + esc(st.ui.impStatus || t.iDrop) + "</label>"
+        + '<div class="row2" style="margin-top:14px"><div class="field"><label>' + esc(t.iFrom) + '</label><input type="date" id="impFrom" value="' + esc(st.ui.impFrom || "") + '"></div><div class="field"><label>' + esc(t.iTo) + '</label><input type="date" id="impTo" value="' + esc(st.ui.impTo || "") + '"></div></div><p class="hint">' + esc(t.iRangeHint) + " " + esc(fill(t.iCutoff, { d: dmy(st.settings.import_cutoff || "") })) + "</p>"
+        + (st.ui.impError ? '<div class="setup">' + esc(st.ui.impError) + "</div>" : "") + "</div></div>";
+      return h;
+    }
+    if (step === 2) {
+      var r = st.ui.impResult;
+      return h + '<div class="panel donecard"><div class="big">📄</div><h2>' + esc(t.iDone) + "</h2><p>" + esc(fill(t.iDoneX, r)) + "</p>" + (r.errors.length ? '<div class="setup" style="text-align:left">' + r.errors.map(esc).join("<br>") + "</div>" : "") + '<div class="acts"><button type="button" class="btn primary" data-act="imp-reset">' + esc(t.iAgain) + '</button><a class="btn" href="#/tasks">' + esc(t.iToTasks) + "</a></div></div>";
+    }
+    h += '<div class="note"><p>' + esc(fill(t.iFound, { n: imp.orders.length, s: imp.sheetName, c: imp.skipped, d: dmy(st.settings.import_cutoff || "") })) + "</p></div>";
+    var sel = imp.sel, nsel = Object.keys(sel).filter(function (k) { return sel[k]; }).length;
+    function head(title, hint, codes, withAll){ var all = codes.length && codes.every(function (c) { return sel[c]; }); return "<h3>" + esc(title) + ' <span class="hint">' + esc(hint) + "</span></h3>" + (withAll ? '<div class="ihead"><label><input type="checkbox" data-act="imp-selall" data-codes="' + esc(codes.join(",")) + '"' + (all ? " checked" : "") + "> " + esc(t.selectAll) + '</label><span class="cnt">' + codes.length + "</span></div>" : ""); }
+    /* new entries */
+    var news = imp.groups.new;
+    h += '<div class="panel">' + head(t.iNew, t.iNewHint, news.map(function (o) { return o.code; }), true);
+    if (!news.length) h += '<div class="empty">—</div>';
+    news.forEach(function (o) {
+      var e = imp.edits[o.code], m = o.match;
+      h += '<div class="irow"><input type="checkbox" data-act="imp-sel" data-code="' + esc(o.code) + '"' + (sel[o.code] ? " checked" : "") + '><div><div class="nm">' + esc(o.name || "?") + ' <span class="mono" style="font-weight:400;color:var(--muted);font-size:.78rem">' + esc(o.code) + "</span></div>"
+        + '<div class="meta">' + [o.phone, o.lens || "—", t.dep + " " + dm(o.dep), o.collected ? t.coll + " " + dm(o.collected) : (o.expected ? esc(o.status) + " · " + dm(o.expected) : o.status)].filter(Boolean).map(esc).join(" · ")
+        + (m.kind === "sibling" ? ' · <span class="pill p-warn">' + esc(fill(t.iSibling, { n: custLabel(m.cust) })) + "</span>" : "") + (o.seen === "seen" ? ' · <span class="pill p-inert">' + esc(t.iSeen) + "</span>" : "") + (o.futureDone ? ' · <span class="pill p-bad">' + esc(t.iFuture) + "</span>" : "") + "</div>"
+        + '<div class="edit"><div><label>' + esc(t.aChild) + '</label><input type="text" data-imp="child" data-code="' + esc(o.code) + '" value="' + esc(e.child) + '"' + (e.child ? "" : ' class="bad"') + "></div>"
+        + "<div><label>" + esc(t.aParent) + '</label><input type="text" data-imp="parent" data-code="' + esc(o.code) + '" value="' + esc(e.parent) + '"></div>'
+        + "<div><label>" + esc(t.aRel) + '</label><select data-imp="relation" data-code="' + esc(o.code) + '">' + Z.RELATIONS.map(function (r) { return '<option value="' + esc(r) + '"' + (e.relation === r ? " selected" : "") + ">" + esc(r === "Khác" ? t.other : r) + "</option>"; }).join("") + "</select></div>"
+        + "<div><label>" + esc(t.aProduct) + '</label><select data-imp="product" data-code="' + esc(o.code) + '"' + (e.product ? "" : ' class="bad"') + '><option value="">' + esc(t.iPick) + "</option>" + Z.PRODUCTS.map(function (p) { return '<option value="' + p + '"' + (e.product === p ? " selected" : "") + ">" + esc(prodLabel(p)) + "</option>"; }).join("") + "</select></div>"
+        + "<div><label>" + esc(t.lPhone) + '</label><input type="tel" data-imp="phone" data-code="' + esc(o.code) + '" value="' + esc(e.phone) + '"></div>'
+        + "<div><label>" + esc(t.aDep) + '</label><input type="date" data-imp="dep" data-code="' + esc(o.code) + '" value="' + esc(e.dep) + '"></div>'
+        + "<div><label>" + esc(t.aColl) + '</label><input type="date" data-imp="coll" data-code="' + esc(o.code) + '" value="' + esc(e.coll) + '"></div>'
+        + '<div class="tagline"><label>' + esc(t.aTag) + '</label><input type="text" data-imp="tag" data-code="' + esc(o.code) + '" value="' + esc(e.tag) + '"' + (e.tag ? "" : ' class="bad"') + "></div></div></div></div>";
+    });
+    h += "</div>";
+    /* collection updates */
+    var colls = imp.groups.coll;
+    h += '<div class="panel">' + head(t.iColl, t.iCollHint, colls.map(function (o) { return o.code; }), true);
+    if (!colls.length) h += '<div class="empty">—</div>';
+    colls.forEach(function (o) {
+      var e = imp.edits[o.code], c = o.match.cust;
+      h += '<div class="irow"><input type="checkbox" data-act="imp-sel" data-code="' + esc(o.code) + '"' + (sel[o.code] ? " checked" : "") + '><div><div class="nm">' + esc(custLabel(c)) + ' <span class="mono" style="font-weight:400;color:var(--muted);font-size:.78rem">' + esc(c.tag) + "</span></div>"
+        + '<div class="meta">' + [c.phone, prodLabel(c.product), t.dep + " " + dm(c.dep || o.dep), o.lens].filter(Boolean).map(esc).join(" · ") + (o.match.checkphone ? ' · <span class="pill p-warn">' + esc(fill(t.iCheckPhone, { p: o.phone })) + "</span>" : "") + (o.futureDone ? ' · <span class="pill p-bad">' + esc(t.iFuture) + "</span>" : "") + "</div>"
+        + '<div class="edit"><div><label>' + esc(t.aColl) + '</label><input type="date" data-imp="coll" data-code="' + esc(o.code) + '" value="' + esc(e.coll) + '" max="' + esc(st.today) + '"></div></div></div></div>';
+    });
+    h += "</div>";
+    /* repeats and info */
+    if (imp.groups.repeat.length) {
+      h += '<div class="panel">' + head(t.iRepeat, t.iRepeatHint, [], false);
+      imp.groups.repeat.forEach(function (o) { h += '<div class="irow"><span></span><div><div class="nm">' + esc(custLabel(o.match.cust)) + '</div><div class="meta">' + [o.code, o.phone, o.lens, t.dep + " " + dm(o.dep), o.collected ? t.coll + " " + dm(o.collected) : o.status, t.coll + " " + dm(o.match.cust.coll) + " (CRM)"].filter(Boolean).map(esc).join(" · ") + "</div></div></div>"; });
+      h += "</div>";
+    }
+    h += '<div class="panel"><h3>' + esc(t.iInfo) + ' <span class="hint">' + esc(t.iInfoHint) + " · " + imp.groups.info.length + "</span></h3></div>";
+    h += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 30px"><button type="button" class="btn primary" id="impSubmit" data-act="imp-submit"' + (nsel && !st.busy ? "" : " disabled") + ">" + esc(st.busy ? t.iSubmitting : fill(t.iConfirm, { n: nsel })) + '</button><button type="button" class="btn" data-act="imp-reset">' + esc(t.iAgain) + "</button></div>";
+    return h;
+  }
+  function impCount(){ var b = $("impSubmit"); if (!b || !st.ui.imp) return; var n = Object.keys(st.ui.imp.sel).filter(function (k) { return st.ui.imp.sel[k]; }).length; b.disabled = !n || st.busy; b.textContent = fill(T().iConfirm, { n: n }); }
+  var XLSX_SRC = ["https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js", "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"];
+  function loadScript(list){ return new Promise(function (res, rej) { if (window.XLSX) return res(); var i = 0; (function next() { if (i >= list.length) return rej(new Error("Excel reader could not be loaded (no internet?)")); var s = document.createElement("script"); s.src = list[i++]; s.onload = res; s.onerror = next; document.head.appendChild(s); })(); }); }
+  function readWorkbook(file){
+    var name = file.name.toLowerCase();
+    if (/\.csv$/.test(name)) return file.text().then(function (txt) { return [{ name: "csv", rows: Z.parseCSV(txt) }]; });
+    st.ui.impStatus = T().iLibLoading; render();
+    return loadScript(XLSX_SRC).then(function () { return file.arrayBuffer(); }).then(function (ab) {
+      var X = window.XLSX, peek = X.read(ab, { type: "array", bookSheets: true }), names = peek.SheetNames || [];
+      var target = names.filter(function (n) { return /^\s*so\s+ttksct\s*$/i.test(Z.stripAccents(n)); })[0];
+      if (!target) {
+        var probe = X.read(ab, { type: "array", sheetRows: 12 });
+        probe.SheetNames.forEach(function (n) { if (target) return; var rows = X.utils.sheet_to_json(probe.Sheets[n], { header: 1, raw: true, defval: "" }); for (var r = 0; r < rows.length; r++) if (Z.isOrderHeader(rows[r])) { target = n; break; } });
+      }
+      if (!target) return [];
+      var wb = X.read(ab, { type: "array", cellDates: true, sheets: [target] });
+      return [{ name: target, rows: X.utils.sheet_to_json(wb.Sheets[target], { header: 1, raw: true, defval: "" }) }];
+    });
+  }
+  function importFile(file){
+    var t = T(); st.ui.impError = ""; st.ui.impStatus = t.iParsing; render();
+    st.ui.impFrom = ($("impFrom") || {}).value || st.ui.impFrom; st.ui.impTo = ($("impTo") || {}).value || st.ui.impTo;
+    readWorkbook(file).then(function (sheets) {
+      var found = Z.findOrderSheet(sheets);
+      if (!found || found.header < 0) throw new Error(t.iNoSheet);
+      var cutoff = st.settings.import_cutoff || "", all = Z.parseOrders(found.rows.slice(found.header + 1), { today: st.today }), kept = all.filter(function (o) { return !cutoff || o.dep >= cutoff; });
+      if (st.ui.impFrom || st.ui.impTo) kept = Z.inRange(kept, st.ui.impFrom, st.ui.impTo);
+      var idx = Z.indexCustomers(st.cust), orders = Z.dedupe(kept, st.imports), groups = { new: [], coll: [], repeat: [], info: [] }, edits = {}, sel = {}, seenNew = {};
+      orders.sort(function (a, b) { return a.dep < b.dep ? -1 : a.dep > b.dep ? 1 : 0; });
+      orders.forEach(function (o) {
+        o.match = Z.matchOrder(o, idx);
+        var k = o.match.kind, dk = o.phone + "|" + o.nameNorm;
+        if ((k === "new" || k === "sibling") && o.nameNorm) { if (seenNew[dk]) { o.match = { kind: "dup", cust: null }; groups.info.push(o); return; } seenNew[dk] = o.code; }
+        if (o.seen === "done" || (o.prior && o.prior.state === "dismissed")) { groups.info.push(o); return; }
+        if (k === "new" || k === "sibling") {
+          if (o.seen === "seen" && o.prior && o.prior.state === "parked") { groups.info.push(o); return; }   /* already parked, nothing changed */
+          groups.new.push(o); var rel = "Mẹ";
+          edits[o.code] = { child: o.name, parent: "", relation: rel, relText: "", product: o.product, phone: o.phone, dep: o.dep, coll: o.collected, tag: "", tagManual: false, sibling: k === "sibling" ? o.match.cust : null };
+          edits[o.code].tag = Z.suggestTag({ product: o.product, dep: o.dep, coll: o.collected, relation: rel, child: o.name, phone: o.phone });
+          sel[o.code] = !!(o.product && o.name) && k !== "sibling";
+        } else if ((k === "update" || k === "update-checkphone") && o.collected) { groups.coll.push(o); edits[o.code] = { coll: o.collected }; sel[o.code] = !o.futureDone; }
+        else if (k === "repeat") groups.repeat.push(o);
+        else groups.info.push(o);
+      });
+      st.ui.imp = { orders: orders, groups: groups, edits: edits, sel: sel, sheetName: found.name, skipped: all.length - kept.length, fileName: file.name };
+      st.ui.importStep = 1; st.ui.impStatus = ""; render();
+    }).catch(function (e) { st.ui.impStatus = ""; st.ui.impError = fill(t.iBadFile, { e: e.message }); render(); });
+  }
+  function submitImport(){
+    var t = T(), imp = st.ui.imp, adds = [], colls = [], park = [], errors = [];
+    imp.groups.new.forEach(function (o) {
+      var e = imp.edits[o.code];
+      if (!imp.sel[o.code]) { park.push(o.code); return; }
+      if (!e.child || !e.product || !e.tag) { errors.push(o.code + ": " + t.req); park.push(o.code); return; }
+      var fields = { name: e.child, phone: Z.normPhone(e.phone) || e.phone, product: e.product, tag: e.tag, dep: e.dep, coll: e.coll, da: st.da };
+      if (e.sibling) fields.kid2 = e.sibling.names[0] || e.sibling.name;
+      adds.push({ code: o.code, fields: fields, details: { parent_name: e.parent, relation: e.relation === "Khác" ? e.relText : e.relation } });
+    });
+    imp.groups.coll.forEach(function (o) { if (!imp.sel[o.code]) return; var c = o.match.cust; colls.push({ code: o.code, ref: { row: c.row, name: c.name, phone: c.phone }, date: imp.edits[o.code].coll }); });
+    imp.groups.repeat.forEach(function (o) { park.push(o.code); });
+    var orders = imp.orders.map(function (o) { var e = imp.edits[o.code] || {}; return { code: o.code, deposit: o.dep, appointment: o.appt, status: o.status, name: o.name, phone: o.phone, patient: o.patient, lens: o.lens, product: e.product || o.product, collected: o.collected,
+      result: o.match.kind === "repeat" ? "repeat:" + o.match.cust.key : o.match.kind === "sibling" ? "sibling:" + o.match.cust.key : "", state: o.prior ? o.prior.state : "parked" }; });
+    st.busy = true; render();
+    apiPost({ action: "confirmImports", adds: adds, collections: colls, park: park, orders: orders }).then(function (res) {
+      var a = 0, c = 0, p = 0;
+      adds.forEach(function (x) { var r = res.results[x.code] || {}; if (r.error) { errors.push(x.code + ": " + r.error); p++; } else a++; });
+      colls.forEach(function (x) { var r = res.results[x.code] || {}; if (r.error) errors.push(x.code + ": " + r.error); else c++; });
+      p += park.length;
+      st.ui.impResult = { a: a, c: c, p: p, e: errors.length, errors: errors }; st.ui.importStep = 2; st.busy = false;
+      return reload(true);
+    }).then(function () { render(); }).catch(function (e) { st.busy = false; render(); toast(fill(t.errToast, { e: e.message }), true); });
+  }
+
+  /* ------------------------------------------------------------------ page: not in CRM */
+  function pageLegacy(){
+    var t = T(), parked = parkedImports(), dismissed = st.imports.filter(function (i) { return i.state === "dismissed"; });
+    var repeats = parked.filter(function (i) { return /^repeat:/.test(i.result || ""); }), rest = parked.filter(function (i) { return !/^repeat:/.test(i.result || ""); });
+    function monthOf(i){ var d = Z.toISO(i.collected) || Z.toISO(i.appointment) || Z.toISO(i.deposit); return d ? d.slice(0, 7) : ""; }
+    var byM = {}; rest.forEach(function (i) { var m = monthOf(i); (byM[m] = byM[m] || []).push(i); });
+    var months = Object.keys(byM).filter(Boolean).sort().reverse(); if (byM[""]) months.unshift("");
+    var h = '<div class="panel"><h3>' + esc(t.lTitle) + ' <span class="hint">' + esc(t.lHint) + " · " + rest.length + "</span></h3>";
+    if (!rest.length) h += '<div class="empty">' + esc(t.lNone) + "</div>";
+    st.ui.openMonths = st.ui.openMonths || {};
+    months.forEach(function (m, mi) {
+      var open = !m || mi < 2 || st.ui.openMonths[m];
+      h += '<button type="button" class="grpd" style="width:100%;text-align:left;border:0;border-bottom:1px solid var(--rule-2);cursor:pointer" data-act="lg-month" data-m="' + esc(m) + '">' + (open ? "▾ " : "▸ ") + (m ? esc(t.months[+m.slice(5, 7) - 1] + " " + m.slice(0, 4)) : esc(t.noDate)) + " · " + byM[m].length + "</button>";
+      if (open) byM[m].sort(function (a, b) { return (b.collected || b.deposit) < (a.collected || a.deposit) ? -1 : 1; }).forEach(function (i) { h += legacyRow(i, false); });
+    });
+    h += "</div>";
+    if (repeats.length) { h += '<div class="panel"><h3>' + esc(t.lRepeat) + ' <span class="hint">' + esc(t.lRepeatHint) + "</span></h3>"; repeats.forEach(function (i) { h += legacyRow(i, true); }); h += "</div>"; }
+    if (dismissed.length) {
+      h += '<div class="panel"><h3><button type="button" class="linkbtn" data-act="lg-toggle-dismissed">' + esc(st.ui.showDismissed ? t.lHideDismissed : fill(t.lShowDismissed, { n: dismissed.length })) + "</button></h3>";
+      if (st.ui.showDismissed) dismissed.forEach(function (i) { h += legacyRow(i, false, true); });
+      h += "</div>";
+    }
+    return h;
+  }
+  function legacyRow(i, isRepeat, isDismissed){
+    var t = T(), prod = i.product || Z.lensProduct(i.lens), dep = Z.toISO(i.deposit), coll = Z.toISO(i.collected), crm = isRepeat ? st.byKey[(i.result || "").slice(7)] : null;
+    var up = prod && (dep || coll) ? Z.milestones({ product: prod, dep: dep, coll: coll }, { cadenceTab: st.cadence }).filter(function (m) { return m.due >= st.today; }).slice(0, 2) : [];
+    return '<div class="irow"><span></span><div><div class="nm">' + esc(crm ? custLabel(crm) : (i.name || "?")) + ' <span class="mono" style="font-weight:400;color:var(--muted);font-size:.78rem">' + esc(i.code) + (i.result === "manual" ? " · " + esc(t.lManual) : "") + "</span></div>"
+      + '<div class="meta">' + [i.phone, i.lens ? i.lens + (prod ? " → " + prodLabel(prod) : "") : prodLabel(prod), dep ? t.dep + " " + dm(dep) : "", coll ? t.coll + " " + dm(coll) : (i.status || t.lNoColl)].filter(Boolean).map(esc).join(" · ")
+      + (up.length ? ' · <span class="pill p-accent">' + esc(t.lUpcoming) + ": " + up.map(function (m) { return esc(m.stage + " " + dm(m.due)); }).join(", ") + "</span>" : "") + "</div>"
+      + '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">' + (isDismissed ? '<button type="button" class="btn sm" data-act="lg-restore" data-code="' + esc(i.code) + '">' + esc(t.lRestore) + "</button>"
+        : (isRepeat ? '<button type="button" class="btn primary sm" data-act="lg-startnew" data-code="' + esc(i.code) + '">' + esc(t.lStartNew) + "</button>" : '<button type="button" class="btn primary sm" data-act="lg-add" data-code="' + esc(i.code) + '">' + esc(t.lAdd) + "</button>")
+        + '<button type="button" class="btn sm" data-act="lg-dismiss" data-code="' + esc(i.code) + '">' + esc(t.lDismiss) + "</button>") + "</div></div></div>";
+  }
+
+  /* ------------------------------------------------------------------ writes */
+  function recordSent(items){
+    var t = T(), at = nowIso(), added = items.map(function (it) { var r = { key: it.key, clinic: st.clinic, da: st.da, stage: it.stage, due: it.due, bits: it.bits, score: it.score, sent_at: at, undone_at: "", _local: true }; st.tasks.push(r); return r; });
+    render();
+    return apiPost({ action: "markSent", items: items }).then(function () { toast(fill(t.sentToast, { n: items.length })); if (st.demo) toast(t.demoWrite); })
+      .catch(function (e) { added.forEach(function (r) { st.tasks.splice(st.tasks.indexOf(r), 1); }); render(); toast(fill(t.errToast, { e: e.message }), true); });
+  }
+  function recordUndo(list){
+    var t = T(), at = nowIso(), touched = [];
+    list.forEach(function (u) { for (var i = st.tasks.length - 1; i >= 0; i--) { var r = st.tasks[i]; if (r.key === u.key && r.stage === u.stage && !r.undone_at) { r.undone_at = at; touched.push(r); break; } } });
+    render();
+    return apiPost({ action: "markSent", undo: list }).then(function () { toast(t.undoneToast); })
+      .catch(function (e) { touched.forEach(function (r) { r.undone_at = ""; }); render(); toast(fill(t.errToast, { e: e.message }), true); });
+  }
+  function fullItem(tk){ return { key: tk.key, stage: tk.stage, due: tk.due, bits: tk.items.map(function () { return "1"; }).join(""), score: 1 }; }
+  function tickCard(card){
+    if (card.done) return recordUndo(card.tasks.map(function (tk) { return { key: tk.key, stage: tk.stage }; }));
+    return recordSent(card.tasks.filter(function (tk) { return !tk.full; }).map(fullItem));
+  }
+  function toggleItem(card, ti, i){
+    var tk = card.tasks[ti], bits = (tk.done ? String(tk.done.bits || "") : "").split(""); while (bits.length < tk.items.length) bits.push("0");
+    bits[i] = bits[i] === "1" ? "0" : "1";
+    var on = bits.filter(function (b) { return b === "1"; }).length;
+    if (!on) return recordUndo([{ key: tk.key, stage: tk.stage }]);
+    return recordSent([{ key: tk.key, stage: tk.stage, due: tk.due, bits: bits.join(""), score: on === tk.items.length ? 1 : 0.5 }]);
+  }
+  function updateLocalCustomer(key, changes){ var c = st.byKey[key]; if (!c) return; Object.keys(changes).forEach(function (k) { c[k] = changes[k]; }); c.parsed = Z.parseTag(c.tag); c.product = Z.normProduct(c.product) || (c.parsed && c.parsed.product) || ""; c.exam = c.product === "Exam"; }
+  function saveLocalDetails(key, d){ var cur = st.det[key] || (st.det[key] = { key: key }); Object.keys(d).forEach(function (k) { cur[k] = d[k]; }); }
+
+  function reload(quiet){
+    if (!quiet) { st.feed = { mode: "loading", at: "" }; renderChrome(); }
+    return apiGet({ action: "bootstrap" }).then(function (d) { shape(d); st.feed = { mode: st.demo ? "demo" : "live", at: new Date().toTimeString().slice(0, 5) }; if (!quiet) render(); })
+      .catch(function (e) { st.feed = { mode: "failed", at: "" }; if (!quiet) render(); toast(fill(T().neterr, { e: e.message }), true); });
+  }
+
+  /* ------------------------------------------------------------------ events */
+  function afterRender(){
+    var s = $("custSearch"); if (s) { s.oninput = function () { st.ui.search = s.value; var pos = s.selectionStart; render(); var n = $("custSearch"); if (n) { n.focus(); n.setSelectionRange(pos, pos); } }; }
+    var f = $("addForm"); if (f) { f.onsubmit = function (ev) { ev.preventDefault(); submitAdd(); }; f.oninput = function (ev) { var fm = readAddForm(); if (ev.target.name === "tag") fm.tagManual = true; if (!fm.tagManual) { var el = f.elements.tag; if (el) el.value = suggest(fm); fm.tag = el ? el.value : fm.tag; } if (ev.target.name === "depNA" || ev.target.name === "noZalo") render(); }; }
+    var fi = $("impFile"); if (fi) { fi.onchange = function () { if (fi.files[0]) importFile(fi.files[0]); }; var dz = $("drop"); dz.ondragover = function (e) { e.preventDefault(); dz.classList.add("on"); }; dz.ondragleave = function () { dz.classList.remove("on"); }; dz.ondrop = function (e) { e.preventDefault(); dz.classList.remove("on"); if (e.dataTransfer.files[0]) importFile(e.dataTransfer.files[0]); }; }
+    var cf = $("custForm"); if (cf) cf.onsubmit = function (ev) { ev.preventDefault(); saveCust(cf); };
+  }
+  function saveCust(form){
+    var t = T(), key = form.dataset.key, c = st.byKey[key], d = detailsOf(c), changes = {}, det = {};
+    ["dep", "coll", "product", "phone", "note", "dob"].forEach(function (k) { var v = form.elements[k].value; if (k === "phone") v = Z.normPhone(v) || v.trim(); if ((c[k] || "") !== v) changes[k] = v; });
+    var tag = form.elements.tag.value.trim(); if (tag !== (c.tag || "") && tag !== (d.pending_tag || "")) det.pending_tag = tag; if (tag === (c.tag || "") && d.pending_tag) det.pending_tag = "";
+    ["parent_name", "relation", "gender"].forEach(function (k) { var v = form.elements[k].value; if ((d[k] || "") !== v) det[k] = v; });
+    if (changes.coll && !changes.status && !c.status) changes.status = "Đã là hội viên";
+    var p = Promise.resolve();
+    if (Object.keys(changes).length) p = p.then(function () { return apiPost({ action: "updateCustomer", ref: { row: c.row, name: c.name, phone: c.phone }, changes: changes }); }).then(function () { updateLocalCustomer(key, changes); });
+    if (Object.keys(det).length) p = p.then(function () { return apiPost({ action: "saveDetails", key: key, details: det }); }).then(function () { saveLocalDetails(key, det); });
+    p.then(function () { toast(t.saved); openSheet(custSheetHtml(st.byKey[key], false)); render(); }).catch(function (e) { toast(fill(t.errToast, { e: e.message }), true); });
+  }
+  document.addEventListener("click", function (ev) {
+    var el = ev.target.closest("[data-act]"); if (!el) return;
+    var act = el.dataset.act, t = T();
+    if (el.tagName === "INPUT" && el.type === "checkbox") return;        /* handled on change */
+    switch (act) {
+      case "tick": ev.preventDefault(); tickCard(st.cards[el.dataset.card]); break;
+      case "item": ev.preventDefault(); toggleItem(st.cards[el.dataset.card], +el.dataset.task, +el.dataset.i); break;
+      case "toggle-overdue": st.ui.overdueOpen = !st.ui.overdueOpen; render(); break;
+      case "fold": st.ui.foldOpen = !st.ui.foldOpen; render(); break;
+      case "send-group": { var g = st.groups[el.dataset.g], sel = st.ui.massSel[el.dataset.g] || {}, items = g.tasks.filter(function (x) { return !x.full && sel[x.key + "|" + x.stage]; }).map(fullItem); st.ui.massSel[el.dataset.g] = {}; if (items.length) recordSent(items); break; }
+      case "copy-group": { var gg = st.groups[el.dataset.g], names = []; gg.tasks.forEach(function (x) { var n = x.cust.tag || custLabel(x.cust); if (names.indexOf(n) === -1) names.push(n); }); copyText(names.join("\n")).then(function () { toast(fill(t.copied, { n: names.length })); }); break; }
+      case "undo-one": { var kk = el.dataset.k.split("|"); recordUndo([{ key: kk.slice(0, -1).join("|"), stage: kk[kk.length - 1] }]); break; }
+      case "cfilter": st.ui.cfilter = el.dataset.f; render(); break;
+      case "open-cust": openSheet(custSheetHtml(st.byKey[el.dataset.key], false)); st.ui.sheetKey = el.dataset.key; break;
+      case "edit-cust": openSheet(custSheetHtml(st.byKey[el.dataset.key], true)); afterRender(); break;
+      case "add-opt": { var fm = readAddForm(); fm[el.dataset.name] = fm[el.dataset.name] === el.dataset.v && el.dataset.name !== "product" ? "" : el.dataset.v; if (!fm.tagManual) fm.tag = suggest(fm); render(); break; }
+      case "add-another": st.ui.addDone = null; st.ui.addForm = null; render(); break;
+      case "p-submit": { var c = st.byKey[el.dataset.key], date = document.querySelector('[data-pdate="' + c.row + '"]').value; if (!date) return; el.disabled = true;
+        apiPost({ action: "setCollected", ref: { row: c.row, name: c.name, phone: c.phone }, date: date }).then(function () { updateLocalCustomer(c.key, { coll: date, status: "Đã là hội viên" }); toast(fill(t.pDone, { n: custLabel(c) })); render(); }).catch(function (e) { el.disabled = false; toast(fill(t.errToast, { e: e.message }), true); }); break; }
+      case "tag-copy": copyText(el.dataset.tag).then(function () { toast(fill(t.copied, { n: 1 })); }); break;
+      case "tag-confirm": { var cc = st.byKey[el.dataset.key], tag = el.dataset.tag; el.disabled = true;
+        apiPost({ action: "confirmTag", ref: { row: cc.row, name: cc.name, phone: cc.phone }, tag: tag }).then(function () { updateLocalCustomer(cc.key, { tag: tag }); return apiPost({ action: "saveDetails", key: cc.key, details: { pending_tag: "" } }); }).then(function () { saveLocalDetails(cc.key, { pending_tag: "" }); toast(t.tConfirmed); render(); }).catch(function (e) { el.disabled = false; toast(fill(t.errToast, { e: e.message }), true); }); break; }
+      case "tag-skip": { var cs = st.byKey[el.dataset.key]; apiPost({ action: "saveDetails", key: cs.key, details: { pending_tag: cs.tag } }).then(function () { saveLocalDetails(cs.key, { pending_tag: cs.tag }); render(); }).catch(function (e) { toast(fill(t.errToast, { e: e.message }), true); }); break; }
+      case "imp-submit": submitImport(); break;
+      case "imp-reset": st.ui.imp = null; st.ui.importStep = 0; st.ui.impError = ""; render(); break;
+      case "lg-add": case "lg-startnew": { var im = st.imports.filter(function (i) { return i.code === el.dataset.code; })[0]; if (!im) return; var prod = im.product || Z.lensProduct(im.lens), crm = act === "lg-startnew" ? st.byKey[(im.result || "").slice(7)] : null;
+        st.ui.addPrefill = { child: crm ? crm.names[0] : im.name, phone: Z.normPhone(im.phone) || im.phone, product: prod, dep: Z.toISO(im.deposit), coll: Z.toISO(im.collected), code: im.code, allowDuplicate: !!crm, parent: crm ? (detailsOf(crm).parent_name || "") : "", relation: crm ? (detailsOf(crm).relation || "Mẹ") : "Mẹ", dob: crm ? crm.dob : "" };
+        st.ui.addForm = null; st.ui.addDone = null; location.hash = "#/add"; break; }
+      case "lg-dismiss": case "lg-restore": { var code = el.dataset.code, state = act === "lg-dismiss" ? "dismissed" : "parked"; el.disabled = true;
+        apiPost({ action: "storeImports", orders: [{ code: code, state: state }] }).then(function () { st.imports.forEach(function (i) { if (i.code === code) i.state = state; }); render(); }).catch(function (e) { el.disabled = false; toast(fill(t.errToast, { e: e.message }), true); }); break; }
+      case "lg-toggle-dismissed": st.ui.showDismissed = !st.ui.showDismissed; render(); break;
+      case "lg-month": st.ui.openMonths = st.ui.openMonths || {}; st.ui.openMonths[el.dataset.m] = !st.ui.openMonths[el.dataset.m]; render(); break;
+    }
+  });
+  document.addEventListener("change", function (ev) {
+    var el = ev.target; if (!el.dataset) return;
+    if (el.dataset.act === "sel") { var sel = st.ui.massSel[el.dataset.g] = st.ui.massSel[el.dataset.g] || {}; sel[el.dataset.k] = el.checked; render(); }
+    else if (el.dataset.act === "sel-all") { var g = st.groups[el.dataset.g], s2 = st.ui.massSel[el.dataset.g] = {}; if (el.checked) g.tasks.forEach(function (x) { if (!x.full) s2[x.key + "|" + x.stage] = true; }); render(); }
+    else if (el.dataset.act === "p-check") { var btn = document.querySelector('#p-' + el.dataset.row + ' [data-act="p-submit"]'); if (btn) btn.disabled = !el.checked; }
+    else if (el.dataset.act === "imp-sel") { st.ui.imp.sel[el.dataset.code] = el.checked; impCount(); }
+    else if (el.dataset.act === "imp-selall") { var on = el.checked; el.dataset.codes.split(",").forEach(function (c) { if (c) { st.ui.imp.sel[c] = on; var cb = document.querySelector('[data-act="imp-sel"][data-code="' + CSS.escape(c) + '"]'); if (cb) cb.checked = on; } }); impCount(); }
+    else if (el.dataset.imp) { var e = st.ui.imp.edits[el.dataset.code]; if (!e) return; e[el.dataset.imp] = el.value; el.classList.toggle("bad", !el.value && ["child", "product", "tag"].indexOf(el.dataset.imp) !== -1);
+      if (el.dataset.imp === "tag") e.tagManual = true; else if (!e.tagManual) { e.tag = Z.suggestTag({ product: e.product, dep: e.dep, coll: e.coll, relation: e.relation, relationText: e.relText, child: e.child, phone: e.phone }); var ti = document.querySelector('[data-imp="tag"][data-code="' + CSS.escape(el.dataset.code) + '"]'); if (ti) { ti.value = e.tag; ti.classList.toggle("bad", !e.tag); } } }
+  });
+  document.addEventListener("input", function (ev) { var el = ev.target; if (el.dataset && el.dataset.imp && ["child", "parent", "phone"].indexOf(el.dataset.imp) !== -1) { var e = st.ui.imp.edits[el.dataset.code]; if (e) e[el.dataset.imp] = el.value; } });
+  $("sheetClose").onclick = closeSheet; $("sheet").addEventListener("click", function (ev) { if (ev.target === $("sheet")) closeSheet(); });
+  document.addEventListener("keydown", function (ev) { if (ev.key === "Escape") closeSheet(); });
+
+  /* ------------------------------------------------------------------ confetti */
+  function maybeConfetti(){
+    var p = st.plan; if (st.route !== "tasks" || !p || !p.tiles.today.due || p.tiles.today.done !== p.tiles.today.due) return;
+    if (store("zalo_confetti") === st.today + "|" + st.da) return;
+    store("zalo_confetti", st.today + "|" + st.da); confetti(); toast(T().confettiMsg);
+  }
+  function confetti(){
+    var cv = $("confetti"), ctx = cv.getContext("2d"), W = cv.width = window.innerWidth, H = cv.height = window.innerHeight, cols = ["#2438B8", "#17795E", "#E6EE6B", "#A6690A", "#AE2E48", "#8D99F7"];
+    var ps = []; for (var i = 0; i < 140; i++) ps.push({ x: W / 2 + (Math.random() - .5) * W * .5, y: H * .35, vx: (Math.random() - .5) * 14, vy: -Math.random() * 14 - 4, g: .35 + Math.random() * .2, s: 5 + Math.random() * 6, c: cols[i % cols.length], r: Math.random() * Math.PI, vr: (Math.random() - .5) * .3 });
+    cv.style.display = "block"; var t0 = Date.now();
+    (function frame() { ctx.clearRect(0, 0, W, H); var alive = 0; ps.forEach(function (p) { p.vy += p.g; p.x += p.vx; p.y += p.vy; p.vx *= .99; p.r += p.vr; if (p.y < H + 20) alive++; ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.r); ctx.fillStyle = p.c; ctx.fillRect(-p.s / 2, -p.s / 2, p.s, p.s * .6); ctx.restore(); });
+      if (alive && Date.now() - t0 < 3200) requestAnimationFrame(frame); else { cv.style.display = "none"; ctx.clearRect(0, 0, W, H); } })();
+  }
+
+  /* ------------------------------------------------------------------ sign-in, picker, start */
+  function showPick(){
+    var t = T(), by = st.data ? st.data.das || {} : {}, h = '<div class="pickclinic">' + esc(st.clinic) + '</div><div class="pickrow">';
+    var names = Object.keys(by).sort(); if (!names.length) names = [st.da || "DA"];
+    names.forEach(function (n) { h += '<button type="button" data-me="' + esc(n) + '"' + (n === st.da ? ' class="on"' : "") + ">" + esc(n) + "<span>" + (by[n] || 0) + " " + esc(t.kh) + "</span></button>"; });
+    $("pickBody").innerHTML = h + "</div>";
+    document.querySelectorAll("[data-me]").forEach(function (b) { b.onclick = function () { st.da = b.dataset.me; store("zalo_da", st.da); $("pick").classList.add("gone"); $("wrap").hidden = false; route(); }; });
+    $("wrap").hidden = true; $("pick").classList.remove("gone");
+  }
+  function enterApp(){
+    $("gate").classList.add("gone"); st.session = true;
+    sstore("zalo_s", JSON.stringify({ u: st.u, h: st.h, clinic: st.clinic, demo: st.demo }));
+    var known = st.da && st.data && st.data.das && st.data.das[st.da];
+    if (known) { $("wrap").hidden = false; route(); } else showPick();
+  }
+  function signOut(){ st.session = false; st.u = st.h = ""; st.demo = false; st.data = null; sstore("zalo_s", null); $("wrap").hidden = true; $("pick").classList.add("gone"); $("gate").classList.remove("gone"); $("gp").value = ""; $("gu").focus(); }
+  function startDemo(){ st.demo = true; st.clinic = "NGT"; st.u = "NGT_DA"; st.h = "demo"; st.today = (/[?&]asof=(\d{4}-\d{2}-\d{2})/.exec(location.search) || [])[1] || Z.todayISO(); shape(DemoAPI.load()); st.feed = { mode: "demo", at: "" }; if (!st.da) st.da = "Tiên"; enterApp(); }
+  function login(u, pw){
+    var t = T(), btn = $("gateBtn"), err = $("gateErr"); btn.disabled = true; btn.textContent = t.signingin; err.classList.remove("on");
+    sha256(pw).then(function (hh) { st.u = u.trim().toUpperCase(); st.h = hh; st.demo = false; return apiGet({ action: "bootstrap" }); })
+      .then(function (d) { st.clinic = d.clinic; shape(d); st.feed = { mode: "live", at: new Date().toTimeString().slice(0, 5) }; btn.disabled = false; btn.textContent = t.signin; enterApp(); })
+      .catch(function (e) { btn.disabled = false; btn.textContent = t.signin; err.textContent = /forbidden|unknown user/.test(e.message) ? t.badlogin : e.message === "no api" ? t.noapi : fill(t.neterr, { e: e.message }); err.classList.add("on"); $("gp").value = ""; });
+  }
+  function setLang(l){ st.lang = l; store("zalo_lang", l); applyGateLang(); if (st.session) render(); }
+  function init(){
+    st.lang = store("zalo_lang") || "vi"; var ql = /[?&]lang=(en|vi|zh)/.exec(location.search); if (ql) st.lang = ql[1];
+    st.da = store("zalo_da") || "";
+    applyGateLang();
+    $("apiUrl").value = store("zalo_api") || ""; $("apiUrl").onchange = function () { store("zalo_api", $("apiUrl").value.trim() || null); };
+    document.querySelectorAll("#gateLang button, #langseg button").forEach(function (b) { b.onclick = function () { setLang(b.dataset.l); }; });
+    $("gateform").addEventListener("submit", function (ev) { ev.preventDefault(); login($("gu").value, $("gp").value); });
+    $("demoBtn").onclick = startDemo;
+    window.addEventListener("hashchange", route);
+    if (/[?&]demo=1/.test(location.search)) return startDemo();
+    var s = sstore("zalo_s"); if (s) { try { s = JSON.parse(s); } catch (e) { s = null; } }
+    if (s && s.demo) return startDemo();
+    if (s && s.u && s.h) { st.u = s.u; st.h = s.h; st.clinic = s.clinic; apiGet({ action: "bootstrap" }).then(function (d) { st.clinic = d.clinic; shape(d); st.feed = { mode: "live", at: new Date().toTimeString().slice(0, 5) }; enterApp(); }).catch(function () { $("gu").value = s.u; $("gu").focus(); }); return; }
+    $("gu").focus();
+  }
+  init();
+})();
