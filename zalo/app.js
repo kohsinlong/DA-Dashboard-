@@ -6,7 +6,7 @@
   /* Paste the Apps Script /exec URL here after deploying (README §2.10). ?api=<url> and the
      "Connect" box on the sign-in card override it for testing. */
   var API = { url: "https://script.google.com/macros/s/AKfycbwselLgmfAg8ffK5IqBpXVvY8Ppqv2hDNCOStNABLLNfSalUvx5UKR7GC6LIxKuVEO9kg/exec" };
-  var VERSION = "1.1.2";
+  var VERSION = "1.1.3";
 
   /* ------------------------------------------------------------------ strings */
   var L = {
@@ -21,6 +21,7 @@
       rel: { "Mẹ": "Mẹ", "Ba": "Ba", "Ông ngoại": "Ông ngoại", "Bà ngoại": "Bà ngoại", "Ông nội": "Ông nội", "Bà nội": "Bà nội", "Cô": "Cô", "Dì": "Dì", "Chú": "Chú", "Khác": "Khác" },
       aZaloAdded: "Đã kết bạn Zalo", iConfirmM: "Ghi {n} khách đã có Zalo", iNewHint2: "chưa có trong CRM · tick những khách đã kết bạn Zalo rồi điền phần còn thiếu; khách không tick sẽ vào danh sách chưa kết bạn Zalo",
       tSkipped: "Đã giữ nguyên tag", iUndoWrite: "Hoàn tác lần ghi này", aUndo: "Hoàn tác (xoá khách vừa ghi)", undoneRow: "Đã hoàn tác: dòng vừa ghi đã được xoá", undoneImport: "Đã hoàn tác lần ghi", collUndone: "Đã bỏ ngày nhận kính",
+      iLibFail: "Không tải được bộ đọc Excel. Thử lại, hoặc lưu tab SO TTKSCT thành .csv rồi tải lên.", iReading: "Đang đọc {f}… (file lớn có thể mất tới một phút)",
       nav: { overview: "Tổng quan", add: "Thêm khách", collections: "Nhận kính", members: "Danh sách khách", legacy: "Chưa kết bạn Zalo" },
       aSection: "Thêm từng khách", iTitleM: "Nhập khách mới từ báo cáo QK", iTitleC: "Cập nhật ngày nhận kính từ báo cáo QK", iChange: "Đổi file", iLoaded: "File {f} · {n} đơn từ {d}",
       iWhy: { same: "đã có trong CRM", expected: "chưa DONE (chỉ có ngày hẹn)", parked: "đã ở danh sách chưa kết bạn Zalo", parkedOther: "đã ở danh sách chưa kết bạn Zalo", dup: "trùng trong file", done: "đã nhập lần trước", dismissed: "đã ẩn", update: "ngày nhận đã ghi", "update-checkphone": "ngày nhận đã ghi" },
@@ -68,6 +69,7 @@
       rel: { "Mẹ": "Mother", "Ba": "Father", "Ông ngoại": "Maternal grandfather", "Bà ngoại": "Maternal grandmother", "Ông nội": "Paternal grandfather", "Bà nội": "Paternal grandmother", "Cô": "Aunt (father's side)", "Dì": "Aunt (mother's side)", "Chú": "Uncle", "Khác": "Other" },
       aZaloAdded: "Zalo added", iConfirmM: "Write {n} members with Zalo", iNewHint2: "not in the CRM · tick the ones you have on Zalo and complete their details; the rest go to the No Zalo Add List",
       tSkipped: "Tag kept as is", iUndoWrite: "Undo this write", aUndo: "Undo (remove the row just written)", undoneRow: "Undone: the row just written was cleared", undoneImport: "The write was undone", collUndone: "Collected date removed",
+      iLibFail: "The Excel reader could not be loaded. Try again, or save the SO TTKSCT tab as .csv and upload that.", iReading: "Reading {f}… (a large file can take up to a minute)",
       nav: { overview: "Overview", add: "Add members", collections: "Glass collections", members: "Member list", legacy: "No Zalo Add List" },
       aSection: "Add one member", iTitleM: "New members from the QK report", iTitleC: "Collection updates from the QK report", iChange: "Change file", iLoaded: "File {f} · {n} orders since {d}",
       iWhy: { same: "already in the CRM", expected: "not DONE yet (appointment only)", parked: "already on the No Zalo Add List", parkedOther: "already on the No Zalo Add List", dup: "duplicate within the file", done: "imported earlier", dismissed: "dismissed", update: "collected date already recorded", "update-checkphone": "collected date already recorded" },
@@ -115,6 +117,7 @@
       rel: { "Mẹ": "母亲", "Ba": "父亲", "Ông ngoại": "外公", "Bà ngoại": "外婆", "Ông nội": "爷爷", "Bà nội": "奶奶", "Cô": "姑姑", "Dì": "阿姨", "Chú": "叔叔", "Khác": "其他" },
       aZaloAdded: "已加 Zalo", iConfirmM: "写入 {n} 位已加 Zalo 的会员", iNewHint2: "不在 CRM · 勾选已加 Zalo 的客户并补齐信息；未勾选的进入“未加 Zalo 名单”",
       tSkipped: "已保留标签", iUndoWrite: "撤销本次写入", aUndo: "撤销（删除刚写入的行）", undoneRow: "已撤销：刚写入的行已清除", undoneImport: "已撤销本次写入", collUndone: "已移除取镜日期",
+      iLibFail: "无法加载 Excel 读取器。请重试，或将 SO TTKSCT 工作表另存为 .csv 后上传。", iReading: "正在读取 {f}…（大文件可能需要一分钟）",
       nav: { overview: "总览", add: "新增会员", collections: "取镜", members: "会员列表", legacy: "未加 Zalo 名单" },
       aSection: "逐个新增", iTitleM: "从 QK 报表导入新会员", iTitleC: "从 QK 报表更新取镜日期", iChange: "更换文件", iLoaded: "文件 {f} · {d} 起 {n} 条订单",
       iWhy: { same: "已在 CRM", expected: "尚未 DONE（仅预约）", parked: "已在“未加 Zalo 名单”", parkedOther: "已在“未加 Zalo 名单”", dup: "文件内重复", done: "之前已导入", dismissed: "已忽略", update: "取镜日期已记录", "update-checkphone": "取镜日期已记录" },
@@ -712,7 +715,7 @@
     var name = file.name.toLowerCase();
     if (/\.csv$/.test(name)) return file.text().then(function (txt) { return [{ name: "csv", rows: Z.parseCSV(txt) }]; });
     st.ui.impStatus = T().iLibLoading; render();
-    return loadScript(XLSX_SRC).then(function () { return file.arrayBuffer(); }).then(function (ab) {
+    return loadScript(XLSX_SRC).then(function () { st.ui.impStatus = fill(T().iReading, { f: file.name }); render(); return nextTick(); }).then(function () { return file.arrayBuffer(); }).then(function (ab) {
       var X = window.XLSX, peek = X.read(ab, { type: "array", bookSheets: true }), names = peek.SheetNames || [];
       var target = names.filter(function (n) { return /^\s*so\s+ttksct\s*$/i.test(Z.stripAccents(n)); })[0];
       if (!target) {

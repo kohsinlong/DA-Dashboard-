@@ -64,6 +64,7 @@ Files in `zalo/`:
 | `core.js` | every rule: dates, names and phones, products, cadence milestones, the task plan, tag suggestions, QK parsing, matching. Runs in the browser and in Node |
 | `zalo.css` | page styles on top of the shared `../theme.css` |
 | `demo-data.js` | synthetic customers for `?demo=1` |
+| `vendor/xlsx.full.min.js` | the Excel reader (SheetJS 0.18.5, Apache-2.0), loaded only when an .xlsx is chosen |
 | `tools/zalo-sop.gs` | the Apps Script web app (reads and writes the workbook) |
 | `tools/test-core.js`, `tools/test-gs.js` | rule tests and script tests (`node zalo/tools/test-core.js`, `node zalo/tools/test-gs.js`) |
 | `README.md` | this document |
@@ -302,8 +303,8 @@ MCY&KTY 261023 Mẹ bé An & Bình 0909123456   two kids on one Zalo
 
 ### 2.7 Import (QK NGT Daily report)
 
-**File.** The workbook as downloaded (.xlsx, parsed in the browser with SheetJS) or a .csv of
-the order tab. The page finds the tab named `SO TTKSCT`, or any tab whose header row begins
+**File.** The workbook as downloaded (.xlsx, parsed in the browser with SheetJS, which ships
+with the page in `zalo/vendor/` so no CDN is needed) or a .csv of the order tab. The page finds the tab named `SO TTKSCT`, or any tab whose header row begins
 `Ngày Đặt · Ngày Hẹn · Mã Đơn Hàng · Mã BN · Thông Tin KH · Sản Phẩm · Tình Trạng`.
 
 **Columns.** A deposit date · B appointment ("Ngày Hẹn", the promised pickup) · C order code
@@ -445,6 +446,7 @@ Newest first. Each entry: date · version · what changed · why · files.
 
 | Date | Version | Change | Why | Files |
 |---|---|---|---|---|
+| 2026-10-16 | 1.1.3 | Excel reader shipped with the page instead of fetched from a CDN; real progress text while a workbook is read; a 30-second timeout with a CSV hint instead of a silent hang. | Upload appeared stuck on first use. | `zalo/vendor/`, `zalo/app.js`, `zalo/index.html` |
 | 2026-10-16 | 1.1.2 | Username changed to `NGT_DA1` with a new password; the generic `<CLINIC>_DA` sign-in rule removed so only listed usernames work; page files carry a version tag so phones fetch new releases. | Launch. | `zalo/tools/zalo-sop.gs`, `zalo/app.js`, `zalo/index.html` |
 | 2026-10-16 | 1.1.1 | "Not in CRM" renamed to **No Zalo Add List**; every month group on it folds (the newest ones could not); bigger section headers. | Launch review. | `zalo/app.js`, `zalo/zalo.css` |
 | 2026-10-16 | 1.1.0 | Pages restructured to Overview · Add members · Glass collections · Member list · Not in CRM; the QK import sits under Add members (new entries, with a note field) and under Glass collections (collection updates), one upload serving both; every list panel collapsible with the fold state remembered; member list filters by date and sorts; search filters in place (no re-render per keystroke, which broke typing on phones); deposit-phase cadences dropped once collected; orders already in the member list or on Not in CRM never offered again; imported new members are written only when ticked "Zalo added" (no select-all, nothing pre-ticked), relation empty by default with language-aware labels, parent's name optional; Undo on every write (toast button, recorded screen, import result) with two new script actions `removeCustomer` and `removeImport`; `DA_Imports` gains a `note` column. | First review on the live page. | `zalo/app.js`, `zalo/core.js`, `zalo/zalo.css`, `zalo/tools/zalo-sop.gs`, tests |
