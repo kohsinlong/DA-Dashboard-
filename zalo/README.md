@@ -394,8 +394,10 @@ already created on 16 Oct 2026, and `setup()` is safe to run again):
    and upload the latest QK report under Import QK.
 
 After editing the script: Deploy → Manage deployments → Edit → Version: New version → Deploy.
-The URL does not change. After editing the page: commit to `main`; GitHub Pages publishes
-within a minute.
+The URL does not change. After editing the page: bump the `?v=` on the script and stylesheet
+tags in `zalo/index.html` (and `VERSION` in `app.js`), commit to `main`; GitHub Pages publishes
+within a few minutes. Browsers cache the old files for up to ten minutes; the `?v=` bump is what
+makes every phone pick up the new version on its next open.
 
 After editing the script: Deploy → Manage deployments → Edit → Version: New version. The URL
 does not change. After editing the page: commit to `main`; GitHub Pages publishes in a minute.
