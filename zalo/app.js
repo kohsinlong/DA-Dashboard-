@@ -36,7 +36,7 @@
       search: "Tìm tên, số điện thoại hoặc tag…", fAll: "Tất cả", fFix: "Cần sửa", fNoTag: "Chưa có tag", fExam: "Khám", showing: "{a}/{b}", noCust: "Không có khách nào.",
       lPhone: "Điện thoại", lProduct: "Sản phẩm", lDA: "Trợ lý", lDep: "Ngày đặt cọc", lColl: "Ngày nhận kính", lStatus: "Trạng thái", lTag: "Zalo tag", lNote: "Ghi chú", lParent: "Phụ huynh", lRel: "Quan hệ", lGender: "Giới tính", lDob: "Ngày sinh", lRow: "Dòng", lKid2: "Bé thứ 2",
       timeline: "Lịch chăm sóc", edit: "Sửa", save: "Lưu", saving: "Đang lưu…", saved: "Đã lưu", cancel: "Huỷ", close: "Đóng", pendingTag: "Tag mới đang chờ đổi trên Zalo", tagChangeNote: "Tag mới sẽ vào mục Đổi tag; sheet chỉ đổi sau khi bạn đổi trên Zalo và xác nhận.",
-      fix: { nodates: "Thiếu ngày cọc và ngày nhận", notag: "Chưa kết bạn Zalo tag", nophone: "Thiếu số điện thoại", noprod: "Sản phẩm không rõ", future: "Ngày nhận kính ở tương lai", badtag: "Tag không đọc được" },
+      fix: { nodates: "Thiếu ngày cọc và ngày nhận", notag: "Chưa có Zalo tag", nophone: "Thiếu số điện thoại", noprod: "Sản phẩm không rõ", future: "Ngày nhận kính ở tương lai", badtag: "Tag không đọc được" },
       stSent: "đã gửi", stPartial: "gửi một phần", stMissed: "bỏ lỡ", stToday: "hôm nay", stUp: "sắp tới", stOpen: "đang mở",
       addTitle: "Thêm khách mới", aChild: "Tên bé", aGender: "Giới tính", aParent: "Tên phụ huynh", aRel: "Quan hệ với bé", aDob: "Ngày sinh", aDep: "Ngày đặt cọc", aNA: "Chưa chuyển đổi / không áp dụng",
       aColl: "Ngày nhận kính", aProduct: "Sản phẩm", aTag: "Zalo tag", aTagHint: "Gợi ý theo quy ước; sửa được.", aNoZalo: "Chưa kết bạn Zalo / không có tag", aNote: "Ghi chú", aSubmit: "Ghi khách mới", aSubmitting: "Đang ghi…",
