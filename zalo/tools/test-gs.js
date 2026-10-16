@@ -12,6 +12,7 @@ FakeSheet.prototype.getMaxColumns = function(){ return this.rows[0].length; };
 FakeSheet.prototype.getLastRow = function(){ var last = 0; this.rows.forEach(function (r, i) { if (r.some(function (v) { return v !== "" && v !== null && v !== undefined; })) last = i + 1; }); return last; };
 FakeSheet.prototype.getLastColumn = function(){ var last = 0; this.rows.forEach(function (r) { r.forEach(function (v, j) { if (v !== "") last = Math.max(last, j + 1); }); }); return last; };
 FakeSheet.prototype.setFrozenRows = function(k){ this.frozen = k; };
+FakeSheet.prototype.deleteRow = function(r){ this.rows.splice(r - 1, 1); };
 FakeSheet.prototype.insertRowsAfter = function(after, k){ for (var i = 0; i < k; i++) { var a = []; for (var c = 0; c < this.rows[0].length; c++) a.push(""); this.rows.splice(after, 0, a); } };
 FakeSheet.prototype.getRange = function(r, c, nr, nc){ var sh = this; nr = nr || 1; nc = nc || 1; while (sh.rows.length < r + nr - 1) sh.insertRowsAfter(sh.rows.length, 1);
   return {
@@ -40,6 +41,10 @@ var cad = ss.insertSheet("Cadence (VN)");
 [["Sản phẩm","Mốc","Nội dung","Key"],["MC","D1","Đặt cọc: Tin nhắn giới thiệu","MC|D1"],["MC","CD+14","Nhắc đeo 12 giờ","MC|CD+14"],["Kính","CD+7","Chỉnh gọng","Kính|CD+7"],["Atropine","CD+90","Tái khám 1","Atropine|CD+90"],["","",""],["Kính","12"]].forEach(function (r, i) { r.forEach(function (v, j) { cad.rows[i][j] = v; }); });
 
 /* ---------- fake services ---------- */
+/* an older DA_Imports tab without the note column, to check the header sync */
+var oldImp = ss.insertSheet("DA_Imports"); oldImp.rows = []; for (var oi = 0; oi < 50; oi++) { var oa = []; for (var oc = 0; oc < 16; oc++) oa.push(""); oldImp.rows.push(oa); }
+["code","clinic","uploaded_at","uploaded_by","deposit","appointment","status","name","phone","patient_code","lens","product","state","result","last_seen","collected"].forEach(function (h, j) { oldImp.rows[0][j] = h; });
+FakeSheet.prototype.insertColumnsAfter = function(after, k){ this.rows.forEach(function (r) { for (var i = 0; i < k; i++) r.splice(after, 0, ""); }); };
 var sandbox = {
   SpreadsheetApp: { openById: function(){ return ss; }, CopyPasteType: { PASTE_FORMULA: "formula" } },
   Utilities: { formatDate: function(d, tz, fmt){ var t = new Date(d.getTime() + (tz === "UTC" ? 0 : 7 * 3600000)); var s = t.toISOString(); return fmt === "yyyy-MM-dd" ? s.slice(0, 10) : s; } },
@@ -64,6 +69,7 @@ eq(post({ action: "markSent" }), { error: "unknown user" }, "post without creden
 var rep = sandbox.setup();
 ok(ss.getSheetByName("DA_Tasks") && ss.getSheetByName("DA_Imports") && ss.getSheetByName("DA_Details") && ss.getSheetByName("DA_Settings") && ss.getSheetByName("DA_Log"), "setup creates the five tabs");
 eq(ss.getSheetByName("DA_Settings").rows[1].slice(0, 2), ["go_live", "2026-10-16"], "settings seeded");
+eq(ss.getSheetByName("DA_Imports").rows[0][16], "note", "an older DA_Imports tab gets the note header added");
 eq([cad.rows[0][4], cad.rows[1][4], cad.rows[2][4], cad.rows[3][4], cad.rows[4][4], cad.rows[6][4]], ["Touch", "High", "Low", "High", "Low", ""], "touch column seeded, warranty table untouched");
 sandbox.setup(); eq(cad.rows[1][4], "High", "setup is idempotent");
 
@@ -122,9 +128,9 @@ ok(tasks.rows[1][8] !== "", "undone_at set");
 eq(get({ u: "NGT_DA", h: H }).tasks.length, 2, "bootstrap serves the ticks");
 
 /* ---------- imports ---------- */
-var si = post(body({ action: "storeImports", orders: [{ code: "DT1", deposit: "2026-10-10", appointment: "2026-10-20", status: "Chờ Lấy", name: "Võ Gia", phone: "0977111222", lens: "1.61 EL Night", product: "Kính" }, { code: "DT2", deposit: "2026-10-11", appointment: "2026-10-13", status: "DONE", name: "Lê An Nhiên", phone: "0966000111", product: "MC", collected: "2026-10-13" }] }));
+var si = post(body({ action: "storeImports", orders: [{ code: "DT1", deposit: "2026-10-10", appointment: "2026-10-20", status: "Chờ Lấy", name: "Võ Gia", phone: "0977111222", lens: "1.61 EL Night", product: "Kính", note: "bạn của chị Lan" }, { code: "DT2", deposit: "2026-10-11", appointment: "2026-10-13", status: "DONE", name: "Lê An Nhiên", phone: "0966000111", product: "MC", collected: "2026-10-13" }] }));
 eq([si.added, si.updated], [2, 0], "orders stored as parked");
-var imp = ss.getSheetByName("DA_Imports"); eq(imp.rows[1][12], "parked", "default state parked");
+var imp = ss.getSheetByName("DA_Imports"); eq(imp.rows[1][12], "parked", "default state parked"); eq(imp.rows[1][16], "bạn của chị Lan", "note stored with the parked order");
 var ci = post(body({ action: "confirmImports", orders: [{ code: "DT1" }, { code: "DT2" }, { code: "DT3", deposit: "2026-10-12", status: "DONE", name: "Phạm Huy", phone: "0955000111", product: "MC" }],
   adds: [{ code: "DT1", fields: { name: "Võ Gia", phone: "0977111222", product: "Kính", tag: "KTN 261010 Mẹ bé Gia 0977111222", dep: "2026-10-10" } }],
   collections: [{ code: "DT2", ref: { row: 4, name: "Lê An Nhiên", phone: "" }, date: "2026-10-13" }], park: ["DT3"] }));
@@ -141,6 +147,16 @@ eq(ss.getSheetByName("DA_Details").rows[1].slice(0, 6), ["0912345678|tran bao ng
 post(body({ action: "saveDetails", key: "0912345678|tran bao ngoc", details: { pending_tag: "" } }));
 eq(ss.getSheetByName("DA_Details").rows[1][5], "", "pending tag cleared");
 eq(post(body({ action: "nope" })).error, "unknown action: nope", "unknown action");
+
+/* ---------- undo: removeCustomer / removeImport ---------- */
+eq(post(body({ action: "removeCustomer", ref: { row: 2, name: "Nguyễn Tuấn Kiệt", phone: "0907683580" } })).error, "only rows added by the dashboard can be removed", "a row the DA typed into the sheet cannot be cleared");
+var rm = post(body({ action: "removeCustomer", ref: { row: 5, name: "Trần Bảo Ngọc", phone: "0912345678" } }));
+eq([rm.ok, rm.row], [1, 5], "a row the dashboard added can be cleared");
+eq([mem.rows[4][2], mem.rows[4][5], mem.rows[4][8], mem.rows[4][10], mem.rows[4][0]], ["", "", "", "", "=IF($C5=\"\";\"\";COUNTA($C$2:$C5))"], "data cells cleared, formula kept");
+post(body({ action: "storeImports", orders: [{ code: "MAN-1", name: "Tay", phone: "0900000001", state: "parked", result: "manual" }] }));
+var before = imp.getLastRow(); eq(post(body({ action: "removeImport", code: "MAN-1" })).removed, 1, "a typed-in parked entry can be removed");
+eq(imp.getLastRow(), before - 1, "the DA_Imports row is gone");
+eq(post(body({ action: "removeImport", code: "NOPE" })).removed, 0, "removing an unknown code is a no-op");
 
 /* ---------- empty-row growth ---------- */
 for (var k = 0; k < 8; k++) post(body({ action: "addCustomer", fields: { name: "Fill " + k, phone: "09000000" + (10 + k), product: "MC", tag: "t" } }));

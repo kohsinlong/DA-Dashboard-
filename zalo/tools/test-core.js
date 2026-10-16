@@ -51,8 +51,9 @@ eq(Z.lensProduct(""), "", "blank lens");
 /* milestones */
 var mc = { key: "0909|a", product: "MC", dep: "2026-10-10", coll: "2026-10-13", phone: "0909", tag: "MCY 261013 Mẹ bé A 0909", da: "Tiên" };
 var ms = Z.milestones(mc, { goLive: "2026-10-16" });
-eq(ms.map(function (m) { return m.stage + ":" + m.open + ".." + m.due + ":" + m.touch; }).slice(0, 4),
-   ["D6-7:2026-10-16..2026-10-17:High", "CD+3-5:2026-10-16..2026-10-18:High", "CD+14:2026-10-27..2026-10-27:Low", "CD+30:2026-11-12..2026-11-12:Low"], "milestones after go-live, with windows and touch");
+eq(ms.map(function (m) { return m.stage + ":" + m.open + ".." + m.due + ":" + m.touch; }).slice(0, 3),
+   ["CD+3-5:2026-10-16..2026-10-18:High", "CD+14:2026-10-27..2026-10-27:Low", "CD+30:2026-11-12..2026-11-12:Low"], "milestones after go-live, with windows and touch; D6-7 gone once collected");
+eq(Z.milestones({ product: "MC", dep: "2026-10-10", coll: "2026-10-10" }).map(function (m) { return m.stage; })[0], "CD", "same-day collection: CD only, no D1");
 eq(Z.milestones({ product: "MC", dep: "2026-10-10", coll: "" }).map(function (m) { return m.stage; }), ["D1", "D6-7"], "no collection: only D1 and D6-7");
 eq(Z.milestones({ product: "Exam", dep: "2026-10-10" }).length, 0, "exam has no cadence");
 eq(Z.milestones({ product: "OK", dep: "", coll: "2026-10-10" }).map(function (m) { return m.stage; })[0], "CD", "collected without deposit: CD onward");
@@ -77,27 +78,27 @@ var custs = [
   { key: "k9", product: "MC", dep: "2026-10-14", coll: "", phone: "0909", tag: "MCN 261014 Mẹ bé J 0909", da: "Thảo" }         /* other DA */
 ];
 var p = Z.plan(custs, [], { today: today, goLive: gl, da: "Tiên" });
-eq(p.dueToday.map(function (t) { return t.key + ":" + t.stage; }), ["0909|a:D6-7", "0909|a:CD+3-5"], "due today: windows open today, high touch only");
-eq(p.overdue.map(function (t) { return t.key + ":" + t.stage + ":" + t.touch; }), ["k1:D1:High", "k7:CD+30:Low", "k1:D6-7:High", "0909|a:D1:High", "k8:D1:High", "0909|a:CD:High"], "overdue: every unsent milestone past its due date since go-live, oldest first, mass sends past their grace week included");
+eq(p.dueToday.map(function (t) { return t.key + ":" + t.stage; }), ["0909|a:CD+3-5"], "due today: windows open today, high touch only, no D6-7 after collection");
+eq(p.overdue.map(function (t) { return t.key + ":" + t.stage + ":" + t.touch; }), ["k1:D1:High", "k7:CD+30:Low", "k1:D6-7:High", "k8:D1:High", "0909|a:CD:High"], "overdue: every unsent milestone past its due date since go-live, oldest first, mass sends past their grace week included");
 eq(p.upcoming.map(function (u) { return u.day + ":" + u.tasks.map(function (t) { return t.key + ":" + t.stage; }).join(","); }), ["2026-10-18:k8:D6-7"], "upcoming groups by opening day");
 eq(p.mass.map(function (g) { return g.key + "=" + g.products.join("/") + "=" + g.tasks.map(function (t) { return t.key + (t.late ? "!" : ""); }).join(","); }),
    ["CD+30|checkin+edu+vipben+referral=MC=k3,k6!", "CD+30|checkin+vipben+referral=Kính=k2", "CD+90|checkin+edu+vipben+referral=MC/Kính=k5,k4"],
    "mass groups: same milestone and content merge across products; late ones stay with a flag");
-eq(p.tiles, { today: { done: 0, partial: 0, due: 2 }, missed: 5, missedMass: 1, mass: { groups: 3, groupsDone: 0, people: 5, peopleDone: 0 } }, "tiles");
-eq(p.overdueRecent.length + p.overdueOld.length, 6, "fold split covers all overdue");
+eq(p.tiles, { today: { done: 0, partial: 0, due: 1 }, missed: 4, missedMass: 1, mass: { groups: 3, groupsDone: 0, people: 5, peopleDone: 0 } }, "tiles");
+eq(p.overdueRecent.length + p.overdueOld.length, 5, "fold split covers all overdue");
 eq(p.overdueOld.map(function (t) { return t.key + ":" + t.stage; }), ["k1:D1"], "only the 15-day-old miss folds away at 14 days");
-var done = [{ key: "0909|a", stage: "D6-7", bits: "11", score: 1, sent_at: "2026-10-16T09:00:00Z" }, { key: "k3", stage: "CD+30", bits: "1111", score: 1, sent_at: "2026-10-16T09:00:00Z" },
+var done = [{ key: "0909|a", stage: "CD+3-5", bits: "11", score: 1, sent_at: "2026-10-16T09:00:00Z" }, { key: "k3", stage: "CD+30", bits: "1111", score: 1, sent_at: "2026-10-16T09:00:00Z" },
             { key: "k6", stage: "CD+30", bits: "1111", score: 1, sent_at: "2026-10-16T09:00:00Z" }, { key: "k1", stage: "D6-7", bits: "11", score: 1, sent_at: "2026-10-15T09:00:00Z", undone_at: "2026-10-15T09:05:00Z" }];
 p = Z.plan(custs, done, { today: today, goLive: gl, da: "Tiên" });
-eq(p.tiles.today, { done: 1, partial: 0, due: 2 }, "a sent milestone counts as done");
-eq(p.dueToday[0].key + ":" + p.dueToday[0].stage, "0909|a:CD+3-5", "done ones sink to the bottom of due today");
+eq(p.tiles.today, { done: 1, partial: 0, due: 1 }, "a sent milestone counts as done");
+eq(p.dueToday[0].key + ":" + p.dueToday[0].stage + ":" + p.dueToday[0].full, "0909|a:CD+3-5:true", "the sent milestone is marked full");
 eq(p.mass[0].done + ":" + p.mass[0].tasks.length, "1:1", "a late item, once sent, leaves the group; this week's sent item counts as done");
 eq(p.mass[0].late, 0, "late count only for unsent");
 eq(p.tiles.mass.groupsDone, 1, "a group with every task sent is done");
-eq(p.overdue.map(function (t) { return t.key; }), ["k1", "k7", "k1", "0909|a", "k8", "0909|a"], "an undone tick is still overdue");
+eq(p.overdue.map(function (t) { return t.key; }), ["k1", "k7", "k1", "k8", "0909|a"], "an undone tick is still overdue");
 eq(p.sentToday, 3, "sent today counts ticks dated today");
-eq(Z.score(custs, done, { today: today, goLive: gl, da: "Tiên" }), { due: 7, points: 1, pct: 14 }, "score over closed milestones only: 7 closed, one of them sent");
-var pp = Z.plan(custs, [{ key: "0909|a", stage: "D6-7", bits: "10", score: 0.5, sent_at: "2026-10-16T09:00:00Z" }], { today: today, goLive: gl, da: "Tiên" });
+eq(Z.score(custs, done, { today: today, goLive: gl, da: "Tiên" }), { due: 6, points: 1, pct: 17 }, "score over closed milestones only: 6 closed, one of them sent");
+var pp = Z.plan(custs, [{ key: "0909|a", stage: "CD+3-5", bits: "10", score: 0.5, sent_at: "2026-10-16T09:00:00Z" }], { today: today, goLive: gl, da: "Tiên" });
 eq([pp.tiles.today.done, pp.tiles.today.partial, pp.dueToday[0].partial, pp.dueToday[0].full], [0, 1, true, false], "a partial send stays open and counts as partial");
 var mc2 = Z.mergeByContact(pp.dueToday); eq([mc2[0].done, mc2[0].partial], [false, true], "a card with a partial task is partial, not done");
 var cards = Z.mergeByContact([{ cust: { phone: "0901", tag: "t1" }, key: "a" }, { cust: { phone: "0901", tag: "t1" }, key: "b" }, { cust: { phone: "", tag: "t2" }, key: "c" }]);

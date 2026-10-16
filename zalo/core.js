@@ -226,6 +226,7 @@
       if (!info) continue;
       var anchor = Z.OFFSETS[si][0] === 0 ? cust.dep : cust.coll;
       if (!anchor) continue;
+      if (Z.OFFSETS[si][0] === 0 && cust.coll) continue;          /* collected: the deposit-phase messages are moot */
       var due = addDays(anchor, Z.OFFSETS[si][1]);
       var open = Z.WINDOW_START[stage] ? addDays(anchor, Z.WINDOW_START[stage]) : due;
       if (opts.goLive && due < opts.goLive) continue;

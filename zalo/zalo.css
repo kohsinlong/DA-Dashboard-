@@ -156,7 +156,9 @@ details summary{cursor:pointer;color:var(--muted);font-size:.8rem}
 
 /* toast + done screen + confetti */
 .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--ground);padding:10px 16px;border-radius:6px;font-size:.86rem;opacity:0;pointer-events:none;transition:all .25s ease;z-index:120;max-width:92vw;text-align:center}
-.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
+.toast{display:flex;align-items:center;gap:10px}
+.toast .tundo{background:var(--mark);color:var(--mark-ink);border:0;border-radius:4px;padding:5px 12px;font-weight:600;font-size:.82rem;white-space:nowrap}
 .toast.bad{background:var(--bad);color:#fff}
 .donecard{text-align:center;padding:34px 20px}
 .donecard .big{font-size:2.4rem;margin-bottom:6px}
@@ -177,3 +179,18 @@ details summary{cursor:pointer;color:var(--muted);font-size:.8rem}
 .nav a .cn{font-family:"IBM Plex Mono",monospace;font-size:10px;font-weight:600;background:var(--bad);color:#fff;border-radius:10px;padding:0 6px;min-width:18px;text-align:center}
 .nav a[aria-current="page"] .cn{background:var(--surface);color:var(--accent)}
 .search{width:100%;font-family:inherit;font-size:.92rem;padding:10px 12px;border:1px solid var(--rule);border-radius:6px;background:var(--surface);color:var(--ink);margin-bottom:10px}
+
+/* collapsible panel heads */
+.panel > h3.ph{padding:0;display:flex;align-items:stretch}
+.foldbtn{flex:1;display:flex;gap:10px;align-items:flex-start;text-align:left;background:none;border:0;padding:13px 18px;color:var(--ink);font:inherit;font-weight:600;font-size:.95rem;min-width:0}
+@media (max-width:640px){.foldbtn{padding:12px 14px}}
+.foldbtn:hover{background:var(--surface-2)}
+.foldbtn .chev{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--accent);width:12px;flex-shrink:0;margin-top:3px}
+.foldbtn .hint{font-weight:400;font-size:.78rem;color:var(--muted)}
+.foldbtn .dsub{margin-left:4px}
+.panel > h3.ph .gtools{padding:10px 14px 10px 0;align-self:center}
+.fbar .hint{font-size:.76rem;color:var(--muted)}
+.fbar input[type=date]{font-family:inherit;font-size:.8rem;padding:4px 8px;background:var(--surface);color:var(--ink);border:1px solid var(--rule);border-radius:20px}
+.zck{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:.66rem;color:var(--muted);text-align:center;width:52px}
+.zck input{width:22px;height:22px;accent-color:var(--ok);margin:0}
+.irow:has(.zck input:checked){background:var(--ok-soft)}

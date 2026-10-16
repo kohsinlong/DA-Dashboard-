@@ -22,7 +22,7 @@ var CADENCE_SHEET = "Cadence (VN)";
 var TABS = { tasks: "DA_Tasks", imports: "DA_Imports", details: "DA_Details", settings: "DA_Settings", log: "DA_Log" };
 var HEADERS = {
   DA_Tasks:    ["key", "clinic", "da", "stage", "due", "bits", "score", "sent_at", "undone_at", "note"],
-  DA_Imports:  ["code", "clinic", "uploaded_at", "uploaded_by", "deposit", "appointment", "status", "name", "phone", "patient_code", "lens", "product", "state", "result", "last_seen", "collected"],
+  DA_Imports:  ["code", "clinic", "uploaded_at", "uploaded_by", "deposit", "appointment", "status", "name", "phone", "patient_code", "lens", "product", "state", "result", "last_seen", "collected", "note"],
   DA_Details:  ["key", "clinic", "parent_name", "relation", "gender", "pending_tag", "updated_at", "updated_by"],
   DA_Settings: ["key", "value", "note"],
   DA_Log:      ["at", "by", "action", "key", "row", "cell", "old", "new"]
@@ -78,6 +78,8 @@ function dispatch(clinic, by, body) {
     case "storeImports":    return storeImports(ss, clinic, by, body.orders || []);
     case "confirmImports":  return confirmImports(ss, clinic, by, body);
     case "saveDetails":     return saveDetails(ss, clinic, by, body.key, body.details || {});
+    case "removeCustomer":  return removeCustomer(ss, clinic, by, body.ref || {});
+    case "removeImport":    return removeImport(ss, clinic, by, body.code);
     default: throw new Error("unknown action: " + body.action);
   }
 }
@@ -225,8 +227,14 @@ function productKey(text) {
 }
 function ensureTabs(ss) {
   Object.keys(HEADERS).forEach(function (name) {
-    var sh = ss.getSheetByName(name);
-    if (!sh) { sh = ss.insertSheet(name); sh.getRange(1, 1, 1, HEADERS[name].length).setValues([HEADERS[name]]); sh.setFrozenRows(1); }
+    var sh = ss.getSheetByName(name), hdr = HEADERS[name];
+    if (!sh) { sh = ss.insertSheet(name); sh.getRange(1, 1, 1, hdr.length).setValues([hdr]); sh.setFrozenRows(1); }
+    else {
+      /* columns added in later versions get their header; existing data is untouched */
+      if (sh.getMaxColumns() < hdr.length) sh.insertColumnsAfter(sh.getMaxColumns(), hdr.length - sh.getMaxColumns());
+      var cur = sh.getRange(1, 1, 1, hdr.length).getValues()[0];
+      for (var i = 0; i < hdr.length; i++) if (cellText(cur[i]).trim() === "") sh.getRange(1, i + 1).setValue(hdr[i]);
+    }
     if (name === TABS.settings && sh.getLastRow() < 2) sh.getRange(2, 1, SETTINGS_DEFAULT.length, 3).setValues(SETTINGS_DEFAULT);
   });
 }
@@ -354,12 +362,13 @@ function storeImports(ss, clinic, by, orders) {
       var v = sh.getRange(r, 1, 1, hdr.length).getValues()[0];
       v[6] = cellText(o.status || v[6]); v[5] = cellText(o.appointment || o.appt || v[5]); v[14] = at;
       if (o.collected !== undefined) v[15] = cellText(o.collected);
+      if (o.note !== undefined) v[16] = cellText(o.note).slice(0, 500);
       if (o.state) v[12] = o.state; if (o.result !== undefined) v[13] = cellText(o.result);
       if (o.product) v[11] = o.product;
       sh.getRange(r, 1, 1, hdr.length).setValues([v]); updated++;
     } else {
       newRows.push([o.code, clinic, at, by, cellText(o.deposit || o.dep), cellText(o.appointment || o.appt), cellText(o.status), cellText(o.name), cellText(o.phone),
-        cellText(o.patient || o.patient_code), cellText(o.lens), cellText(o.product), o.state || "parked", cellText(o.result), at, cellText(o.collected)]);
+        cellText(o.patient || o.patient_code), cellText(o.lens), cellText(o.product), o.state || "parked", cellText(o.result), at, cellText(o.collected), cellText(o.note).slice(0, 500)]);
       byCode[o.code] = -1; added++;
     }
   });
@@ -398,6 +407,27 @@ function upsertDetails(ss, clinic, by, key, d) {
   return { ok: 1, key: key };
 }
 function saveDetails(ss, clinic, by, key, d) { if (!key) throw new Error("key is required"); return upsertDetails(ss, clinic, by, key, d); }
+
+/* Undo of an add: clears the data cells of a row, but only one the dashboard itself wrote
+   (there is an addCustomer entry for it in DA_Log). Formula columns are untouched. */
+function removeCustomer(ss, clinic, by, ref) {
+  var sh = membership(ss, clinic), r = findRow(sh, ref), key = keyOf(sh.getRange(r, COL.phone).getValue(), sh.getRange(r, COL.name).getValue());
+  var lg = ss.getSheetByName(TABS.log), last = lg.getLastRow(), ok = false;
+  if (last >= 2) { var vals = lg.getRange(2, 1, last - 1, 5).getValues(); for (var i = 0; i < vals.length; i++) if (vals[i][2] === "addCustomer" && String(vals[i][3]) === key && String(vals[i][4]) === String(r)) { ok = true; break; } }
+  if (!ok) throw new Error("only rows added by the dashboard can be removed");
+  var log = [];
+  Object.keys(WRITABLE).forEach(function (f) { var rng = sh.getRange(r, COL[f]), old = rng.getValue(); if (old !== "" && old !== null) { log.push([f, old instanceof Date ? iso(old) : cellText(old), ""]); rng.clearContent(); } });
+  logRows(ss, by, "removeCustomer", key, r, log);
+  return { ok: 1, row: r, key: key };
+}
+/* Undo of a typed-in "Zalo not added" entry: the DA_Imports row goes away. */
+function removeImport(ss, clinic, by, code) {
+  if (!code) throw new Error("code is required");
+  var sh = ss.getSheetByName(TABS.imports), last = sh.getLastRow();
+  var vals = last >= 2 ? sh.getRange(2, 1, last - 1, 2).getValues() : [];
+  for (var i = vals.length - 1; i >= 0; i--) if (String(vals[i][0]) === String(code) && (!vals[i][1] || vals[i][1] === clinic)) { sh.deleteRow(i + 2); logRows(ss, by, "removeImport", String(code), i + 2, [["row", "", ""]]); return { ok: 1, removed: 1 }; }
+  return { ok: 1, removed: 0 };
+}
 
 /* Run from the editor to check reading works before deploying. */
 function test() {

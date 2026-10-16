@@ -1,6 +1,6 @@
 # DA Zalo Dashboard — design, operations and change log
 
-**Status:** v1.0.0 built and tested, waiting for the Apps Script to be deployed (§2.10) · **Go-live:** 16 Oct 2026 · **Clinic:** NGT · **Last updated:** 16 Oct 2026
+**Status:** v1.1.0 built and tested, waiting for the Apps Script to be deployed (§2.10) · **Go-live:** 16 Oct 2026 · **Clinic:** NGT · **Last updated:** 16 Oct 2026
 
 This file is the single source of truth for the DA Zalo Dashboard. Part 1 is the view at a
 glance, Part 2 the granular rules, Part 3 the change log. Every change to the dashboard updates
@@ -76,7 +76,8 @@ Files in `zalo/`:
   collection. **Low touch** (mass send) is CD+14 and later. The split is a column in the
   `Cadence (VN)` tab and can be changed there.
 - **Due today** shows high touch only. **Mass sends** shows low touch for the whole week, grouped
-  by milestone and content.
+  by milestone and content. Once a customer has a collected date, the deposit-phase messages
+  (D1, D6-7) are dropped for them.
 - **Nothing before go-live** (16 Oct 2026) is ever due or overdue.
 - **Zalo tag**: `MCY 260720 Mẹ bé Avan Nguyễn 0772786699` — product, Y/N, date, relation, child,
   phone. Collected → Y with the collection date; not yet → N with the deposit date.
@@ -146,7 +147,7 @@ row whose C is empty. STT numbers itself.
 | Tab | Columns |
 |---|---|
 | `DA_Tasks` | key · clinic · da · stage · due (date) · bits (e.g. `1101`) · score (1 / 0.5) · sent_at · undone_at · note |
-| `DA_Imports` | code · uploaded_at · uploaded_by · deposit · appointment · status · name · phone · patient_code · lens · product · state (`confirmed` / `parked` / `dismissed`) · result (`added:<key>` / `collected:<key>` / `repeat:<key>` / `sibling:<key>`) · last_seen |
+| `DA_Imports` | code · clinic · uploaded_at · uploaded_by · deposit · appointment · status · name · phone · patient_code · lens · product · state (`confirmed` / `parked` / `dismissed`) · result (`added:<key>` / `collected:<key>` / `repeat:<key>` / `sibling:<key>` / `manual`) · last_seen · collected · note |
 | `DA_Details` | key · parent_name · relation · gender · updated_at · updated_by |
 | `DA_Settings` | key · value · note — keys: `go_live` 2026-10-16 · `import_cutoff` 2026-07-20 · `late_grace_weeks` 1 · `overdue_fold_days` 14 · `week_start` Mon |
 | `DA_Log` | at · by · action · key · row · cell · old · new |
@@ -216,6 +217,13 @@ shows its text once, then its customers with a milestone chip each, a select-all
 Zalo. Low-touch items not sent by Sunday stay in their group with a **late** chip for
 `late_grace_weeks`, then count as missed and move to Overdue.
 
+**Undo everywhere.** Every write reports with a toast that carries an **Undo** button for nine
+seconds: ticks and mass sends, a recorded collection, a confirmed or kept tag, a member-card
+edit, dismiss and restore. The "member recorded" screen has an Undo that clears the row just
+written, and an import write shows **Undo this write** that clears the rows it added and removes
+the collected dates it set. The script allows clearing a row only when `DA_Log` shows the
+dashboard added it; rows typed into the sheet by hand can never be cleared from the page.
+
 **Ticking.** One tap on a card marks the whole milestone sent (bits all 1, score 1). Tapping
 again undoes it (the `DA_Tasks` row gets `undone_at`; history is kept). Expanding a card
 shows the content items; ticking some of them records a partial send (score 0.5). Ticks are
@@ -230,10 +238,12 @@ When Due today reaches zero a short confetti burst plays once per day.
 
 ### 2.5 Pages
 
-All pages are one HTML file with hash routes (`#/`, `#/customers`, …) so data loads once per
-session.
+All pages are one HTML file with hash routes (`#/overview`, `#/add`, `#/collections`,
+`#/members`, `#/legacy`) so data loads once per session. Every list panel has a collapsible
+header (▾ / ▸); the fold state is remembered per device so the DA can keep only what she is
+working on open.
 
-**Tasks** (landing after sign-in), top to bottom:
+**Overview** (landing after sign-in), top to bottom:
 1. Tiles — **Today**: high-touch done / due · **Missed personal outreach**: overdue high-touch
    count · **Mass sends**: groups done / due and people reached / people due this week.
 2. Overdue band (red, count, opens on tap).
@@ -241,40 +251,35 @@ session.
 4. Upcoming this week.
 5. Mass sends due, one block per group.
 Each task row shows: Zalo tag, phone, deposit date, collection date, the milestone, and the
-exact content items to send. Lists filter by product and search by name, phone or tag.
+exact content items to send.
 
-**Customers** — search by name, phone or tag; chips for product and a **To fix** filter (rows
-missing both dates, missing tag or phone, unknown product, collected date in the future).
-A customer card shows details, parent details, the cadence timeline (sent / partial / missed /
-upcoming) and lets the DA edit deposit date, collected date, product, tag, note and parent
-details. Changing the tag here goes through the tag-update flow (2.6). Setting a product and
-deposit date on an Exam row converts it.
+**Add members** — the single-member form (child name*, gender, parent name, relation, birthday,
+deposit date* with "not applicable / unconverted", collection date, product*, Zalo tag*
+suggested and editable, "Zalo not added", note), then **New members from the QK report**
+underneath: the upload, and the new entries the file contains. Nothing is pre-ticked and there is
+no select-all: the DA ticks **Zalo added** on the customers she actually has on Zalo, completes
+product, relation (empty until she picks it) and tag, and writes those; every unticked row goes
+to Not in CRM. Orders already in the member list, already parked on Not in CRM, or repeated
+within the file never come up as new. Relation labels follow the page language while the stored
+value and the tag stay Vietnamese (Mẹ bé …). Parent's name is optional.
 
-**Add customer** — child name*, gender, parent name*, relation (Mẹ / Ba / Ông ngoại / Bà ngoại
-/ Ông nội / Bà nội / other), birthday, deposit date* (today by default, or "Not applicable /
-unconverted"), collection date, product* (MC / OK / Kính / Atropine / Exam), Zalo tag*
-(suggested from the other fields, editable, or "Zalo not added"). Submit writes the row and
-shows **Entry recorded** with **Add another** / **Back to tasks**, without signing out.
-"Zalo not added" parks the entry on Not in CRM instead of writing to the form.
+**Glass collections** — **Pending collection** (every row with a deposit and no collected date:
+Collected ✓ | date | Save, with the expected pickup from the last upload when known), then
+**Zalo tag updates** (renames waiting for the DA: N → Y after a collection, the & form after a
+sibling, edits made on a member card; the DA renames in Zalo, taps confirmed, then the sheet
+is written), then **Collection updates from the QK report** underneath: the same upload, and
+the rows of members whose glasses the report says are collected. One upload serves both pages.
 
-**Pending collection** — every row with a deposit date and no collected date. Per row:
-**Collected ✓** | date (today by default, editable) | **Submit** (enabled once ticked). Shows
-the expected pickup date from the last upload when known. Submit writes L and status J and
-queues the N → Y tag update.
+**Member list** — search that filters as you type, chips for product, **To fix** and **No tag**,
+a date filter on deposit or collected date, and a sort (newest, name, deposit date, collected
+date). A member card shows details, parent details, the cadence timeline and editable fields;
+tag edits go through Tag updates. Exam members are converted here.
 
-**Tag updates** — renames waiting for the DA: N → Y after a collection, the & form after a
-sibling is added, and any tag edited on a customer card. Each shows old tag → new tag and a
-**Copy** button. The DA renames the contact in Zalo, taps **Updated in Zalo**, and only then is
-column I overwritten. Existing Y tags that carry the deposit date are not proposed for change.
-
-**Import** — see 2.7.
-
-**Not in CRM** — parked orders (no Zalo yet), grouped by collection month, newest first; the
-two newest months are open and older months fold behind their heading. Each row shows its
-upcoming milestones for optional outreach, **Add to CRM** (opens Add customer pre-filled) and
-**Dismiss**. A **Repeat orders** heading lists orders for customers already in
-the form, with a **Start new cadence** button that adds a fresh row. A **Dismissed** filter
-shows hidden rows with **Restore**.
+**Not in CRM** — parked orders (no Zalo yet) grouped by collection month, the two newest months
+open and older ones folded, each row with its note, its upcoming milestones, **Add to CRM**
+(opens Add members pre-filled, note included) and **Dismiss**. **Repeat orders** for existing
+members sit under their own heading with **Start a new cadence**. A **Dismissed** filter shows
+hidden rows with **Restore**.
 
 **Resources** — not in v1.
 
@@ -352,7 +357,9 @@ Every request carries `u` (username) and `h` (password hash). Posts are JSON sen
 | `POST markSent` | one or many milestones sent / undone | DA_Tasks |
 | `POST storeImports` | records uploaded orders and their states | DA_Imports |
 | `POST confirmImports` | adds rows and sets collected dates for ticked orders | as addCustomer / setCollected, DA_Imports |
-| `POST saveDetails` | parent name, relation, gender | DA_Details |
+| `POST saveDetails` | parent name, relation, gender, pending tag | DA_Details |
+| `POST removeCustomer` | undo of an add: clears the data cells of a row the dashboard added (checked against DA_Log) | Membership data cells, DA_Log |
+| `POST removeImport` | undo of a typed-in "Zalo not added" entry | DA_Imports |
 
 Every write takes a script lock, re-finds the row by key, checks name and phone, writes, and
 logs old and new values. Errors come back as `{error: "…"}` and the page shows them.
@@ -395,18 +402,21 @@ does not change. After editing the page: commit to `main`; GitHub Pages publishe
 
 ### 2.11 Testing
 
-- `node zalo/tools/test-core.js` — 98 checks on the rules: dates, names and phones, products,
+- `node zalo/tools/test-core.js` — 99 checks on the rules: dates, names and phones, products,
   milestones, the task plan (overdue, due today, upcoming, mass groups, late, partial sends),
   tag suggestions and parsing, CSV, QK parsing in both formats, matching, duplicate handling.
-- `node zalo/tools/test-gs.js` — 58 checks on the script against a fake spreadsheet: sign-in,
+- `node zalo/tools/test-gs.js` — 66 checks on the script against a fake spreadsheet: sign-in,
   setup, bootstrap, every write, row re-location after rows move, refusals (duplicates, bad
   dates, formula columns), import confirmation, details merge, growth past the formatted rows.
 - The QK export of 16 Oct 2026 was run through the parser and matcher and reproduced the
   independent Python analysis exactly (924 orders since July: 545 phone+name matches, 26
   name-only, 17 sibling, 336 new).
-- Every screen was walked in headless Chromium in demo mode (sign-in, picker, ticks, undo,
-  partial ticks, mass send, customers, edit, add, duplicate refusal, no-Zalo parking, pending
-  collection, tag updates, CSV import and re-import, Not in CRM, three languages).
+- Every screen was walked in headless Chromium in demo mode, 63 checks: sign-in, picker, folds
+  and their persistence, ticks, undo from the toast, partial ticks, mass send, member list
+  search, date filter, sort and backspace behaviour, member edit, add with undo, duplicate
+  refusal, no-Zalo parking, CSV import with the Zalo-added ticks, undo of the import write and
+  re-import, pending collection with undo, tag updates, Not in CRM dismiss with undo, three
+  languages.
 - `?demo=1` loads synthetic sample data (no real customers). `?asof=YYYY-MM-DD` moves "today".
   `?api=<url>` points the page at a test deployment.
 
@@ -433,5 +443,6 @@ Newest first. Each entry: date · version · what changed · why · files.
 
 | Date | Version | Change | Why | Files |
 |---|---|---|---|---|
+| 2026-10-16 | 1.1.0 | Pages restructured to Overview · Add members · Glass collections · Member list · Not in CRM; the QK import sits under Add members (new entries, with a note field) and under Glass collections (collection updates), one upload serving both; every list panel collapsible with the fold state remembered; member list filters by date and sorts; search filters in place (no re-render per keystroke, which broke typing on phones); deposit-phase cadences dropped once collected; orders already in the member list or on Not in CRM never offered again; imported new members are written only when ticked "Zalo added" (no select-all, nothing pre-ticked), relation empty by default with language-aware labels, parent's name optional; Undo on every write (toast button, recorded screen, import result) with two new script actions `removeCustomer` and `removeImport`; `DA_Imports` gains a `note` column. | First review on the live page. | `zalo/app.js`, `zalo/core.js`, `zalo/zalo.css`, `zalo/tools/zalo-sop.gs`, tests |
 | 2026-10-16 | 1.0.0 | First build: all pages, rules engine, Apps Script, demo mode, tests. Workbook tabs `DA_Tasks`, `DA_Imports`, `DA_Details`, `DA_Settings`, `DA_Log` created and `Cadence (VN)` column E "Touch" filled. Head-office feed and both rule copies now anchor on K/L with the tag date as fallback. | Launch for NGT. | `zalo/*`, `optom-core.js`, head-office `index.html` and `tools/live-feed.gs` |
 | 2026-10-16 | 0.1 | Design agreed and written up. No code yet. | Starting point for the build and for hand-over. | `zalo/README.md` |
