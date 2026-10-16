@@ -95,8 +95,8 @@ Files in `zalo/`:
 | Change the go-live date, import cutoff, grace periods | `DA_Settings` tab |
 | Move a milestone between high and low touch | `Cadence (VN)` column E |
 | Change what a milestone says to do | `Cadence (VN)` column C |
-| Change the password | `PW_HASH` in `zalo-sop.gs` (sha256 of the new password), then publish a new version of the script |
-| Add a clinic | add its workbook to `CLINICS` in `zalo-sop.gs`; its username is the clinic name upper-cased + `_DA` |
+| Change the username or password | `USERS` / `PW_HASH` in `zalo-sop.gs` (sha256 of the new password), then publish a new version of the script |
+| Add a clinic or a username | add the workbook to `CLINICS` and the username to `USERS` in `zalo-sop.gs`, then publish a new version |
 | Update the script after editing it | Apps Script editor → Deploy → Manage deployments → Edit → New version |
 
 ---
@@ -105,7 +105,7 @@ Files in `zalo/`:
 
 ### 2.1 Sign-in and access
 
-- Username `NGT_DA`, one shared password. Only the SHA-256 hash of the password is stored, and
+- Username `NGT_DA1`, one shared password. Only usernames listed in `USERS` can sign in. Only the SHA-256 hash of the password is stored, and
   only in the script (`PW_HASH` in `zalo-sop.gs`); the page holds neither the password nor its
   hash, so nothing in the public page source can be brute-forced. The page hashes what the DA
   types, sends the hash with every request, and the script refuses anything else.
@@ -390,7 +390,7 @@ already created on 16 Oct 2026, and `setup()` is safe to run again):
 4. Either paste that URL into `API.url` at the top of `zalo/app.js` and commit (the permanent
    way), or on the sign-in card open **Connect the script (advanced)** and paste it there, once
    per device. Sending the URL to Claude also works: it commits it.
-5. Open https://kohsinlong.github.io/DA-Dashboard-/zalo/, sign in as `NGT_DA`, pick the DA,
+5. Open https://kohsinlong.github.io/DA-Dashboard-/zalo/, sign in as `NGT_DA1`, pick the DA,
    and upload the latest QK report under Import QK.
 
 After editing the script: Deploy → Manage deployments → Edit → Version: New version → Deploy.
@@ -445,6 +445,7 @@ Newest first. Each entry: date · version · what changed · why · files.
 
 | Date | Version | Change | Why | Files |
 |---|---|---|---|---|
+| 2026-10-16 | 1.1.2 | Username changed to `NGT_DA1` with a new password; the generic `<CLINIC>_DA` sign-in rule removed so only listed usernames work; page files carry a version tag so phones fetch new releases. | Launch. | `zalo/tools/zalo-sop.gs`, `zalo/app.js`, `zalo/index.html` |
 | 2026-10-16 | 1.1.1 | "Not in CRM" renamed to **No Zalo Add List**; every month group on it folds (the newest ones could not); bigger section headers. | Launch review. | `zalo/app.js`, `zalo/zalo.css` |
 | 2026-10-16 | 1.1.0 | Pages restructured to Overview · Add members · Glass collections · Member list · Not in CRM; the QK import sits under Add members (new entries, with a note field) and under Glass collections (collection updates), one upload serving both; every list panel collapsible with the fold state remembered; member list filters by date and sorts; search filters in place (no re-render per keystroke, which broke typing on phones); deposit-phase cadences dropped once collected; orders already in the member list or on Not in CRM never offered again; imported new members are written only when ticked "Zalo added" (no select-all, nothing pre-ticked), relation empty by default with language-aware labels, parent's name optional; Undo on every write (toast button, recorded screen, import result) with two new script actions `removeCustomer` and `removeImport`; `DA_Imports` gains a `note` column. | First review on the live page. | `zalo/app.js`, `zalo/core.js`, `zalo/zalo.css`, `zalo/tools/zalo-sop.gs`, tests |
 | 2026-10-16 | 1.0.0 | First build: all pages, rules engine, Apps Script, demo mode, tests. Workbook tabs `DA_Tasks`, `DA_Imports`, `DA_Details`, `DA_Settings`, `DA_Log` created and `Cadence (VN)` column E "Touch" filled. Head-office feed and both rule copies now anchor on K/L with the tag date as fallback. | Launch for NGT. | `zalo/*`, `optom-core.js`, head-office `index.html` and `tools/live-feed.gs` |

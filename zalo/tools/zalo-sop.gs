@@ -15,8 +15,8 @@ var CLINICS = {
   /* clinic code → the CRM workbook and its Membership tab */
   "NGT": { id: "1IdKCJ58wJHrjFkaQmnTKwPo3rWtAvAA3CUYRkH_4IJI", sheet: "Membership_NGT" }
 };
-var USERS = { "NGT_DA": "NGT" };     /* extra usernames; <CLINIC>_DA works for every clinic above */
-var PW_HASH = "48a495c2722686b5907a142bf3009e12856f690280cd0e37e91497fdeb597075";   /* sha256 of the shared password */
+var USERS = { "NGT_DA1": "NGT" };    /* username → clinic; only names listed here can sign in */
+var PW_HASH = "d006b3f546ac914c34dfc209ad535ea530f32a1e8e0ae822ea049b3a783e4d20";   /* sha256 of the shared password */
 var TZ = "Asia/Ho_Chi_Minh";
 var CADENCE_SHEET = "Cadence (VN)";
 var TABS = { tasks: "DA_Tasks", imports: "DA_Imports", details: "DA_Details", settings: "DA_Settings", log: "DA_Log" };
@@ -92,7 +92,6 @@ function out(obj) {
 function auth(u, h) {
   u = String(u || "").trim().toUpperCase();
   var clinic = USERS[u] || "";
-  if (!clinic) Object.keys(CLINICS).forEach(function (c) { if (c.replace(/\s+/g, "").toUpperCase() + "_DA" === u) clinic = c; });
   if (!clinic || !CLINICS[clinic]) throw new Error("unknown user");
   if (!PW_HASH || String(h || "").toLowerCase() !== PW_HASH) throw new Error("forbidden");
   return clinic;

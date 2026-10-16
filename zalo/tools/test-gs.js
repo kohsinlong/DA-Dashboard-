@@ -54,15 +54,16 @@ var sandbox = {
 };
 vm.createContext(sandbox);
 vm.runInContext(fs.readFileSync(__dirname + "/zalo-sop.gs", "utf8"), sandbox);
-var H = "48a495c2722686b5907a142bf3009e12856f690280cd0e37e91497fdeb597075";
+var H = "d006b3f546ac914c34dfc209ad535ea530f32a1e8e0ae822ea049b3a783e4d20";
 function get(p){ return JSON.parse(sandbox.doGet({ parameter: p }).text); }
 function post(b){ return JSON.parse(sandbox.doPost({ postData: { contents: JSON.stringify(b) } }).text); }
-function body(b){ return Object.assign({ u: "NGT_DA", h: H, da: "Tiên" }, b); }
+function body(b){ return Object.assign({ u: "NGT_DA1", h: H, da: "Tiên" }, b); }
 
 /* ---------- auth ---------- */
-eq(get({ u: "NGT_DA", h: "wrong", action: "ping" }), { error: "forbidden" }, "wrong hash is refused");
+eq(get({ u: "NGT_DA1", h: "wrong", action: "ping" }), { error: "forbidden" }, "wrong hash is refused");
 eq(get({ u: "XYZ_DA", h: H, action: "ping" }), { error: "unknown user" }, "unknown user is refused");
-eq(get({ u: "ngt_da", h: H, action: "ping" }).clinic, "NGT", "clinic rule <CLINIC>_DA, case-insensitive");
+eq(get({ u: "ngt_da1", h: H, action: "ping" }).clinic, "NGT", "listed username, case-insensitive");
+eq(get({ u: "NGT_DA", h: H, action: "ping" }), { error: "unknown user" }, "the old username no longer signs in");
 eq(post({ action: "markSent" }), { error: "unknown user" }, "post without credentials is refused");
 
 /* ---------- setup ---------- */
@@ -74,7 +75,7 @@ eq([cad.rows[0][4], cad.rows[1][4], cad.rows[2][4], cad.rows[3][4], cad.rows[4][
 sandbox.setup(); eq(cad.rows[1][4], "High", "setup is idempotent");
 
 /* ---------- bootstrap ---------- */
-var b = get({ u: "NGT_DA", h: H });
+var b = get({ u: "NGT_DA1", h: H });
 eq(b.ok, 1, "bootstrap ok");
 eq(b.customers.length, 3, "three customers read, formula-only rows skipped");
 eq([b.customers[0].dep, b.customers[0].coll, b.customers[1].dep, b.customers[2].dep], ["2026-07-20", "2026-07-27", "2026-10-03", "2026-10-10"], "dates read from Date, text and serial cells");
@@ -125,7 +126,7 @@ var tasks = ss.getSheetByName("DA_Tasks"); eq([tasks.rows[1][0], tasks.rows[1][1
 var un = post(body({ action: "markSent", undo: [{ key: "k1", stage: "CD+14" }, { key: "zz", stage: "D1" }] }));
 eq(un.undone, 1, "undo marks the latest matching row only");
 ok(tasks.rows[1][8] !== "", "undone_at set");
-eq(get({ u: "NGT_DA", h: H }).tasks.length, 2, "bootstrap serves the ticks");
+eq(get({ u: "NGT_DA1", h: H }).tasks.length, 2, "bootstrap serves the ticks");
 
 /* ---------- imports ---------- */
 var si = post(body({ action: "storeImports", orders: [{ code: "DT1", deposit: "2026-10-10", appointment: "2026-10-20", status: "Chờ Lấy", name: "Võ Gia", phone: "0977111222", lens: "1.61 EL Night", product: "Kính", note: "bạn của chị Lan" }, { code: "DT2", deposit: "2026-10-11", appointment: "2026-10-13", status: "DONE", name: "Lê An Nhiên", phone: "0966000111", product: "MC", collected: "2026-10-13" }] }));
