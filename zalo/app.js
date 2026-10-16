@@ -6,7 +6,7 @@
   /* Paste the Apps Script /exec URL here after deploying (README §2.10). ?api=<url> and the
      "Connect" box on the sign-in card override it for testing. */
   var API = { url: "https://script.google.com/macros/s/AKfycbwselLgmfAg8ffK5IqBpXVvY8Ppqv2hDNCOStNABLLNfSalUvx5UKR7GC6LIxKuVEO9kg/exec" };
-  var VERSION = "1.1.3";
+  var VERSION = "1.1.4";
 
   /* ------------------------------------------------------------------ strings */
   var L = {
@@ -710,7 +710,15 @@
       b.disabled = !n || st.busy; b.textContent = fill(mode === "members" ? T().iConfirmM : T().iConfirm, { n: n });
     });
   }
-  function loadScript(list){ return new Promise(function (res, rej) { if (window.XLSX) return res(); var i = 0; (function next() { if (i >= list.length) return rej(new Error("Excel reader could not be loaded (no internet?)")); var s = document.createElement("script"); s.src = list[i++]; s.onload = res; s.onerror = next; document.head.appendChild(s); })(); }); }
+  /* the Excel reader ships with the page (zalo/vendor); the CDNs are only fallbacks */
+  var XLSX_SRC = ["vendor/xlsx.full.min.js?v=" + VERSION, "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js", "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"];
+  function loadScript(list){ return new Promise(function (res, rej) {
+    if (window.XLSX) return res();
+    var i = 0, done = false, timer = setTimeout(function () { if (!done) { done = true; rej(new Error(T().iLibFail)); } }, 30000);
+    (function next() { if (done) return; if (i >= list.length) { done = true; clearTimeout(timer); return rej(new Error(T().iLibFail)); }
+      var sc = document.createElement("script"); sc.src = list[i++]; sc.onload = function () { if (!done) { done = true; clearTimeout(timer); res(); } }; sc.onerror = next; document.head.appendChild(sc); })();
+  }); }
+  function nextTick(v){ return new Promise(function (res) { setTimeout(function () { res(v); }, 30); }); }
   function readWorkbook(file){
     var name = file.name.toLowerCase();
     if (/\.csv$/.test(name)) return file.text().then(function (txt) { return [{ name: "csv", rows: Z.parseCSV(txt) }]; });
@@ -730,7 +738,7 @@
   function importFile(file){
     var t = T(); st.ui.impError = ""; st.ui.impStatus = t.iParsing; render();
     st.ui.impFrom = ($("impFrom") || {}).value || st.ui.impFrom; st.ui.impTo = ($("impTo") || {}).value || st.ui.impTo;
-    readWorkbook(file).then(function (sheets) {
+    Promise.resolve().then(function () { return readWorkbook(file); }).then(function (sheets) {
       var found = Z.findOrderSheet(sheets);
       if (!found || found.header < 0) throw new Error(t.iNoSheet);
       var cutoff = st.settings.import_cutoff || "", all = Z.parseOrders(found.rows.slice(found.header + 1), { today: st.today }), kept = all.filter(function (o) { return !cutoff || o.dep >= cutoff; });

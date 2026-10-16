@@ -446,6 +446,7 @@ Newest first. Each entry: date · version · what changed · why · files.
 
 | Date | Version | Change | Why | Files |
 |---|---|---|---|---|
+| 2026-10-16 | 1.1.4 | Fix: choosing an .xlsx failed silently since 1.1.0 (the reader's source list was lost in the page restructure); the browser walkthrough now uploads the real workbook. | Excel upload hung on live. | `zalo/app.js` |
 | 2026-10-16 | 1.1.3 | Excel reader shipped with the page instead of fetched from a CDN; real progress text while a workbook is read; a 30-second timeout with a CSV hint instead of a silent hang. | Upload appeared stuck on first use. | `zalo/vendor/`, `zalo/app.js`, `zalo/index.html` |
 | 2026-10-16 | 1.1.2 | Username changed to `NGT_DA1` with a new password; the generic `<CLINIC>_DA` sign-in rule removed so only listed usernames work; page files carry a version tag so phones fetch new releases. | Launch. | `zalo/tools/zalo-sop.gs`, `zalo/app.js`, `zalo/index.html` |
 | 2026-10-16 | 1.1.1 | "Not in CRM" renamed to **No Zalo Add List**; every month group on it folds (the newest ones could not); bigger section headers. | Launch review. | `zalo/app.js`, `zalo/zalo.css` |
