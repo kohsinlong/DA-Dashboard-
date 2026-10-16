@@ -1,6 +1,6 @@
 # DA Zalo Dashboard — design, operations and change log
 
-**Status:** v1.1.0 built and tested, waiting for the Apps Script to be deployed (§2.10) · **Go-live:** 16 Oct 2026 · **Clinic:** NGT · **Last updated:** 16 Oct 2026
+**Status:** v1.1.1 built and tested, waiting for the Apps Script to be deployed (§2.10) · **Go-live:** 16 Oct 2026 · **Clinic:** NGT · **Last updated:** 16 Oct 2026
 
 This file is the single source of truth for the DA Zalo Dashboard. Part 1 is the view at a
 glance, Part 2 the granular rules, Part 3 the change log. Every change to the dashboard updates
@@ -86,7 +86,7 @@ Files in `zalo/`:
 - **Siblings** are one row per child sharing the parent's phone; the task list merges them into
   one card so the parent is messaged once.
 - **Imports lose nothing**: every uploaded order is remembered; rows not ticked are parked on
-  the Not in CRM page.
+  the No Zalo Add List.
 
 ### Where to change common things
 
@@ -111,7 +111,7 @@ Files in `zalo/`:
   types, sends the hash with every request, and the script refuses anything else.
 - After sign-in the DA picks her name once (the list comes from column H); the phone remembers it.
 - Everyone signed in sees the clinic. Task lists are filtered to the picked DA. Pending
-  collection, Not in CRM and Customers are clinic-wide.
+  collection, the No Zalo Add List and the Member list are clinic-wide.
 - Sessions live in the browser tab (sessionStorage). Sign out clears them.
 
 ### 2.2 Data model
@@ -259,7 +259,7 @@ suggested and editable, "Zalo not added", note), then **New members from the QK 
 underneath: the upload, and the new entries the file contains. Nothing is pre-ticked and there is
 no select-all: the DA ticks **Zalo added** on the customers she actually has on Zalo, completes
 product, relation (empty until she picks it) and tag, and writes those; every unticked row goes
-to Not in CRM. Orders already in the member list, already parked on Not in CRM, or repeated
+to the No Zalo Add List. Orders already in the member list, already on that list, or repeated
 within the file never come up as new. Relation labels follow the page language while the stored
 value and the tag stay Vietnamese (Mẹ bé …). Parent's name is optional.
 
@@ -275,8 +275,8 @@ a date filter on deposit or collected date, and a sort (newest, name, deposit da
 date). A member card shows details, parent details, the cadence timeline and editable fields;
 tag edits go through Tag updates. Exam members are converted here.
 
-**Not in CRM** — parked orders (no Zalo yet) grouped by collection month, the two newest months
-open and older ones folded, each row with its note, its upcoming milestones, **Add to CRM**
+**No Zalo Add List** (route `#/legacy`) — customers not added on Zalo yet, grouped by collection
+month; every month folds and unfolds, the two newest open by default, each row with its note, its upcoming milestones, **Add to CRM**
 (opens Add members pre-filled, note included) and **Dismiss**. **Repeat orders** for existing
 members sit under their own heading with **Start a new cadence**. A **Dismissed** filter shows
 hidden rows with **Restore**.
@@ -443,6 +443,7 @@ Newest first. Each entry: date · version · what changed · why · files.
 
 | Date | Version | Change | Why | Files |
 |---|---|---|---|---|
+| 2026-10-16 | 1.1.1 | "Not in CRM" renamed to **No Zalo Add List**; every month group on it folds (the newest ones could not); bigger section headers. | Launch review. | `zalo/app.js`, `zalo/zalo.css` |
 | 2026-10-16 | 1.1.0 | Pages restructured to Overview · Add members · Glass collections · Member list · Not in CRM; the QK import sits under Add members (new entries, with a note field) and under Glass collections (collection updates), one upload serving both; every list panel collapsible with the fold state remembered; member list filters by date and sorts; search filters in place (no re-render per keystroke, which broke typing on phones); deposit-phase cadences dropped once collected; orders already in the member list or on Not in CRM never offered again; imported new members are written only when ticked "Zalo added" (no select-all, nothing pre-ticked), relation empty by default with language-aware labels, parent's name optional; Undo on every write (toast button, recorded screen, import result) with two new script actions `removeCustomer` and `removeImport`; `DA_Imports` gains a `note` column. | First review on the live page. | `zalo/app.js`, `zalo/core.js`, `zalo/zalo.css`, `zalo/tools/zalo-sop.gs`, tests |
 | 2026-10-16 | 1.0.0 | First build: all pages, rules engine, Apps Script, demo mode, tests. Workbook tabs `DA_Tasks`, `DA_Imports`, `DA_Details`, `DA_Settings`, `DA_Log` created and `Cadence (VN)` column E "Touch" filled. Head-office feed and both rule copies now anchor on K/L with the tag date as fallback. | Launch for NGT. | `zalo/*`, `optom-core.js`, head-office `index.html` and `tools/live-feed.gs` |
 | 2026-10-16 | 0.1 | Design agreed and written up. No code yet. | Starting point for the build and for hand-over. | `zalo/README.md` |

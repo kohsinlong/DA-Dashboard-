@@ -19,12 +19,12 @@
       feedLive: "Đã kết nối · đọc lúc {t}", feedDemo: "Bản demo · dữ liệu giả", feedFailed: "Không đọc được sheet", feedLoading: "Đang đọc sheet…", feedOffline: "Chưa kết nối",
       signout: "Đăng xuất", switchWho: "Không phải bạn?", reload: "Tải lại",
       rel: { "Mẹ": "Mẹ", "Ba": "Ba", "Ông ngoại": "Ông ngoại", "Bà ngoại": "Bà ngoại", "Ông nội": "Ông nội", "Bà nội": "Bà nội", "Cô": "Cô", "Dì": "Dì", "Chú": "Chú", "Khác": "Khác" },
-      aZaloAdded: "Đã kết bạn Zalo", iConfirmM: "Ghi {n} khách đã có Zalo", iNewHint2: "chưa có trong CRM · tick những khách đã kết bạn Zalo rồi điền phần còn thiếu; khách không tick sẽ vào Chưa có Zalo",
+      aZaloAdded: "Đã kết bạn Zalo", iConfirmM: "Ghi {n} khách đã có Zalo", iNewHint2: "chưa có trong CRM · tick những khách đã kết bạn Zalo rồi điền phần còn thiếu; khách không tick sẽ vào danh sách chưa kết bạn Zalo",
       tSkipped: "Đã giữ nguyên tag", iUndoWrite: "Hoàn tác lần ghi này", aUndo: "Hoàn tác (xoá khách vừa ghi)", undoneRow: "Đã hoàn tác: dòng vừa ghi đã được xoá", undoneImport: "Đã hoàn tác lần ghi", collUndone: "Đã bỏ ngày nhận kính",
-      nav: { overview: "Tổng quan", add: "Thêm khách", collections: "Nhận kính", members: "Danh sách khách", legacy: "Chưa có Zalo" },
+      nav: { overview: "Tổng quan", add: "Thêm khách", collections: "Nhận kính", members: "Danh sách khách", legacy: "Chưa kết bạn Zalo" },
       aSection: "Thêm từng khách", iTitleM: "Nhập khách mới từ báo cáo QK", iTitleC: "Cập nhật ngày nhận kính từ báo cáo QK", iChange: "Đổi file", iLoaded: "File {f} · {n} đơn từ {d}",
-      iWhy: { same: "đã có trong CRM", expected: "chưa DONE (chỉ có ngày hẹn)", parked: "đã ở Chưa có Zalo", parkedOther: "đã ở Chưa có Zalo", dup: "trùng trong file", done: "đã nhập lần trước", dismissed: "đã ẩn", update: "ngày nhận đã ghi", "update-checkphone": "ngày nhận đã ghi" },
-      iResultM: "Đã ghi {a} khách mới · {p} để ở Chưa có Zalo · {e} lỗi", iResultC: "Đã ghi {c} ngày nhận kính · {e} lỗi", iNothing: "Không có dòng nào cho mục này trong file.",
+      iWhy: { same: "đã có trong CRM", expected: "chưa DONE (chỉ có ngày hẹn)", parked: "đã ở danh sách chưa kết bạn Zalo", parkedOther: "đã ở danh sách chưa kết bạn Zalo", dup: "trùng trong file", done: "đã nhập lần trước", dismissed: "đã ẩn", update: "ngày nhận đã ghi", "update-checkphone": "ngày nhận đã ghi" },
+      iResultM: "Đã ghi {a} khách mới · {p} để ở danh sách chưa kết bạn Zalo · {e} lỗi", iResultC: "Đã ghi {c} ngày nhận kính · {e} lỗi", iNothing: "Không có dòng nào cho mục này trong file.",
       mDate: "Lọc theo", mDep: "ngày cọc", mColl: "ngày nhận", mFrom: "từ", mTo: "đến", mSort: "Sắp xếp", sortNew: "Mới nhất", sortName: "Tên A→Z", sortDep: "Ngày cọc", sortColl: "Ngày nhận", mClear: "Bỏ lọc",
       tToday: "Hôm nay", tTodayX: "{d}/{n} high touch đã gửi", tMissed: "Bỏ lỡ cá nhân", tMissedX: "high touch quá hạn chưa gửi", tMass: "Gửi hàng loạt", tMassX: "{g}/{G} nhóm · {p}/{P} khách tuần này",
       secOverdue: "Quá hạn", overdueHint: "chưa gửi, cũ nhất trước", secToday: "Đến hạn hôm nay", todayHint: "high touch · gửi riêng từng khách", secUp: "Sắp tới trong tuần", upHint: "high touch · từ ngày mai đến Chủ nhật",
@@ -36,11 +36,11 @@
       search: "Tìm tên, số điện thoại hoặc tag…", fAll: "Tất cả", fFix: "Cần sửa", fNoTag: "Chưa có tag", fExam: "Khám", showing: "{a}/{b}", noCust: "Không có khách nào.",
       lPhone: "Điện thoại", lProduct: "Sản phẩm", lDA: "Trợ lý", lDep: "Ngày đặt cọc", lColl: "Ngày nhận kính", lStatus: "Trạng thái", lTag: "Zalo tag", lNote: "Ghi chú", lParent: "Phụ huynh", lRel: "Quan hệ", lGender: "Giới tính", lDob: "Ngày sinh", lRow: "Dòng", lKid2: "Bé thứ 2",
       timeline: "Lịch chăm sóc", edit: "Sửa", save: "Lưu", saving: "Đang lưu…", saved: "Đã lưu", cancel: "Huỷ", close: "Đóng", pendingTag: "Tag mới đang chờ đổi trên Zalo", tagChangeNote: "Tag mới sẽ vào mục Đổi tag; sheet chỉ đổi sau khi bạn đổi trên Zalo và xác nhận.",
-      fix: { nodates: "Thiếu ngày cọc và ngày nhận", notag: "Chưa có Zalo tag", nophone: "Thiếu số điện thoại", noprod: "Sản phẩm không rõ", future: "Ngày nhận kính ở tương lai", badtag: "Tag không đọc được" },
+      fix: { nodates: "Thiếu ngày cọc và ngày nhận", notag: "Chưa kết bạn Zalo tag", nophone: "Thiếu số điện thoại", noprod: "Sản phẩm không rõ", future: "Ngày nhận kính ở tương lai", badtag: "Tag không đọc được" },
       stSent: "đã gửi", stPartial: "gửi một phần", stMissed: "bỏ lỡ", stToday: "hôm nay", stUp: "sắp tới", stOpen: "đang mở",
       addTitle: "Thêm khách mới", aChild: "Tên bé", aGender: "Giới tính", aParent: "Tên phụ huynh", aRel: "Quan hệ với bé", aDob: "Ngày sinh", aDep: "Ngày đặt cọc", aNA: "Chưa chuyển đổi / không áp dụng",
       aColl: "Ngày nhận kính", aProduct: "Sản phẩm", aTag: "Zalo tag", aTagHint: "Gợi ý theo quy ước; sửa được.", aNoZalo: "Chưa kết bạn Zalo / không có tag", aNote: "Ghi chú", aSubmit: "Ghi khách mới", aSubmitting: "Đang ghi…",
-      aRecorded: "Đã ghi khách mới", aRecordedX: "{n} đã vào CRM form, dòng {r}.", aParked: "Đã lưu vào Chưa có Zalo", aParkedX: "{n} sẽ nằm ở trang Chưa có Zalo cho đến khi có tag.", aAnother: "Thêm khách khác", aBack: "Về việc hôm nay",
+      aRecorded: "Đã ghi khách mới", aRecordedX: "{n} đã vào CRM form, dòng {r}.", aParked: "Đã lưu vào danh sách chưa kết bạn Zalo", aParkedX: "{n} sẽ nằm ở danh sách Chưa kết bạn Zalo cho đến khi có tag.", aAnother: "Thêm khách khác", aBack: "Về việc hôm nay",
       req: "bắt buộc", genders: { "": "—", "Nam": "Nam", "Nữ": "Nữ" }, other: "Khác", relText: "Ghi rõ (ví dụ: Cô Lan)", today: "hôm nay", dupWarn: "Khách này hình như đã có trong CRM (dòng {r}).",
       pTitle: "Chờ nhận kính", pHint: "đã đặt cọc, chưa có ngày nhận", pCollected: "Đã nhận", pSubmit: "Ghi", pExpected: "QK hẹn {d}", pNone: "Không có khách nào đang chờ nhận kính.", pDone: "Đã ghi ngày nhận kính cho {n}.",
       tTitle: "Đổi tag Zalo", tHint: "đổi trên điện thoại trước, rồi xác nhận để sheet cập nhật", tOld: "Tag hiện tại", tNew: "Tag mới", tCopy: "Sao chép", tConfirm: "Đã đổi trên Zalo", tSkip: "Giữ nguyên", tNone: "Không có tag nào cần đổi.",
@@ -49,10 +49,10 @@
       iParsing: "Đang đọc file…", iFound: "{n} đơn trong tab “{s}” (sau {c} bỏ qua vì trước {d})", iNoSheet: "Không thấy tab SO TTKSCT hay tab có cột Ngày Đặt / Ngày Hẹn / Mã Đơn Hàng…", iBadFile: "Không đọc được file: {e}",
       iNew: "Khách mới", iNewHint: "chưa có trong CRM · điền phần còn thiếu, tick để ghi", iColl: "Cập nhật ngày nhận kính", iCollHint: "khách đã có trong CRM, QK báo DONE", iRepeat: "Mua lại", iRepeatHint: "khách đã có ngày nhận trước đó", iInfo: "Không cần làm gì",
       iInfoHint: "đã có trong CRM với cùng thông tin, hoặc chưa DONE", iSibling: "cùng SĐT với {n}", iCheckPhone: "SĐT khác với CRM ({p})", iSeen: "đã nhập lần trước", iChanged: "có thay đổi", iFuture: "ngày nhận ở tương lai — kiểm tra",
-      iConfirm: "Ghi {n} dòng đã chọn", iSubmitting: "Đang ghi…", iDone: "Đã ghi xong", iDoneX: "{a} khách mới · {c} ngày nhận · {p} để ở Chưa có Zalo · {e} lỗi", iNoneSel: "Chưa chọn dòng nào", iAgain: "Nhập file khác", iToTasks: "Về việc hôm nay",
+      iConfirm: "Ghi {n} dòng đã chọn", iSubmitting: "Đang ghi…", iDone: "Đã ghi xong", iDoneX: "{a} khách mới · {c} ngày nhận · {p} để ở Chưa kết bạn Zalo · {e} lỗi", iNoneSel: "Chưa chọn dòng nào", iAgain: "Nhập file khác", iToTasks: "Về việc hôm nay",
       iPick: "— chọn —", iSteps: ["Chọn file", "Kiểm tra", "Ghi vào sheet"], iDismiss: "Bỏ qua", iCutoff: "Đơn trước {d} không được nhập (cài đặt import_cutoff).", iExpectedOnly: "chỉ cập nhật ngày hẹn", iLibLoading: "Đang tải bộ đọc Excel…",
-      lTitle: "Chưa có Zalo", lHint: "khách từ QK chưa có trong CRM · nhóm theo tháng nhận kính", lAdd: "Thêm vào CRM", lDismiss: "Ẩn", lRestore: "Khôi phục", lShowDismissed: "Xem đã ẩn ({n})", lHideDismissed: "Ẩn danh sách đã ẩn",
-      lRepeat: "Mua lại", lRepeatHint: "đơn mới của khách đã có trong CRM", lStartNew: "Tạo chu kỳ mới", lUpcoming: "Sắp đến", lNone: "Không có khách nào chờ. Tải báo cáo QK ở mục Nhập QK.", lNoColl: "Chưa nhận kính", lManual: "nhập tay",
+      lTitle: "Chưa kết bạn Zalo", lHint: "khách chưa kết bạn Zalo, chưa có trong CRM · nhóm theo tháng nhận kính", lAdd: "Thêm vào CRM", lDismiss: "Ẩn", lRestore: "Khôi phục", lShowDismissed: "Xem đã ẩn ({n})", lHideDismissed: "Ẩn danh sách đã ẩn",
+      lRepeat: "Mua lại", lRepeatHint: "đơn mới của khách đã có trong CRM", lStartNew: "Tạo chu kỳ mới", lUpcoming: "Sắp đến", lNone: "Danh sách trống. Tải báo cáo QK ở trang Thêm khách để lấy khách chưa kết bạn Zalo.", lNoColl: "Chưa nhận kính", lManual: "nhập tay",
       prod: { MC: "MC", "Kính": "Kính", OK: "Ortho-K", Atropine: "Atropine", Exam: "Khám" }, months: ["Th1", "Th2", "Th3", "Th4", "Th5", "Th6", "Th7", "Th8", "Th9", "Th10", "Th11", "Th12"], days: ["T2", "T3", "T4", "T5", "T6", "T7", "CN"],
       foot: "Ngày đến hạn tính từ ngày đặt cọc (K) và ngày nhận kính (L) trong CRM form. Mọi thay đổi ở đây được ghi vào Google Sheet và lưu lại trong DA_Log. Phiên bản {v}.",
       setupTitle: "Chưa kết nối Google Sheets", confettiMsg: "🎉 Xong hết việc hôm nay!", demoWrite: "Bản demo: thay đổi chỉ lưu trên trình duyệt này.", notConnected: "Chưa kết nối sheet: không ghi được."
@@ -66,12 +66,12 @@
       feedLive: "Connected · read at {t}", feedDemo: "Demo · sample data", feedFailed: "Sheets unreachable", feedLoading: "Reading the sheets…", feedOffline: "Not connected",
       signout: "Sign out", switchWho: "Not you?", reload: "Reload",
       rel: { "Mẹ": "Mother", "Ba": "Father", "Ông ngoại": "Maternal grandfather", "Bà ngoại": "Maternal grandmother", "Ông nội": "Paternal grandfather", "Bà nội": "Paternal grandmother", "Cô": "Aunt (father's side)", "Dì": "Aunt (mother's side)", "Chú": "Uncle", "Khác": "Other" },
-      aZaloAdded: "Zalo added", iConfirmM: "Write {n} members with Zalo", iNewHint2: "not in the CRM · tick the ones you have on Zalo and complete their details; the rest go to Not in CRM",
+      aZaloAdded: "Zalo added", iConfirmM: "Write {n} members with Zalo", iNewHint2: "not in the CRM · tick the ones you have on Zalo and complete their details; the rest go to the No Zalo Add List",
       tSkipped: "Tag kept as is", iUndoWrite: "Undo this write", aUndo: "Undo (remove the row just written)", undoneRow: "Undone: the row just written was cleared", undoneImport: "The write was undone", collUndone: "Collected date removed",
-      nav: { overview: "Overview", add: "Add members", collections: "Glass collections", members: "Member list", legacy: "Not in CRM" },
+      nav: { overview: "Overview", add: "Add members", collections: "Glass collections", members: "Member list", legacy: "No Zalo Add List" },
       aSection: "Add one member", iTitleM: "New members from the QK report", iTitleC: "Collection updates from the QK report", iChange: "Change file", iLoaded: "File {f} · {n} orders since {d}",
-      iWhy: { same: "already in the CRM", expected: "not DONE yet (appointment only)", parked: "already on Not in CRM", parkedOther: "already on Not in CRM", dup: "duplicate within the file", done: "imported earlier", dismissed: "dismissed", update: "collected date already recorded", "update-checkphone": "collected date already recorded" },
-      iResultM: "Written: {a} new members · {p} parked on Not in CRM · {e} errors", iResultC: "Written: {c} collected dates · {e} errors", iNothing: "Nothing in this file for this section.",
+      iWhy: { same: "already in the CRM", expected: "not DONE yet (appointment only)", parked: "already on the No Zalo Add List", parkedOther: "already on the No Zalo Add List", dup: "duplicate within the file", done: "imported earlier", dismissed: "dismissed", update: "collected date already recorded", "update-checkphone": "collected date already recorded" },
+      iResultM: "Written: {a} new members · {p} parked on the No Zalo Add List · {e} errors", iResultC: "Written: {c} collected dates · {e} errors", iNothing: "Nothing in this file for this section.",
       mDate: "Filter by", mDep: "deposit date", mColl: "collected date", mFrom: "from", mTo: "to", mSort: "Sort", sortNew: "Newest", sortName: "Name A→Z", sortDep: "Deposit date", sortColl: "Collected date", mClear: "Clear",
       tToday: "Today", tTodayX: "{d}/{n} high touch sent", tMissed: "Missed personal", tMissedX: "high touch overdue, not sent", tMass: "Mass sends", tMassX: "{g}/{G} groups · {p}/{P} people this week",
       secOverdue: "Overdue", overdueHint: "not sent, oldest first", secToday: "Due today", todayHint: "high touch · one by one", secUp: "Upcoming this week", upHint: "high touch · tomorrow to Sunday",
@@ -87,7 +87,7 @@
       stSent: "sent", stPartial: "partly sent", stMissed: "missed", stToday: "today", stUp: "upcoming", stOpen: "open",
       addTitle: "Add a customer", aChild: "Child's name", aGender: "Gender", aParent: "Parent's name", aRel: "Relation to the child", aDob: "Birthday", aDep: "Deposit date", aNA: "Not applicable / unconverted",
       aColl: "Collection date", aProduct: "Product", aTag: "Zalo tag", aTagHint: "Suggested from the convention; editable.", aNoZalo: "Zalo not added / no tag yet", aNote: "Note", aSubmit: "Record customer", aSubmitting: "Recording…",
-      aRecorded: "Customer recorded", aRecordedX: "{n} is in the CRM form, row {r}.", aParked: "Saved to Not in CRM", aParkedX: "{n} stays on the Not in CRM page until a tag exists.", aAnother: "Add another", aBack: "Back to tasks",
+      aRecorded: "Customer recorded", aRecordedX: "{n} is in the CRM form, row {r}.", aParked: "Saved to the No Zalo Add List", aParkedX: "{n} stays on the No Zalo Add List until a tag exists.", aAnother: "Add another", aBack: "Back to tasks",
       req: "required", genders: { "": "—", "Nam": "Male", "Nữ": "Female" }, other: "Other", relText: "Specify (e.g. Cô Lan)", today: "today", dupWarn: "This customer seems to be in the CRM already (row {r}).",
       pTitle: "Pending collection", pHint: "deposit paid, no collected date yet", pCollected: "Collected", pSubmit: "Save", pExpected: "QK expects {d}", pNone: "Nobody is waiting for glasses.", pDone: "Collected date saved for {n}.",
       tTitle: "Zalo tag updates", tHint: "rename on your phone first, then confirm so the sheet follows", tOld: "Current tag", tNew: "New tag", tCopy: "Copy", tConfirm: "Renamed in Zalo", tSkip: "Keep as is", tNone: "No tags waiting.",
@@ -96,10 +96,10 @@
       iParsing: "Reading the file…", iFound: "{n} orders in tab “{s}” ({c} skipped: before {d})", iNoSheet: "No SO TTKSCT tab, and no tab with the Ngày Đặt / Ngày Hẹn / Mã Đơn Hàng… header", iBadFile: "Could not read the file: {e}",
       iNew: "New entries", iNewHint: "not in the CRM · fill what's missing, tick to write", iColl: "Collection updates", iCollHint: "already in the CRM, QK says DONE", iRepeat: "Repeat orders", iRepeatHint: "customers already collected earlier", iInfo: "Nothing to do",
       iInfoHint: "in the CRM with the same data, or not DONE yet", iSibling: "same phone as {n}", iCheckPhone: "phone differs from the CRM ({p})", iSeen: "uploaded before", iChanged: "changed", iFuture: "collected date in the future — check",
-      iConfirm: "Write {n} selected rows", iSubmitting: "Writing…", iDone: "Written", iDoneX: "{a} new · {c} collected dates · {p} parked on Not in CRM · {e} errors", iNoneSel: "Nothing selected", iAgain: "Import another file", iToTasks: "Back to tasks",
+      iConfirm: "Write {n} selected rows", iSubmitting: "Writing…", iDone: "Written", iDoneX: "{a} new · {c} collected dates · {p} parked on No Zalo Add List · {e} errors", iNoneSel: "Nothing selected", iAgain: "Import another file", iToTasks: "Back to tasks",
       iPick: "— pick —", iSteps: ["Choose file", "Review", "Write to sheet"], iDismiss: "Dismiss", iCutoff: "Orders before {d} are ignored (setting import_cutoff).", iExpectedOnly: "expected date only", iLibLoading: "Loading the Excel reader…",
-      lTitle: "Not in CRM", lHint: "QK customers without a Zalo yet · by collection month", lAdd: "Add to CRM", lDismiss: "Dismiss", lRestore: "Restore", lShowDismissed: "Show dismissed ({n})", lHideDismissed: "Hide dismissed",
-      lRepeat: "Repeat orders", lRepeatHint: "new orders for customers already in the CRM", lStartNew: "Start a new cadence", lUpcoming: "Upcoming", lNone: "Nobody parked. Upload the QK report under Import QK.", lNoColl: "Not collected yet", lManual: "typed in",
+      lTitle: "No Zalo Add List", lHint: "customers not added on Zalo yet, not in the CRM · by collection month", lAdd: "Add to CRM", lDismiss: "Dismiss", lRestore: "Restore", lShowDismissed: "Show dismissed ({n})", lHideDismissed: "Hide dismissed",
+      lRepeat: "Repeat orders", lRepeatHint: "new orders for customers already in the CRM", lStartNew: "Start a new cadence", lUpcoming: "Upcoming", lNone: "The list is empty. Upload the QK report under Add members to fill it.", lNoColl: "Not collected yet", lManual: "typed in",
       prod: { MC: "MC", "Kính": "Glasses", OK: "Ortho-K", Atropine: "Atropine", Exam: "Exam" }, months: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"], days: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
       foot: "Due dates come from the deposit date (K) and collected date (L) in the CRM form. Every change here is written to the Google Sheet and recorded in DA_Log. Version {v}.",
       setupTitle: "Google Sheets not connected", confettiMsg: "🎉 Everything due today is done!", demoWrite: "Demo: changes stay in this browser only.", notConnected: "Not connected to the sheet: nothing was saved."
@@ -113,12 +113,12 @@
       feedLive: "已连接 · 读取于 {t}", feedDemo: "演示 · 示例数据", feedFailed: "无法读取表格", feedLoading: "正在读取表格…", feedOffline: "未连接",
       signout: "退出", switchWho: "不是你？", reload: "刷新",
       rel: { "Mẹ": "母亲", "Ba": "父亲", "Ông ngoại": "外公", "Bà ngoại": "外婆", "Ông nội": "爷爷", "Bà nội": "奶奶", "Cô": "姑姑", "Dì": "阿姨", "Chú": "叔叔", "Khác": "其他" },
-      aZaloAdded: "已加 Zalo", iConfirmM: "写入 {n} 位已加 Zalo 的会员", iNewHint2: "不在 CRM · 勾选已加 Zalo 的客户并补齐信息；未勾选的进入“未加 Zalo”",
+      aZaloAdded: "已加 Zalo", iConfirmM: "写入 {n} 位已加 Zalo 的会员", iNewHint2: "不在 CRM · 勾选已加 Zalo 的客户并补齐信息；未勾选的进入“未加 Zalo 名单”",
       tSkipped: "已保留标签", iUndoWrite: "撤销本次写入", aUndo: "撤销（删除刚写入的行）", undoneRow: "已撤销：刚写入的行已清除", undoneImport: "已撤销本次写入", collUndone: "已移除取镜日期",
-      nav: { overview: "总览", add: "新增会员", collections: "取镜", members: "会员列表", legacy: "未加 Zalo" },
+      nav: { overview: "总览", add: "新增会员", collections: "取镜", members: "会员列表", legacy: "未加 Zalo 名单" },
       aSection: "逐个新增", iTitleM: "从 QK 报表导入新会员", iTitleC: "从 QK 报表更新取镜日期", iChange: "更换文件", iLoaded: "文件 {f} · {d} 起 {n} 条订单",
-      iWhy: { same: "已在 CRM", expected: "尚未 DONE（仅预约）", parked: "已在“未加 Zalo”", parkedOther: "已在“未加 Zalo”", dup: "文件内重复", done: "之前已导入", dismissed: "已忽略", update: "取镜日期已记录", "update-checkphone": "取镜日期已记录" },
-      iResultM: "已写入 {a} 位新会员 · {p} 条留在“未加 Zalo” · {e} 个错误", iResultC: "已写入 {c} 个取镜日期 · {e} 个错误", iNothing: "文件中没有本节的内容。",
+      iWhy: { same: "已在 CRM", expected: "尚未 DONE（仅预约）", parked: "已在“未加 Zalo 名单”", parkedOther: "已在“未加 Zalo 名单”", dup: "文件内重复", done: "之前已导入", dismissed: "已忽略", update: "取镜日期已记录", "update-checkphone": "取镜日期已记录" },
+      iResultM: "已写入 {a} 位新会员 · {p} 条留在“未加 Zalo 名单” · {e} 个错误", iResultC: "已写入 {c} 个取镜日期 · {e} 个错误", iNothing: "文件中没有本节的内容。",
       mDate: "按", mDep: "定金日期", mColl: "取镜日期", mFrom: "从", mTo: "到", mSort: "排序", sortNew: "最新", sortName: "姓名 A→Z", sortDep: "定金日期", sortColl: "取镜日期", mClear: "清除",
       tToday: "今天", tTodayX: "{d}/{n} 高触达已发", tMissed: "遗漏个人跟进", tMissedX: "高触达逾期未发", tMass: "群发", tMassX: "{g}/{G} 组 · {p}/{P} 人本周",
       secOverdue: "逾期", overdueHint: "未发送，最早在前", secToday: "今日到期", todayHint: "高触达 · 逐一发送", secUp: "本周即将到期", upHint: "高触达 · 明天到周日",
@@ -134,7 +134,7 @@
       stSent: "已发", stPartial: "部分发送", stMissed: "遗漏", stToday: "今天", stUp: "即将", stOpen: "进行中",
       addTitle: "新增客户", aChild: "孩子姓名", aGender: "性别", aParent: "家长姓名", aRel: "与孩子的关系", aDob: "生日", aDep: "定金日期", aNA: "未转化 / 不适用",
       aColl: "取镜日期", aProduct: "产品", aTag: "Zalo 标签", aTagHint: "按规则建议；可修改。", aNoZalo: "尚未加 Zalo / 无标签", aNote: "备注", aSubmit: "记录客户", aSubmitting: "记录中…",
-      aRecorded: "已记录客户", aRecordedX: "{n} 已进入 CRM 表，第 {r} 行。", aParked: "已存入“未加 Zalo”", aParkedX: "{n} 会留在“未加 Zalo”页面直到有标签。", aAnother: "再加一位", aBack: "返回任务",
+      aRecorded: "已记录客户", aRecordedX: "{n} 已进入 CRM 表，第 {r} 行。", aParked: "已存入“未加 Zalo 名单”", aParkedX: "{n} 会留在“未加 Zalo 名单”直到有标签。", aAnother: "再加一位", aBack: "返回任务",
       req: "必填", genders: { "": "—", "Nam": "男", "Nữ": "女" }, other: "其他", relText: "请注明（例如 Cô Lan）", today: "今天", dupWarn: "此客户似乎已在 CRM 中（第 {r} 行）。",
       pTitle: "待取镜", pHint: "已付定金，尚无取镜日期", pCollected: "已取镜", pSubmit: "保存", pExpected: "QK 预约 {d}", pNone: "没有待取镜的客户。", pDone: "已保存 {n} 的取镜日期。",
       tTitle: "Zalo 标签更新", tHint: "先在手机上改名，再确认，表格随之更新", tOld: "当前标签", tNew: "新标签", tCopy: "复制", tConfirm: "已在 Zalo 改名", tSkip: "保持不变", tNone: "没有待改的标签。",
@@ -145,8 +145,8 @@
       iInfoHint: "CRM 中信息相同，或尚未 DONE", iSibling: "与 {n} 同一电话", iCheckPhone: "电话与 CRM 不同（{p}）", iSeen: "之前已导入", iChanged: "有变化", iFuture: "取镜日期在未来 — 请检查",
       iConfirm: "写入 {n} 条所选", iSubmitting: "写入中…", iDone: "已写入", iDoneX: "{a} 位新客户 · {c} 个取镜日期 · {p} 条留在“未加 Zalo” · {e} 个错误", iNoneSel: "未选择任何行", iAgain: "导入另一个文件", iToTasks: "返回任务",
       iPick: "— 选择 —", iSteps: ["选择文件", "核对", "写入表格"], iDismiss: "忽略", iCutoff: "早于 {d} 的订单不导入（设置 import_cutoff）。", iExpectedOnly: "仅更新预约日期", iLibLoading: "正在加载 Excel 读取器…",
-      lTitle: "未加 Zalo", lHint: "QK 中尚未进入 CRM 的客户 · 按取镜月份分组", lAdd: "加入 CRM", lDismiss: "忽略", lRestore: "恢复", lShowDismissed: "查看已忽略（{n}）", lHideDismissed: "隐藏已忽略",
-      lRepeat: "复购", lRepeatHint: "CRM 已有客户的新订单", lStartNew: "开始新周期", lUpcoming: "即将", lNone: "没有待处理的客户。请在“导入 QK”上传报表。", lNoColl: "尚未取镜", lManual: "手动录入",
+      lTitle: "未加 Zalo 名单", lHint: "尚未加 Zalo、不在 CRM 的客户 · 按取镜月份分组", lAdd: "加入 CRM", lDismiss: "忽略", lRestore: "恢复", lShowDismissed: "查看已忽略（{n}）", lHideDismissed: "隐藏已忽略",
+      lRepeat: "复购", lRepeatHint: "CRM 已有客户的新订单", lStartNew: "开始新周期", lUpcoming: "即将", lNone: "名单为空。请在“新增会员”上传 QK 报表。", lNoColl: "尚未取镜", lManual: "手动录入",
       prod: { MC: "MC", "Kính": "眼镜", OK: "Ortho-K", Atropine: "阿托品", Exam: "检查" }, months: ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"], days: ["一", "二", "三", "四", "五", "六", "日"],
       foot: "到期日期根据 CRM 表中的定金日期（K）和取镜日期（L）计算。此处的每项更改都会写入 Google 表格并记录在 DA_Log。版本 {v}。",
       setupTitle: "尚未连接 Google Sheets", confettiMsg: "🎉 今天的任务全部完成！", demoWrite: "演示：更改仅保存在本浏览器。", notConnected: "未连接表格：未保存。"
@@ -352,7 +352,7 @@
     afterRender();
     maybeConfetti();
   }
-  var ALIAS = { tasks: "overview", customers: "members", pending: "collections", tags: "collections", import: "add" };
+  var ALIAS = { tasks: "overview", customers: "members", pending: "collections", tags: "collections", import: "add", nozalo: "legacy" };
   function route(){ var m = /^#\/([a-z]+)/.exec(location.hash || ""); st.route = m ? (ALIAS[m[1]] || m[1]) : "overview"; if (["overview", "add", "collections", "members", "legacy"].indexOf(st.route) === -1) st.route = "overview"; render(); window.scrollTo(0, 0); }
 
   /* ------------------------------------------------------------------ shared pieces */
@@ -776,10 +776,9 @@
     var h = '<div class="panel">' + foldHead("legacy", esc(t.lTitle) + ' <span class="dsub">' + rest.length + "</span>", t.lHint);
     if (isFolded("legacy")) { h += "</div>"; months = []; }
     else if (!rest.length) h += '<div class="empty">' + esc(t.lNone) + "</div>";
-    st.ui.openMonths = st.ui.openMonths || {};
     months.forEach(function (m, mi) {
-      var open = !m || mi < 2 || st.ui.openMonths[m];
-      h += '<button type="button" class="grpd" style="width:100%;text-align:left;border:0;border-bottom:1px solid var(--rule-2);cursor:pointer" data-act="lg-month" data-m="' + esc(m) + '">' + (open ? "▾ " : "▸ ") + (m ? esc(t.months[+m.slice(5, 7) - 1] + " " + m.slice(0, 4)) : esc(t.noDate)) + " · " + byM[m].length + "</button>";
+      var fk = "lg:" + m, open = st.ui.folds[fk] === undefined ? (!m || mi < 2) : !st.ui.folds[fk];
+      h += '<button type="button" class="grpd" style="width:100%;text-align:left;border:0;border-bottom:1px solid var(--rule-2);cursor:pointer" data-act="lg-month" data-m="' + esc(m) + '" data-open="' + (open ? 1 : 0) + '">' + (open ? "▾ " : "▸ ") + (m ? esc(t.months[+m.slice(5, 7) - 1] + " " + m.slice(0, 4)) : esc(t.noDate)) + " · " + byM[m].length + "</button>";
       if (open) byM[m].sort(function (a, b) { return (b.collected || b.deposit) < (a.collected || a.deposit) ? -1 : 1; }).forEach(function (i) { h += legacyRow(i, false); });
     });
     if (!isFolded("legacy")) h += "</div>";
@@ -913,7 +912,7 @@
         var setState = function (stt, msg, undo) { return apiPost({ action: "storeImports", orders: [{ code: code, state: stt }] }).then(function () { st.imports.forEach(function (i) { if (i.code === code) i.state = stt; }); render(); toast(msg, false, undo); }); };
         setState(state, state === "dismissed" ? t.lDismiss : t.lRestore, function () { setState(back, t.undoneToast, null).catch(function (e) { toast(fill(t.errToast, { e: e.message }), true); }); }).catch(function (e) { el.disabled = false; toast(fill(t.errToast, { e: e.message }), true); }); break; }
       case "lg-toggle-dismissed": st.ui.showDismissed = !st.ui.showDismissed; render(); break;
-      case "lg-month": st.ui.openMonths = st.ui.openMonths || {}; st.ui.openMonths[el.dataset.m] = !st.ui.openMonths[el.dataset.m]; render(); break;
+      case "lg-month": st.ui.folds["lg:" + el.dataset.m] = el.dataset.open === "1"; store("zalo_folds", JSON.stringify(st.ui.folds)); render(); break;
     }
   });
   document.addEventListener("change", function (ev) {
