@@ -196,3 +196,22 @@ details summary{cursor:pointer;color:var(--muted);font-size:.8rem}
 .irow.on,.irow:has(.zck input:checked){background:var(--ok-soft)}
 .xpage{color:var(--accent);font-weight:600;text-decoration:none;font-size:.82rem}
 .xpage:hover{text-decoration:underline}
+/* guide and tour (1.2.0) */
+.helpbtn{width:30px;height:30px;border-radius:50%;border:1px solid var(--rule);background:var(--surface);color:var(--accent);font-weight:700;font-size:15px;line-height:1;cursor:pointer;margin-right:8px;flex-shrink:0}
+.helpbtn:hover{border-color:var(--accent)}
+.guide .lede{font-size:.92rem;color:var(--ink-2);margin:4px 0 12px;line-height:1.45}
+.guide ol,.guide ul{margin:6px 0 0;padding-left:18px;font-size:.88rem;line-height:1.5}
+.guide li{margin:3px 0}
+.guide .note{margin:12px 0}
+.gsec{border-top:1px solid var(--rule-2);padding:10px 0}
+.gsec summary{cursor:pointer;font-weight:700;font-size:1rem}
+.gsec .btn{margin-top:8px}
+.gbtns{display:flex;gap:8px;justify-content:flex-end;margin:14px 0 4px;flex-wrap:wrap}
+.tour{position:fixed;inset:0;z-index:95}
+.tour.gone{display:none}
+.thl{position:fixed;border-radius:8px;box-shadow:0 0 0 9999px rgba(10,12,20,.55);border:2px solid var(--accent);transition:top .2s,left .2s,width .2s,height .2s;pointer-events:none}
+.tcard{position:fixed;left:50%;transform:translateX(-50%);width:min(92vw,420px);background:var(--surface);color:var(--ink);border-radius:10px;padding:14px 16px;box-shadow:var(--shadow);border:1px solid var(--rule)}
+.tcard h4{margin:4px 0 6px;font-size:1.02rem}
+.tcard p{margin:0 0 12px;font-size:.88rem;line-height:1.45;color:var(--ink-2)}
+.tcard .tstep{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--muted)}
+.tbtns{display:flex;gap:8px;justify-content:flex-end}

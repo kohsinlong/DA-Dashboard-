@@ -1,6 +1,6 @@
 # DA Zalo Dashboard — design, operations and change log
 
-**Status:** v1.1.6 live: script deployed 16 Oct 2026, address baked into `zalo/app.js` · **Go-live:** 16 Oct 2026 · **Clinic:** NGT · **Last updated:** 16 Oct 2026
+**Status:** v1.2.0 live: script deployed 16 Oct 2026, address baked into `zalo/app.js` · **Go-live:** 16 Oct 2026 · **Clinic:** NGT · **Last updated:** 16 Oct 2026
 
 This file is the single source of truth for the DA Zalo Dashboard. Part 1 is the view at a
 glance, Part 2 the granular rules, Part 3 the change log. Every change to the dashboard updates
@@ -293,6 +293,14 @@ month; every month folds and unfolds, the two newest open by default, each row w
 members sit under their own heading with **Start a new cadence**. A **Dismissed** filter shows
 hidden rows with **Restore**.
 
+**Guide** (the **?** button in the header) — a sheet with the daily routine, a section per page
+and a **Tour this page** button in each. A tour highlights the real elements of the page one by
+one (tiles, overdue band, panel headers, search, filters, a member row), with a card explaining
+each, Back / Next / Exit, Escape to leave; steps whose element is not on the page right now
+(no overdue, no file loaded) are skipped. On the first sign-in on a device a welcome opens with
+**Show me around** (starts the Overview tour) and **Later**; it never opens again on that device
+(`zalo_guide_seen` in local storage), the **?** button is always there. All three languages.
+
 **Resources** — not in v1.
 
 ### 2.6 Zalo tag rule
@@ -466,6 +474,7 @@ Newest first. Each entry: date · version · what changed · why · files.
 
 | Date | Version | Change | Why | Files |
 |---|---|---|---|---|
+| 2026-10-18 | 1.2.0 | On-page guide: **?** button opening the routine and a section per page, a step-by-step tour that highlights the page's own elements, and a one-time welcome on first sign-in per device; in Vietnamese, English and Chinese. | DAs can learn the dashboard on the spot without a separate manual. | `zalo/app.js`, `zalo/index.html`, `zalo/zalo.css` |
 | 2026-10-16 | 1.1.6 | Import reader hardened after a "could not read the file" report: text files decoded as UTF-8, UTF-16 or Windows Vietnamese (Excel's plain CSV); comma, semicolon or tab delimiter detected; the header found anywhere in the first 80 rows and matched by meaning (renamed, reordered or extra columns, a separate phone column); the error now says which tabs and first row were seen. | A real export failed on live with the exact-match header check. | `zalo/core.js`, `zalo/app.js`, `zalo/index.html`, `zalo/tools/test-core.js` |
 | 2026-10-16 | 1.1.5 | QK import: the tag is suggested only once **Zalo added** is ticked (empty with a hint before); new entries listed newest first; repeat purchases (same child and phone, bought again after collecting) come up as entries with a chip and the parent's details pre-filled, and confirming writes a second row so the cadence restarts; the same child twice within a month counts as one purchase; a line under the file name links the same upload's other half (collection confirmations ↔ new members). | DA review of the first live import. | `zalo/app.js`, `zalo/zalo.css`, `zalo/index.html` |
 | 2026-10-16 | 1.1.4 | Fix: choosing an .xlsx failed silently since 1.1.0 (the reader's source list was lost in the page restructure); the browser walkthrough now uploads the real workbook. | Excel upload hung on live. | `zalo/app.js` |

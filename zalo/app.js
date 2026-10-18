@@ -6,7 +6,7 @@
   /* Paste the Apps Script /exec URL here after deploying (README §2.10). ?api=<url> and the
      "Connect" box on the sign-in card override it for testing. */
   var API = { url: "https://script.google.com/macros/s/AKfycbwselLgmfAg8ffK5IqBpXVvY8Ppqv2hDNCOStNABLLNfSalUvx5UKR7GC6LIxKuVEO9kg/exec" };
-  var VERSION = "1.1.6";
+  var VERSION = "1.2.0";
 
   /* ------------------------------------------------------------------ strings */
   var L = {
@@ -24,6 +24,19 @@
       iLibFail: "Không tải được bộ đọc Excel. Thử lại, hoặc lưu tab SO TTKSCT thành .csv rồi tải lên.", iReading: "Đang đọc {f}… (file lớn có thể mất tới một phút)",
       iRepeatOf: "mua lại · lần trước nhận {d}", iTagAfterTick: "gợi ý sau khi tick Đã kết bạn Zalo", iAlsoColl: "Cùng file này: {n} khách cần xác nhận ngày nhận kính →", iReadAs: "Đã đọc được — tab: {tabs} · dòng đầu: {row}", iAlsoNew: "Cùng file này: {n} khách mới →",
       nav: { overview: "Tổng quan", add: "Thêm khách", collections: "Nhận kính", members: "Danh sách khách", legacy: "Chưa kết bạn Zalo" },
+      g: { btn: "Hướng dẫn", title: "Hướng dẫn sử dụng", version: "Phiên bản {v}", hello: "Chào {da}!", welcome: "Đây là bảng việc Zalo của bạn: tin cần gửi hôm nay, khách mới từ báo cáo QK và ngày nhận kính — tất cả ở một chỗ, tự ghi vào CRM.",
+        startTour: "Xem hướng dẫn từng bước", later: "Để sau", gotit: "Đã hiểu", tourThis: "Dẫn trang này", next: "Tiếp", back: "Lại", done: "Xong", skip: "Thoát", stepOf: "Bước {i}/{n}", routineTitle: "Việc mỗi ngày",
+        routine: ["Mở Tổng quan: nhìn 3 ô số rồi làm mục Hôm nay — mỗi khách một tin, gửi xong bấm ✓.", "Gửi hàng loạt: cùng một mẫu tin cho cả nhóm — chọn tất cả, gửi, bấm Đã gửi.", "Quá hạn: trễ dưới 1 tuần vẫn gửi bình thường; cũ hơn 2 tuần được gấp lại, mở khi cần.", "Cứ 2–3 ngày: tải báo cáo QK ở Thêm khách (khách mới), rồi sang Nhận kính (xác nhận ngày nhận).", "Khách nhận kính: tick ở Nhận kính, đổi tag N→Y trong Zalo rồi bấm xác nhận.", "Bấm nhầm? Mọi thao tác đều có Hoàn tác trong vài giây."],
+        pages: { overview: ["3 ô số: hôm nay đã gửi / phải gửi · trễ trong tuần · nhóm gửi hàng loạt đã xong.", "Hôm nay (chăm sóc kỹ): từng khách với nội dung ghi sẵn; bấm ✓ khi gửi xong, tick từng mục nếu gửi dở.", "Tuần này: việc sắp tới để chủ động.", "Gửi hàng loạt (nhẹ): cùng mốc, cùng nội dung — chọn tất cả → Đã gửi; Sao chép tên để tìm nhanh trong Zalo.", "Quá hạn: ân hạn 1 tuần; cũ hơn 2 tuần được gấp lại."],
+          add: ["Thêm từng khách: tên bé, phụ huynh, quan hệ, SĐT, sản phẩm, ngày cọc; tag Zalo tự gợi ý; tick “Chưa kết bạn Zalo” nếu chưa add được — khách vào danh sách chờ.", "Nhập từ báo cáo QK: tải file .xlsx (hoặc tab SO TTKSCT dạng .csv) 2–3 ngày một lần; khách mới hiện theo ngày cọc mới nhất.", "Tick “Đã kết bạn Zalo” → tag được gợi ý → bổ sung phần thiếu → Ghi. Khách không tick sẽ sang danh sách Chưa kết bạn Zalo.", "Mua lại (cùng bé, cùng SĐT, cọc sau lần nhận trước) hiện như khách mới kèm nhãn “mua lại”; ghi sẽ tạo dòng mới và lịch chăm sóc bắt đầu lại."],
+          collections: ["Chờ nhận kính: mọi khách có ngày cọc nhưng chưa có ngày nhận; tick + chọn ngày + Lưu khi khách đã lấy kính.", "Cập nhật tag: sau khi nhận kính, trang đề xuất tag N→Y (hoặc tag & cho anh em) — đổi tên trong Zalo trước, rồi bấm xác nhận để ghi vào sheet.", "Cập nhật từ báo cáo QK: cùng file đã tải, các khách báo cáo ghi DONE — kiểm tra rồi Ghi."],
+          members: ["Tìm theo tên, tag, SĐT hoặc tên phụ huynh — lọc ngay khi gõ.", "Lọc theo sản phẩm, Cần sửa (thiếu dữ liệu) hoặc Chưa có tag; lọc theo ngày cọc / ngày nhận; sắp xếp.", "Bấm vào khách để xem chi tiết, lịch chăm sóc và sửa thông tin; sửa tag sẽ đi qua Cập nhật tag."],
+          legacy: ["Khách chưa kết bạn Zalo (kể cả khách cũ trước CRM), gom theo tháng; mỗi tháng gấp/mở được.", "Khi đã add Zalo: bấm Thêm vào CRM (form điền sẵn) hoặc Ẩn nếu không theo nữa.", "Đơn mua lại của khách cũ nằm riêng với nút Bắt đầu chu kỳ mới."] },
+        steps: { "ov-tiles": ["Ba ô số", "Hôm nay đã gửi / phải gửi · trễ trong tuần · nhóm gửi hàng loạt đã xong. Xanh là ổn."], "ov-over": ["Quá hạn", "Bấm để mở. Trễ dưới 1 tuần vẫn gửi bình thường; cũ hơn 2 tuần gấp lại phía dưới."], "ov-today": ["Hôm nay", "Mỗi thẻ là một khách với nội dung cần gửi. Gửi xong bấm ✓; gửi dở thì tick từng mục. Bấm ✓ lần nữa để hoàn tác."], "ov-up": ["Tuần này", "Việc của các ngày tới, để bạn chủ động."], "ov-mass": ["Gửi hàng loạt", "Cùng mốc, cùng nội dung: chọn tất cả → Đã gửi. Sao chép tên để dán vào ô tìm kiếm Zalo."],
+          "ad-form": ["Thêm từng khách", "Điền tên bé, SĐT, sản phẩm, ngày cọc — tag Zalo tự gợi ý. Chưa add được Zalo thì tick “Chưa kết bạn Zalo”."], "ad-imp": ["Nhập từ báo cáo QK", "2–3 ngày một lần: tải file QK lên, khách mới hiện ở đây, mới nhất trước."], "ad-drop": ["Chọn file", "File .xlsx như tải về, hoặc tab SO TTKSCT lưu .csv. Khoảng ngày là tuỳ chọn."], "ad-tick": ["Đã kết bạn Zalo", "Tick khách bạn đã add → tag được gợi ý → bổ sung phần thiếu → Ghi. Không tick sẽ sang danh sách chờ."],
+          "co-pend": ["Chờ nhận kính", "Khách đã lấy kính: tick, chọn ngày, Lưu. Lịch chăm sóc chuyển sang các mốc sau nhận."], "co-tags": ["Cập nhật tag", "Đổi tên trong Zalo trước (N→Y), rồi bấm xác nhận — lúc đó sheet mới được ghi."], "co-imp": ["Cập nhật từ báo cáo QK", "Cùng file đã tải: khách báo cáo ghi DONE được tick sẵn — kiểm tra rồi Ghi."],
+          "me-search": ["Tìm khách", "Gõ tên, tag, SĐT hoặc tên phụ huynh."], "me-chips": ["Bộ lọc", "Theo sản phẩm, Cần sửa, Chưa có tag."], "me-date": ["Ngày và sắp xếp", "Lọc theo ngày cọc hoặc ngày nhận; sắp xếp theo mới nhất, tên, ngày."], "me-row": ["Thẻ khách", "Bấm vào để xem chi tiết, lịch chăm sóc và sửa thông tin."],
+          "lg-list": ["Chưa kết bạn Zalo", "Gom theo tháng; bấm tiêu đề tháng để gấp hoặc mở."], "lg-add": ["Thêm vào CRM", "Khi khách đã add Zalo: bấm để mở form điền sẵn. Ẩn nếu không theo nữa."], "lg-rep": ["Mua lại", "Đơn mới của khách cũ: Bắt đầu chu kỳ mới."] } },
       aSection: "Thêm từng khách", iTitleM: "Nhập khách mới từ báo cáo QK", iTitleC: "Cập nhật ngày nhận kính từ báo cáo QK", iChange: "Đổi file", iLoaded: "File {f} · {n} đơn từ {d}",
       iWhy: { same: "đã có trong CRM", expected: "chưa DONE (chỉ có ngày hẹn)", parked: "đã ở danh sách chưa kết bạn Zalo", parkedOther: "đã ở danh sách chưa kết bạn Zalo", dup: "trùng trong file", done: "đã nhập lần trước", dismissed: "đã ẩn", update: "ngày nhận đã ghi", "update-checkphone": "ngày nhận đã ghi" },
       iResultM: "Đã ghi {a} khách mới · {p} để ở danh sách chưa kết bạn Zalo · {e} lỗi", iResultC: "Đã ghi {c} ngày nhận kính · {e} lỗi", iNothing: "Không có dòng nào cho mục này trong file.",
@@ -73,6 +86,19 @@
       iLibFail: "The Excel reader could not be loaded. Try again, or save the SO TTKSCT tab as .csv and upload that.", iReading: "Reading {f}… (a large file can take up to a minute)",
       iRepeatOf: "repeat purchase · last collected {d}", iTagAfterTick: "suggested once Zalo added is ticked", iAlsoColl: "Same file: {n} collection confirmations →", iReadAs: "What was read — tabs: {tabs} · first row: {row}", iAlsoNew: "Same file: {n} new members →",
       nav: { overview: "Overview", add: "Add members", collections: "Glass collections", members: "Member list", legacy: "No Zalo Add List" },
+      g: { btn: "Guide", title: "How to use this dashboard", version: "Version {v}", hello: "Hi {da}!", welcome: "This is your Zalo work list: every message due today, new members from the QK report and glass collections, in one place and written to the CRM for you.",
+        startTour: "Show me around", later: "Later", gotit: "Got it", tourThis: "Tour this page", next: "Next", back: "Back", done: "Done", skip: "Exit", stepOf: "Step {i}/{n}", routineTitle: "Daily routine",
+        routine: ["Open Overview: glance at the three tiles, then work Due today — one message per member, ✓ when sent.", "Mass send: one template for the whole group — select all, send, Mark sent.", "Overdue: under a week late still goes out; older than two weeks folds away until you need it.", "Every 2–3 days: upload the QK report under Add members (new members), then Glass collections (collection dates).", "Glasses collected: tick under Glass collections, rename the tag N→Y in Zalo, then confirm.", "Wrong tap? Everything has Undo for a few seconds."],
+        pages: { overview: ["Three tiles: sent / due today · missed this week · mass groups done.", "Due today (high touch): one card per member with the content to send; ✓ when sent, tick single items for a partial send.", "This week: what is coming, so you can plan.", "Mass send (low touch): same milestone, same content — select all → Mark sent; Copy names to find them in Zalo.", "Overdue: one week of grace; older than two weeks is folded."],
+          add: ["Add one member: child, parent, relation, phone, product, deposit date; the Zalo tag is suggested; tick “Zalo not added” when you could not add them — they go to the waiting list.", "QK report import: upload the .xlsx (or the SO TTKSCT tab as .csv) every 2–3 days; new members appear newest deposit first.", "Tick “Zalo added” → the tag is suggested → complete what is missing → Write. Unticked rows go to the No Zalo Add List.", "Repeat purchases (same child and phone, deposit after the last collection) appear as new entries with a “repeat purchase” chip; writing adds a new row and the cadence starts again."],
+          collections: ["Pending collection: every member with a deposit and no collected date; tick + date + Save when the glasses are picked up.", "Tag updates: after a collection the page proposes N→Y (or the & tag for siblings) — rename in Zalo first, then confirm to write the sheet.", "Collection updates from the QK: the same upload, members the report marks DONE — check, then Write."],
+          members: ["Search by name, tag, phone or parent — filters as you type.", "Filter by product, To fix (missing data) or No tag; by deposit / collected date; sort.", "Tap a member for details, the cadence timeline and editable fields; tag edits go through Tag updates."],
+          legacy: ["Members not on Zalo yet (including customers from before the CRM), grouped by month; every month folds.", "Once they add Zalo: Add to CRM (form pre-filled) or Dismiss.", "Repeat orders of existing members sit apart with Start a new cadence."] },
+        steps: { "ov-tiles": ["Three tiles", "Sent / due today · missed this week · mass groups done. Green means fine."], "ov-over": ["Overdue", "Tap to open. Under a week late still goes out; older than two weeks folds below."], "ov-today": ["Due today", "Each card is a member with the content to send. Tap ✓ when sent; tick single items for a partial send. ✓ again undoes."], "ov-up": ["This week", "The coming days, so you can plan."], "ov-mass": ["Mass send", "Same milestone, same content: select all → Mark sent. Copy names to paste into Zalo search."],
+          "ad-form": ["Add one member", "Child, phone, product, deposit date — the tag is suggested. Could not add them on Zalo? Tick “Zalo not added”."], "ad-imp": ["QK report import", "Every 2–3 days: upload the report; new members appear here, newest first."], "ad-drop": ["Choose the file", "The .xlsx as downloaded, or the SO TTKSCT tab saved as .csv. The date range is optional."], "ad-tick": ["Zalo added", "Tick the ones you added → tag suggested → complete → Write. Unticked rows go to the waiting list."],
+          "co-pend": ["Pending collection", "Glasses picked up: tick, pick the date, Save. The cadence moves to the post-collection milestones."], "co-tags": ["Tag updates", "Rename in Zalo first (N→Y), then confirm — only then is the sheet written."], "co-imp": ["Collection updates from the QK", "Same upload: members the report marks DONE are pre-ticked — check, then Write."],
+          "me-search": ["Search", "Name, tag, phone or the parent's name."], "me-chips": ["Filters", "Product, To fix, No tag."], "me-date": ["Dates and sort", "Filter by deposit or collected date; sort by newest, name, date."], "me-row": ["Member card", "Tap for details, the timeline and edits."],
+          "lg-list": ["No Zalo Add List", "Grouped by month; tap a month to fold or unfold."], "lg-add": ["Add to CRM", "Once they add Zalo: opens the form pre-filled. Dismiss to stop following."], "lg-rep": ["Repeat orders", "A new order from an existing member: Start a new cadence."] } },
       aSection: "Add one member", iTitleM: "New members from the QK report", iTitleC: "Collection updates from the QK report", iChange: "Change file", iLoaded: "File {f} · {n} orders since {d}",
       iWhy: { same: "already in the CRM", expected: "not DONE yet (appointment only)", parked: "already on the No Zalo Add List", parkedOther: "already on the No Zalo Add List", dup: "duplicate within the file", done: "imported earlier", dismissed: "dismissed", update: "collected date already recorded", "update-checkphone": "collected date already recorded" },
       iResultM: "Written: {a} new members · {p} parked on the No Zalo Add List · {e} errors", iResultC: "Written: {c} collected dates · {e} errors", iNothing: "Nothing in this file for this section.",
@@ -122,6 +148,19 @@
       iLibFail: "无法加载 Excel 读取器。请重试，或将 SO TTKSCT 工作表另存为 .csv 后上传。", iReading: "正在读取 {f}…（大文件可能需要一分钟）",
       iRepeatOf: "复购 · 上次取镜 {d}", iTagAfterTick: "勾选“已加 Zalo”后给出建议", iAlsoColl: "同一文件：{n} 位需确认取镜日期 →", iReadAs: "已读取 — 工作表：{tabs} · 首行：{row}", iAlsoNew: "同一文件：{n} 位新会员 →",
       nav: { overview: "总览", add: "新增会员", collections: "取镜", members: "会员列表", legacy: "未加 Zalo 名单" },
+      g: { btn: "使用指南", title: "使用指南", version: "版本 {v}", hello: "{da}，你好！", welcome: "这是你的 Zalo 工作清单：今天要发的消息、QK 报表里的新会员和取镜日期，全在一处，并自动写入 CRM。",
+        startTour: "逐步引导", later: "稍后", gotit: "知道了", tourThis: "引导本页", next: "下一步", back: "上一步", done: "完成", skip: "退出", stepOf: "第 {i}/{n} 步", routineTitle: "每日流程",
+        routine: ["打开总览：看一眼三个数字块，然后处理“今天”——每位会员一条消息，发完点 ✓。", "批量发送：同一模板发给整组——全选、发送、点“已发送”。", "逾期：迟一周内照常发送；超过两周会折叠起来，需要时再展开。", "每 2–3 天：在“新增会员”上传 QK 报表（新会员），再到“取镜”确认取镜日期。", "会员取镜后：在“取镜”勾选，在 Zalo 里把标签 N→Y 改名，然后确认。", "点错了？所有操作几秒内都可撤销。"],
+        pages: { overview: ["三个数字块：今天已发 / 应发 · 本周错过 · 批量组已完成。", "今天（重点关怀）：每位会员一张卡片，附要发的内容；发完点 ✓，部分发送则勾选单项。", "本周：即将到来的事项，便于安排。", "批量发送（轻度）：同一节点、同一内容——全选 → 已发送；复制姓名以便在 Zalo 里查找。", "逾期：一周宽限；超过两周折叠。"],
+          add: ["逐个新增：孩子姓名、家长、关系、电话、产品、订金日期；自动建议 Zalo 标签；加不上 Zalo 就勾“未加 Zalo”——进入等待名单。", "从 QK 报表导入：每 2–3 天上传 .xlsx（或 SO TTKSCT 工作表另存的 .csv）；新会员按订金日期从新到旧显示。", "勾“已加 Zalo”→ 给出标签建议 → 补齐缺项 → 写入。未勾选的进入“未加 Zalo 名单”。", "复购（同一孩子、同一电话、订金晚于上次取镜）作为新条目显示并带“复购”标记；写入会新增一行，关怀周期重新开始。"],
+          collections: ["待取镜：所有有订金日期但没有取镜日期的会员；取镜后勾选 + 选日期 + 保存。", "标签更新：取镜后页面会建议 N→Y（兄弟姐妹则是 & 标签）——先在 Zalo 里改名，再点确认写入表格。", "从 QK 报表更新：同一文件，报表标为 DONE 的会员——核对后写入。"],
+          members: ["按姓名、标签、电话或家长姓名搜索——边输入边筛选。", "按产品、待修正（缺数据）或无标签筛选；按订金 / 取镜日期筛选；排序。", "点击会员查看详情、关怀时间线并编辑；标签修改会走“标签更新”。"],
+          legacy: ["尚未加 Zalo 的会员（含 CRM 之前的老客户），按月分组；每个月可折叠。", "加上 Zalo 后：点“加入 CRM”（表单已预填）或“忽略”。", "老会员的复购订单单独列出，可“开始新周期”。"] },
+        steps: { "ov-tiles": ["三个数字块", "今天已发 / 应发 · 本周错过 · 批量组已完成。绿色表示正常。"], "ov-over": ["逾期", "点击展开。迟一周内照常发送；超过两周折叠在下方。"], "ov-today": ["今天", "每张卡片是一位会员和要发的内容。发完点 ✓；部分发送则勾选单项。再点 ✓ 可撤销。"], "ov-up": ["本周", "接下来几天的事项，便于安排。"], "ov-mass": ["批量发送", "同一节点、同一内容：全选 → 已发送。复制姓名粘贴到 Zalo 搜索框。"],
+          "ad-form": ["逐个新增", "填孩子姓名、电话、产品、订金日期——自动建议标签。加不上 Zalo 就勾“未加 Zalo”。"], "ad-imp": ["从 QK 报表导入", "每 2–3 天：上传报表，新会员显示在这里，最新在前。"], "ad-drop": ["选择文件", "下载的 .xlsx 原文件，或 SO TTKSCT 工作表另存的 .csv。日期范围可选。"], "ad-tick": ["已加 Zalo", "勾选已加的会员 → 建议标签 → 补齐 → 写入。未勾选的进入等待名单。"],
+          "co-pend": ["待取镜", "已取镜：勾选、选日期、保存。关怀周期转到取镜后的节点。"], "co-tags": ["标签更新", "先在 Zalo 改名（N→Y），再点确认——此时才写入表格。"], "co-imp": ["从 QK 报表更新", "同一文件：报表标为 DONE 的会员已预先勾选——核对后写入。"],
+          "me-search": ["搜索", "姓名、标签、电话或家长姓名。"], "me-chips": ["筛选", "产品、待修正、无标签。"], "me-date": ["日期与排序", "按订金或取镜日期筛选；按最新、姓名、日期排序。"], "me-row": ["会员卡片", "点击查看详情、时间线并编辑。"],
+          "lg-list": ["未加 Zalo 名单", "按月分组；点月份标题折叠或展开。"], "lg-add": ["加入 CRM", "会员加上 Zalo 后：点击打开已预填的表单。不再跟进则忽略。"], "lg-rep": ["复购", "老会员的新订单：开始新周期。"] } },
       aSection: "逐个新增", iTitleM: "从 QK 报表导入新会员", iTitleC: "从 QK 报表更新取镜日期", iChange: "更换文件", iLoaded: "文件 {f} · {d} 起 {n} 条订单",
       iWhy: { same: "已在 CRM", expected: "尚未 DONE（仅预约）", parked: "已在“未加 Zalo 名单”", parkedOther: "已在“未加 Zalo 名单”", dup: "文件内重复", done: "之前已导入", dismissed: "已忽略", update: "取镜日期已记录", "update-checkphone": "取镜日期已记录" },
       iResultM: "已写入 {a} 位新会员 · {p} 条留在“未加 Zalo 名单” · {e} 个错误", iResultC: "已写入 {c} 个取镜日期 · {e} 个错误", iNothing: "文件中没有本节的内容。",
@@ -352,7 +391,7 @@
   function render(){
     if (!st.session) return;
     st.plan = currentPlan();
-    renderChrome();
+    renderChrome(); $("helpBtn").title = T().g.btn;
     var r = st.route, h = r === "members" ? pageMembers() : r === "add" ? pageAdd() : r === "collections" ? pageCollections() : r === "legacy" ? pageLegacy() : pageTasks();
     $("app").innerHTML = h;
     afterRender();
@@ -845,6 +884,64 @@
         + '<button type="button" class="btn sm" data-act="lg-dismiss" data-code="' + esc(i.code) + '">' + esc(t.lDismiss) + "</button>") + "</div></div></div>";
   }
 
+  /* ------------------------------------------------------------------ guide and tour */
+  /* Tour steps per page: a selector and a key into t.g.steps. Steps whose element is not on the
+     page right now (no overdue band, no file loaded) are skipped. */
+  var TOURS = {
+    overview: [{ sel: ".tiles", k: "ov-tiles" }, { sel: ".band", k: "ov-over" }, { sel: '[data-act="fold-panel"][data-id="today"]', k: "ov-today" }, { sel: '[data-act="fold-panel"][data-id="upcoming"]', k: "ov-up" }, { sel: ".sec", k: "ov-mass" }],
+    add: [{ sel: '[data-act="fold-panel"][data-id="addform"]', k: "ad-form" }, { sel: '[data-act="fold-panel"][data-id="imp-members"]', k: "ad-imp" }, { sel: ".drop", k: "ad-drop" }, { sel: ".zck", k: "ad-tick" }],
+    collections: [{ sel: '[data-act="fold-panel"][data-id="pending"]', k: "co-pend" }, { sel: '[data-act="fold-panel"][data-id="tags"]', k: "co-tags" }, { sel: '[data-act="fold-panel"][data-id="imp-collections"]', k: "co-imp" }],
+    members: [{ sel: "#custSearch", k: "me-search" }, { sel: ".chips", k: "me-chips" }, { sel: ".fbar", k: "me-date" }, { sel: ".lrow", k: "me-row" }],
+    legacy: [{ sel: '[data-act="fold-panel"][data-id="legacy"]', k: "lg-list" }, { sel: '[data-act="lg-add"]', k: "lg-add" }, { sel: '[data-act="fold-panel"][data-id="repeats"]', k: "lg-rep" }]
+  };
+  var PAGES = ["overview", "add", "collections", "members", "legacy"], tour = null;
+  function guideHtml(mode){
+    var t = T(), g = t.g, welcome = mode === "welcome";
+    var h = '<div class="guide">' + (welcome ? "<h2>" + esc(fill(g.hello, { da: st.da || "" })) + '</h2><p class="lede">' + esc(g.welcome) + "</p>"
+      : "<h2>" + esc(g.title) + '</h2><div class="sub">' + esc(fill(g.version, { v: VERSION })) + "</div>");
+    if (welcome) h += '<div class="gbtns"><button type="button" class="btn primary" data-act="tour-start" data-page="overview">' + esc(g.startTour) + '</button><button type="button" class="btn" data-act="guide-close">' + esc(g.later) + "</button></div>";
+    h += '<div class="note"><b>' + esc(g.routineTitle) + "</b><ol>" + g.routine.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + "</ol></div>";
+    PAGES.forEach(function (pg) {
+      h += '<details class="gsec"' + (!welcome && pg === st.route ? " open" : "") + "><summary>" + esc(t.nav[pg]) + "</summary><ul>" + g.pages[pg].map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("")
+        + '</ul><button type="button" class="btn sm" data-act="tour-start" data-page="' + pg + '">' + esc(g.tourThis) + " ▸</button></details>";
+    });
+    if (!welcome) h += '<div class="gbtns"><button type="button" class="btn primary" data-act="guide-close">' + esc(g.gotit) + "</button></div>";
+    return h + "</div>";
+  }
+  function openGuide(mode){ store("zalo_guide_seen", "1"); st.ui.sheetKey = "guide"; openSheet(guideHtml(mode)); }
+  /* the welcome opens once per device, on the first sign-in */
+  function firstRun(){ if (store("zalo_guide_seen")) return; setTimeout(function () { if (st.session && !st.ui.sheetKey) openGuide("welcome"); }, 500); }
+  function startTour(page){
+    closeSheet(); store("zalo_guide_seen", "1"); endTour(); tour = { page: page, i: 0, el: null, k: "", n: 0 };
+    if (st.route !== page) location.hash = "#/" + page;
+    var tries = 0;
+    (function wait(){ if (!tour) return; if (st.route === page) showStep(); else if (++tries < 40) setTimeout(wait, 50); else endTour(); })();
+  }
+  function tourSteps(){ return (TOURS[tour.page] || []).filter(function (s) { var e = document.querySelector(s.sel); return e && e.getClientRects().length; }); }
+  function showStep(){
+    if (!tour) return;
+    var steps = tourSteps();
+    if (!steps.length || tour.i >= steps.length) return endTour();
+    if (tour.i < 0) tour.i = 0;
+    var s = steps[tour.i]; tour.el = document.querySelector(s.sel); tour.k = s.k; tour.n = steps.length;
+    $("tour").classList.remove("gone");
+    tour.el.scrollIntoView({ block: "center" });
+    var t = T(), g = t.g, txt = g.steps[s.k] || ["", ""], i = tour.i + 1;
+    $("tourCard").innerHTML = '<div class="tstep">' + esc(fill(g.stepOf, { i: i, n: tour.n })) + "</div><h4>" + esc(txt[0]) + "</h4><p>" + esc(txt[1]) + "</p>"
+      + '<div class="tbtns">' + (i > 1 ? '<button type="button" class="btn sm" data-act="tour-back">' + esc(g.back) + "</button>" : "") + '<button type="button" class="btn sm" data-act="tour-end">' + esc(g.skip) + "</button>"
+      + '<button type="button" class="btn primary sm" data-act="tour-next">' + esc(i === tour.n ? g.done : g.next) + "</button></div>";
+    placeTour();
+  }
+  function placeTour(){
+    if (!tour || !tour.el) return;
+    var r = tour.el.getBoundingClientRect(), pad = 6, hl = $("tourHl"), card = $("tourCard");
+    hl.style.top = (r.top - pad) + "px"; hl.style.left = (r.left - pad) + "px"; hl.style.width = (r.width + pad * 2) + "px"; hl.style.height = (r.height + pad * 2) + "px";
+    var ch = card.offsetHeight, below = r.bottom + pad + 10;
+    card.style.top = (below + ch < window.innerHeight - 8 ? below : Math.max(8, r.top - pad - ch - 10)) + "px";
+  }
+  function endTour(){ tour = null; $("tour").classList.add("gone"); }
+  window.addEventListener("resize", placeTour); window.addEventListener("scroll", placeTour, { passive: true });
+
   /* ------------------------------------------------------------------ writes */
   function recordSent(items){
     var t = T(), at = nowIso(), added = items.map(function (it) { var r = { key: it.key, clinic: st.clinic, da: st.da, stage: it.stage, due: it.due, bits: it.bits, score: it.score, sent_at: at, undone_at: "", _local: true }; st.tasks.push(r); return r; });
@@ -956,6 +1053,12 @@
         var setState = function (stt, msg, undo) { return apiPost({ action: "storeImports", orders: [{ code: code, state: stt }] }).then(function () { st.imports.forEach(function (i) { if (i.code === code) i.state = stt; }); render(); toast(msg, false, undo); }); };
         setState(state, state === "dismissed" ? t.lDismiss : t.lRestore, function () { setState(back, t.undoneToast, null).catch(function (e) { toast(fill(t.errToast, { e: e.message }), true); }); }).catch(function (e) { el.disabled = false; toast(fill(t.errToast, { e: e.message }), true); }); break; }
       case "lg-toggle-dismissed": st.ui.showDismissed = !st.ui.showDismissed; render(); break;
+      case "guide-open": openGuide(); break;
+      case "guide-close": closeSheet(); break;
+      case "tour-start": startTour(el.dataset.page); break;
+      case "tour-next": if (tour) { tour.i++; showStep(); } break;
+      case "tour-back": if (tour) { tour.i--; showStep(); } break;
+      case "tour-end": endTour(); break;
       case "lg-month": st.ui.folds["lg:" + el.dataset.m] = el.dataset.open === "1"; store("zalo_folds", JSON.stringify(st.ui.folds)); render(); break;
     }
   });
@@ -973,7 +1076,7 @@
   });
   document.addEventListener("input", function (ev) { var el = ev.target; if (el.dataset && el.dataset.imp && ["child", "parent", "phone", "note", "tag"].indexOf(el.dataset.imp) !== -1) { var e = st.ui.imp.edits[el.dataset.code]; if (e) { e[el.dataset.imp] = el.value; if (el.dataset.imp === "tag") e.tagManual = true; } } });
   $("sheetClose").onclick = closeSheet; $("sheet").addEventListener("click", function (ev) { if (ev.target === $("sheet")) closeSheet(); });
-  document.addEventListener("keydown", function (ev) { if (ev.key === "Escape") closeSheet(); });
+  document.addEventListener("keydown", function (ev) { if (ev.key === "Escape") { if (tour) endTour(); else closeSheet(); } });
 
   /* ------------------------------------------------------------------ confetti */
   function maybeConfetti(){
@@ -995,14 +1098,14 @@
     var names = Object.keys(by).sort(); if (!names.length) names = [st.da || "DA"];
     names.forEach(function (n) { h += '<button type="button" data-me="' + esc(n) + '"' + (n === st.da ? ' class="on"' : "") + ">" + esc(n) + "<span>" + (by[n] || 0) + " " + esc(t.kh) + "</span></button>"; });
     $("pickBody").innerHTML = h + "</div>";
-    document.querySelectorAll("[data-me]").forEach(function (b) { b.onclick = function () { st.da = b.dataset.me; store("zalo_da", st.da); $("pick").classList.add("gone"); $("wrap").hidden = false; route(); }; });
+    document.querySelectorAll("[data-me]").forEach(function (b) { b.onclick = function () { st.da = b.dataset.me; store("zalo_da", st.da); $("pick").classList.add("gone"); $("wrap").hidden = false; route(); firstRun(); }; });
     $("wrap").hidden = true; $("pick").classList.remove("gone");
   }
   function enterApp(){
     $("gate").classList.add("gone"); st.session = true;
     sstore("zalo_s", JSON.stringify({ u: st.u, h: st.h, clinic: st.clinic, demo: st.demo }));
     var known = st.da && st.data && st.data.das && st.data.das[st.da];
-    if (known) { $("wrap").hidden = false; route(); } else showPick();
+    if (known) { $("wrap").hidden = false; route(); firstRun(); } else showPick();
   }
   function signOut(){ st.session = false; st.u = st.h = ""; st.demo = false; st.data = null; sstore("zalo_s", null); $("wrap").hidden = true; $("pick").classList.add("gone"); $("gate").classList.remove("gone"); $("gp").value = ""; $("gu").focus(); }
   function startDemo(){ st.demo = true; st.clinic = "NGT"; st.u = "NGT_DA"; st.h = "demo"; st.today = (/[?&]asof=(\d{4}-\d{2}-\d{2})/.exec(location.search) || [])[1] || Z.todayISO(); shape(DemoAPI.load()); st.feed = { mode: "demo", at: "" }; if (!st.da) st.da = "Tiên"; enterApp(); }
@@ -1023,6 +1126,7 @@
     $("gateform").addEventListener("submit", function (ev) { ev.preventDefault(); login($("gu").value, $("gp").value); });
     $("demoBtn").onclick = startDemo;
     window.addEventListener("hashchange", route);
+    window.addEventListener("hashchange", function () { if (tour && tour.page !== st.route) endTour(); });
     if (/[?&]demo=1/.test(location.search)) return startDemo();
     var s = sstore("zalo_s"); if (s) { try { s = JSON.parse(s); } catch (e) { s = null; } }
     if (s && s.demo) return startDemo();

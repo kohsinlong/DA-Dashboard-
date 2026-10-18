@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:wght@500;600&display=swap">
 <link rel="stylesheet" href="../theme.css">
-<link rel="stylesheet" href="zalo.css?v=1.1.6">
+<link rel="stylesheet" href="zalo.css?v=1.2.0">
 </head>
 <body>
 <!-- sign-in -->
@@ -40,7 +40,7 @@
 <div class="wrap" id="wrap" hidden>
   <header class="top">
     <div class="titleblock"><h1 id="pgTitle">DA Zalo Dashboard</h1><div class="sub" id="pgSub"></div></div>
-    <div class="controls"><span class="feed" id="feed"></span><span class="who" id="whoami"></span>
+    <div class="controls"><span class="feed" id="feed"></span><button type="button" class="helpbtn" id="helpBtn" data-act="guide-open" aria-label="Guide">?</button><span class="who" id="whoami"></span>
       <div class="seg" id="langseg" role="group" aria-label="Language"><button data-l="vi">VI</button><button data-l="en">EN</button><button data-l="zh">中文</button></div></div>
   </header>
   <nav class="nav" id="nav"></nav>
@@ -48,10 +48,11 @@
   <footer class="foot" id="foot"></footer>
 </div>
 <div id="sheet" class="sheet gone" role="dialog" aria-modal="true"><div class="sheetcard"><button class="sheetx" id="sheetClose" aria-label="Close">×</button><div id="sheetBody"></div></div></div>
+<div id="tour" class="tour gone" aria-live="polite"><div class="thl" id="tourHl"></div><div class="tcard" id="tourCard"></div></div>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <canvas id="confetti" aria-hidden="true"></canvas>
-<script src="core.js?v=1.1.6"></script>
-<script src="demo-data.js?v=1.1.6"></script>
-<script src="app.js?v=1.1.6"></script>
+<script src="core.js?v=1.2.0"></script>
+<script src="demo-data.js?v=1.2.0"></script>
+<script src="app.js?v=1.2.0"></script>
 </body>
 </html>
