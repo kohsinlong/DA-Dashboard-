@@ -6,7 +6,7 @@
   /* Paste the Apps Script /exec URL here after deploying (README §2.10). ?api=<url> and the
      "Connect" box on the sign-in card override it for testing. */
   var API = { url: "https://script.google.com/macros/s/AKfycbwselLgmfAg8ffK5IqBpXVvY8Ppqv2hDNCOStNABLLNfSalUvx5UKR7GC6LIxKuVEO9kg/exec" };
-  var VERSION = "1.3.0";
+  var VERSION = "1.3.1";
 
   /* ------------------------------------------------------------------ strings */
   var L = {
@@ -961,6 +961,17 @@
     swipe = null;
   }, { passive: true });
 
+  /* GitHub Pages caches index.html for ten minutes, so a phone can run the old release with the
+     new one already published. version.json is fetched fresh on every start; when it names a
+     newer release than this file, the page reloads once under a fresh URL. */
+  function checkVersion(){
+    fetch("version.json?t=" + Date.now(), { cache: "no-store" }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
+      if (!j || !j.v || j.v === VERSION) return;
+      var key = "zalo_reloaded_" + j.v; if (sstore(key)) return; sstore(key, "1");
+      location.replace(location.pathname + (location.search ? location.search + "&" : "?") + "r=" + Date.now() + location.hash);
+    }).catch(function () {});
+  }
+
   /* ------------------------------------------------------------------ guide and tour */
   /* Tour steps per page: a selector and a key into t.g.steps. Steps whose element is not on the
      page right now (no overdue band, no file loaded) are skipped. */
@@ -1214,6 +1225,7 @@
     $("gateform").addEventListener("submit", function (ev) { ev.preventDefault(); login($("gu").value, $("gp").value); });
     $("demoBtn").onclick = startDemo;
     window.addEventListener("hashchange", route);
+    checkVersion();
     window.addEventListener("hashchange", function () { if (tour && tour.page !== st.route) endTour(); });
     if (/[?&]demo=1/.test(location.search)) return startDemo();
     var s = sstore("zalo_s"); if (s) { try { s = JSON.parse(s); } catch (e) { s = null; } }

@@ -1,6 +1,6 @@
 # DA Zalo Dashboard — design, operations and change log
 
-**Status:** v1.3.0 live: script deployed 16 Oct 2026, address baked into `zalo/app.js` · **Go-live:** 16 Oct 2026 · **Clinic:** NGT · **Last updated:** 16 Oct 2026
+**Status:** v1.3.1 live: script deployed 16 Oct 2026, address baked into `zalo/app.js` · **Go-live:** 16 Oct 2026 · **Clinic:** NGT · **Last updated:** 16 Oct 2026
 
 This file is the single source of truth for the DA Zalo Dashboard. Part 1 is the view at a
 glance, Part 2 the granular rules, Part 3 the change log. Every change to the dashboard updates
@@ -505,6 +505,7 @@ Newest first. Each entry: date · version · what changed · why · files.
 
 | Date | Version | Change | Why | Files |
 |---|---|---|---|---|
+| 2026-10-19 | 1.3.1 | The nav wraps onto a second row on phones so every tab is visible (the Resources tab sat off-screen to the right). The page checks `zalo/version.json` on every start and reloads itself once when a newer release is published, so releases show without a hard refresh (Pages caches `index.html` for ten minutes). A release now bumps `VERSION` in `app.js`, the four `?v=` tags in `index.html` and `version.json` together. | The Resources tab was not found on a phone after release. | `zalo/zalo.css`, `zalo/app.js`, `zalo/index.html`, `zalo/version.json` |
 | 2026-10-19 | 1.3.0 | **Resources** page: the weekly MSG training decks, one panel per week, shown in the page's language with per-week tabs, a slide flipper (arrows, tap, swipe, keys, dots, full screen) and the original .pptx for download; `zalo/tools/add-week.py` renders a week's decks and updates the manifest. Five weeks loaded (25 Aug, 2 Sep, 24 Sep, 1 Oct, 14 Oct 2026). Also: a late mass-send task marked sent today now stays in its group, ticked, instead of vanishing. | DAs get every week's training on the dashboard. | `zalo/app.js`, `zalo/zalo.css`, `zalo/index.html`, `zalo/tools/add-week.py`, `zalo/resources/` |
 | 2026-10-18 | 1.2.0 | On-page guide: **?** button opening the routine and a section per page, a step-by-step tour that highlights the page's own elements, and a one-time welcome on first sign-in per device; in Vietnamese, English and Chinese. | DAs can learn the dashboard on the spot without a separate manual. | `zalo/app.js`, `zalo/index.html`, `zalo/zalo.css` |
 | 2026-10-16 | 1.1.6 | Import reader hardened after a "could not read the file" report: text files decoded as UTF-8, UTF-16 or Windows Vietnamese (Excel's plain CSV); comma, semicolon or tab delimiter detected; the header found anywhere in the first 80 rows and matched by meaning (renamed, reordered or extra columns, a separate phone column); the error now says which tabs and first row were seen. | A real export failed on live with the exact-match header check. | `zalo/core.js`, `zalo/app.js`, `zalo/index.html`, `zalo/tools/test-core.js` |
