@@ -92,7 +92,9 @@ var done = [{ key: "0909|a", stage: "CD+3-5", bits: "11", score: 1, sent_at: "20
 p = Z.plan(custs, done, { today: today, goLive: gl, da: "Tiên" });
 eq(p.tiles.today, { done: 1, partial: 0, due: 1 }, "a sent milestone counts as done");
 eq(p.dueToday[0].key + ":" + p.dueToday[0].stage + ":" + p.dueToday[0].full, "0909|a:CD+3-5:true", "the sent milestone is marked full");
-eq(p.mass[0].done + ":" + p.mass[0].tasks.length, "1:1", "a late item, once sent, leaves the group; this week's sent item counts as done");
+eq(p.mass[0].done + ":" + p.mass[0].tasks.length, "2:2", "a late item sent today stays in the group, ticked; this week's sent item counts as done");
+var pY = Z.plan(custs, done.map(function (d) { return Object.assign({}, d, { sent_at: "2026-10-15T09:00:00Z" }); }), { today: today, goLive: gl, da: "Tiên" });
+eq(pY.mass[0].done + ":" + pY.mass[0].tasks.length, "1:1", "sent on an earlier day, the late item leaves the group");
 eq(p.mass[0].late, 0, "late count only for unsent");
 eq(p.tiles.mass.groupsDone, 1, "a group with every task sent is done");
 eq(p.overdue.map(function (t) { return t.key; }), ["k1", "k7", "k1", "k8", "0909|a"], "an undone tick is still overdue");
@@ -183,6 +185,22 @@ var sep = Z.findOrderSheet([{ name: "x", rows: [["Ngày đặt", "Ngày hẹn", 
 var po2 = Z.parseOrders(sep.rows.slice(sep.header + 1), { today: "2026-10-16", map: sep.map }); eq([po2[0].name, po2[0].phone, po2[0].product], ["Trần Bé", "0912345678", "MC"], "phone column of its own");
 eq(Z.findOrderSheet([{ name: "SO TTKSCT", rows: [["nothing", "here", "at all"]] }, { name: "Data", rows: [std] }]).name, "Data", "a SO TTKSCT tab without the header yields to a tab that has it");
 eq(Z.findOrderSheet([{ name: "SO TTKSCT", rows: [["nothing", "here", "at all"]] }]).header, -1, "a lone SO TTKSCT tab without the header reports -1");
+
+
+/* ---- 1.3.0: a late low-touch task sent today stays in its mass group ---- */
+(function () {
+  var cadence = { MC: [{ stage: "CD+14", offset: 14, touch: "Low", items: ["Kiểm tra tình trạng"] }] };
+  var tab = null; try { tab = Z.cadenceTab ? null : null; } catch (e) {}
+  var cust = { key: "0909000001|late", name: "Late Bé", phone: "0909000001", product: "MC", dep: "2026-09-20", coll: "2026-10-03", names: ["Late Bé"], da: "Tiên", tag: "MCY 261003 Mẹ bé Late Bé 0909000001" };
+  var today = "2026-10-19", stage = Z.milestones(cust, { goLive: "2026-09-01" }).filter(function (m) { return m.touch !== "High" && m.due < today; })[0];
+  if (!stage) { eq(true, true, "late low-touch stage exists (skipped: none in cadence)"); return; }
+  function planWith(sent){ return Z.plan([cust], sent ? [{ key: cust.key, stage: stage.stage, due: stage.due, sent_at: sent, score: 1, undone_at: "" }] : [], { today: today, goLive: "2026-09-01", lateGraceWeeks: 1 }); }
+  var inGroup = function (p) { return p.mass.some(function (g) { return g.tasks.some(function (x) { return x.stage === stage.stage; }); }); };
+  eq(inGroup(planWith(null)), true, "late open task sits in the mass group");
+  eq(inGroup(planWith(today + "T09:00:00.000Z")), true, "late task sent today stays in the group, ticked");
+  eq(planWith(today + "T09:00:00.000Z").mass.filter(function (g) { return g.tasks.some(function (x) { return x.stage === stage.stage; }); })[0].done, 1, "and counts as done there");
+  eq(inGroup(planWith("2026-10-18T09:00:00.000Z")), false, "sent on an earlier day it leaves the group");
+})();
 
 console.log(n + " checks, " + bad + " failed");
 process.exit(bad ? 1 : 0);

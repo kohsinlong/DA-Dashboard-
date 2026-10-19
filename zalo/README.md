@@ -1,6 +1,6 @@
 # DA Zalo Dashboard — design, operations and change log
 
-**Status:** v1.2.0 live: script deployed 16 Oct 2026, address baked into `zalo/app.js` · **Go-live:** 16 Oct 2026 · **Clinic:** NGT · **Last updated:** 16 Oct 2026
+**Status:** v1.3.0 live: script deployed 16 Oct 2026, address baked into `zalo/app.js` · **Go-live:** 16 Oct 2026 · **Clinic:** NGT · **Last updated:** 16 Oct 2026
 
 This file is the single source of truth for the DA Zalo Dashboard. Part 1 is the view at a
 glance, Part 2 the granular rules, Part 3 the change log. Every change to the dashboard updates
@@ -301,7 +301,14 @@ each, Back / Next / Exit, Escape to leave; steps whose element is not on the pag
 **Show me around** (starts the Overview tour) and **Later**; it never opens again on that device
 (`zalo_guide_seen` in local storage), the **?** button is always there. All three languages.
 
-**Resources** — not in v1.
+**Resources** (route `#/resources`) — the weekly MSG training decks. One collapsible panel per
+week, newest on top and open, older weeks folded, numbered from the oldest ("Tuần 5 · 14/10/2026").
+The deck shown follows the page language (VI / EN / 中文); the tabs on a week switch it for that
+week until the language is toggled again, and a week without a deck in the page language falls
+back to one it has and says so. The viewer flips with the arrows, a tap on the slide, a swipe,
+the ←/→ keys or the dots, shows "3 / 10", has **Full screen** (Escape leaves) and **Download
+.pptx**, which hands over the original file under its original name. The list comes from
+`zalo/resources/manifest.json`; slides are JPEGs rendered from the decks (§2.14).
 
 ### 2.6 Zalo tag rule
 
@@ -468,12 +475,37 @@ release) · a conversion follow-up for Exam customers.
 
 ---
 
+### 2.14 Adding a training week
+
+```
+python3 zalo/tools/add-week.py 2026-10-14 --vi Deck_VN.pptx --en Deck_EN.pptx --zh Deck_CN.pptx --title "MSG DA Training"
+git add zalo/resources && git commit -m "Resources: week of 14 Oct 2026" && git push
+```
+
+The script needs LibreOffice (`soffice` on the PATH, or `--soffice "<command>"`) and Poppler's
+`pdftoppm`. For each deck it converts the .pptx to PDF, renders every page as a JPEG 1600 px wide
+into `zalo/resources/<date>/<lang>/NN.jpg`, copies the deck as `<lang>.pptx` beside them (the
+original file name is kept in the manifest for the download button) and rewrites
+`zalo/resources/manifest.json`:
+
+```
+{ "weeks": [ { "date": "2026-10-14", "title": "MSG DA Training",
+               "decks": { "vi": { "slides": 10, "w": 1600, "h": 900, "file": "vi.pptx",
+                                  "name": "20261014_MSG_DA_Training_Deck_VN_Final.pptx", "rev": "a1b2c3d4" }, … } } ] }
+```
+
+Running it again with the same date replaces that week; `rev` (a hash of the deck) busts the
+browser cache. A deck handed over as .pdf skips LibreOffice. Any language can be missing. Each
+week costs roughly 4–17 MB in the repository (the .pptx files are most of it); if that becomes
+a problem, keep the decks elsewhere and link them — the manifest's `file` can be any URL.
+
 ## Part 3 — Change log
 
 Newest first. Each entry: date · version · what changed · why · files.
 
 | Date | Version | Change | Why | Files |
 |---|---|---|---|---|
+| 2026-10-19 | 1.3.0 | **Resources** page: the weekly MSG training decks, one panel per week, shown in the page's language with per-week tabs, a slide flipper (arrows, tap, swipe, keys, dots, full screen) and the original .pptx for download; `zalo/tools/add-week.py` renders a week's decks and updates the manifest. Five weeks loaded (25 Aug, 2 Sep, 24 Sep, 1 Oct, 14 Oct 2026). Also: a late mass-send task marked sent today now stays in its group, ticked, instead of vanishing. | DAs get every week's training on the dashboard. | `zalo/app.js`, `zalo/zalo.css`, `zalo/index.html`, `zalo/tools/add-week.py`, `zalo/resources/` |
 | 2026-10-18 | 1.2.0 | On-page guide: **?** button opening the routine and a section per page, a step-by-step tour that highlights the page's own elements, and a one-time welcome on first sign-in per device; in Vietnamese, English and Chinese. | DAs can learn the dashboard on the spot without a separate manual. | `zalo/app.js`, `zalo/index.html`, `zalo/zalo.css` |
 | 2026-10-16 | 1.1.6 | Import reader hardened after a "could not read the file" report: text files decoded as UTF-8, UTF-16 or Windows Vietnamese (Excel's plain CSV); comma, semicolon or tab delimiter detected; the header found anywhere in the first 80 rows and matched by meaning (renamed, reordered or extra columns, a separate phone column); the error now says which tabs and first row were seen. | A real export failed on live with the exact-match header check. | `zalo/core.js`, `zalo/app.js`, `zalo/index.html`, `zalo/tools/test-core.js` |
 | 2026-10-16 | 1.1.5 | QK import: the tag is suggested only once **Zalo added** is ticked (empty with a hint before); new entries listed newest first; repeat purchases (same child and phone, bought again after collecting) come up as entries with a chip and the parent's details pre-filled, and confirming writes a second row so the cadence restarts; the same child twice within a month counts as one purchase; a line under the file name links the same upload's other half (collection confirmations ↔ new members). | DA review of the first live import. | `zalo/app.js`, `zalo/zalo.css`, `zalo/index.html` |

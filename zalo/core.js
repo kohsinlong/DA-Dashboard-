@@ -275,7 +275,8 @@
           else if (m.open <= wk.end) (upcoming[m.open] = upcoming[m.open] || []).push(t);
         } else {
           var inWeek = m.due >= wk.start && m.due <= wk.end, isLate = m.due < wk.start && m.due >= lateFrom;
-          if (inWeek || (isLate && !full)) {
+          var sentNow = dn && String(d.sent_at || "").slice(0, 10) === today;        /* a late one sent today stays visible, ticked */
+          if (inWeek || (isLate && (!full || sentNow))) {
             t.late = isLate;
             var gk = groupKey(m.stage, m.items), g = groups[gk];
             if (!g) g = groups[gk] = { key: gk, stage: m.stage, si: m.si, items: m.items, products: [], texts: {}, tasks: [] };

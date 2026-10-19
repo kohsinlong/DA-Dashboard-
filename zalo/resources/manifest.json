@@ -1,0 +1,146 @@
+{
+ "weeks": [
+  {
+   "date": "2026-08-25",
+   "title": "MSG DA Training",
+   "decks": {
+    "vi": {
+     "slides": 8,
+     "w": 1600,
+     "h": 900,
+     "file": "vi.pptx",
+     "name": "MSG_DA_Training_Deck_VN.pptx",
+     "rev": "cbdfc9eb"
+    },
+    "en": {
+     "slides": 8,
+     "w": 1600,
+     "h": 900,
+     "file": "en.pptx",
+     "name": "MSG_DA_Training_Deck.pptx",
+     "rev": "40711318"
+    },
+    "zh": {
+     "slides": 8,
+     "w": 1600,
+     "h": 900,
+     "file": "zh.pptx",
+     "name": "MSG_DA_Training_Deck_CN.pptx",
+     "rev": "9493d4bf"
+    }
+   }
+  },
+  {
+   "date": "2026-09-02",
+   "title": "MSG DA Training",
+   "decks": {
+    "vi": {
+     "slides": 13,
+     "w": 1600,
+     "h": 900,
+     "file": "vi.pptx",
+     "name": "20260902_MSG_DA_Training_Deck_VN.pptx",
+     "rev": "2af0ff5b"
+    },
+    "en": {
+     "slides": 13,
+     "w": 1600,
+     "h": 900,
+     "file": "en.pptx",
+     "name": "20260902_MSG_DA_Training_Deck.pptx",
+     "rev": "e2cee556"
+    }
+   }
+  },
+  {
+   "date": "2026-09-24",
+   "title": "MSG DA Training",
+   "decks": {
+    "vi": {
+     "slides": 10,
+     "w": 1600,
+     "h": 900,
+     "file": "vi.pptx",
+     "name": "20260924_MSG_DA_Training_Deck_VN.pptx",
+     "rev": "b1477816"
+    },
+    "en": {
+     "slides": 10,
+     "w": 1600,
+     "h": 900,
+     "file": "en.pptx",
+     "name": "20260924_MSG_DA_Training_Deck.pptx",
+     "rev": "026546b4"
+    },
+    "zh": {
+     "slides": 10,
+     "w": 1600,
+     "h": 900,
+     "file": "zh.pptx",
+     "name": "20260924_MSG_DA_Training_Deck_CN.pptx",
+     "rev": "76e62b69"
+    }
+   }
+  },
+  {
+   "date": "2026-10-01",
+   "title": "MSG DA Training",
+   "decks": {
+    "vi": {
+     "slides": 9,
+     "w": 1600,
+     "h": 900,
+     "file": "vi.pptx",
+     "name": "20261001_MSG_DA_Training_Deck_VN.pptx",
+     "rev": "fe66b6d0"
+    },
+    "en": {
+     "slides": 9,
+     "w": 1600,
+     "h": 900,
+     "file": "en.pptx",
+     "name": "20261001_MSG_DA_Training_Deck.pptx",
+     "rev": "70161b16"
+    },
+    "zh": {
+     "slides": 9,
+     "w": 1600,
+     "h": 900,
+     "file": "zh.pptx",
+     "name": "20261001_MSG_DA_Training_Deck_CN.pptx",
+     "rev": "b9f61ab4"
+    }
+   }
+  },
+  {
+   "date": "2026-10-14",
+   "title": "MSG DA Training",
+   "decks": {
+    "vi": {
+     "slides": 10,
+     "w": 1600,
+     "h": 900,
+     "file": "vi.pptx",
+     "name": "20261014_MSG_DA_Training_Deck_VN_Final.pptx",
+     "rev": "1eb3a9c0"
+    },
+    "en": {
+     "slides": 10,
+     "w": 1600,
+     "h": 900,
+     "file": "en.pptx",
+     "name": "20261014_MSG_DA_Training_Deck_EN_Final.pptx",
+     "rev": "a9e44ae6"
+    },
+    "zh": {
+     "slides": 10,
+     "w": 1600,
+     "h": 900,
+     "file": "zh.pptx",
+     "name": "20261014_MSG_DA_Training_Deck_CN.pptx",
+     "rev": "d6a6c88f"
+    }
+   }
+  }
+ ]
+}

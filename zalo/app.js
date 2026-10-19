@@ -6,7 +6,7 @@
   /* Paste the Apps Script /exec URL here after deploying (README §2.10). ?api=<url> and the
      "Connect" box on the sign-in card override it for testing. */
   var API = { url: "https://script.google.com/macros/s/AKfycbwselLgmfAg8ffK5IqBpXVvY8Ppqv2hDNCOStNABLLNfSalUvx5UKR7GC6LIxKuVEO9kg/exec" };
-  var VERSION = "1.2.0";
+  var VERSION = "1.3.0";
 
   /* ------------------------------------------------------------------ strings */
   var L = {
@@ -23,16 +23,17 @@
       tSkipped: "Đã giữ nguyên tag", iUndoWrite: "Hoàn tác lần ghi này", aUndo: "Hoàn tác (xoá khách vừa ghi)", undoneRow: "Đã hoàn tác: dòng vừa ghi đã được xoá", undoneImport: "Đã hoàn tác lần ghi", collUndone: "Đã bỏ ngày nhận kính",
       iLibFail: "Không tải được bộ đọc Excel. Thử lại, hoặc lưu tab SO TTKSCT thành .csv rồi tải lên.", iReading: "Đang đọc {f}… (file lớn có thể mất tới một phút)",
       iRepeatOf: "mua lại · lần trước nhận {d}", iTagAfterTick: "gợi ý sau khi tick Đã kết bạn Zalo", iAlsoColl: "Cùng file này: {n} khách cần xác nhận ngày nhận kính →", iReadAs: "Đã đọc được — tab: {tabs} · dòng đầu: {row}", iAlsoNew: "Cùng file này: {n} khách mới →",
-      nav: { overview: "Tổng quan", add: "Thêm khách", collections: "Nhận kính", members: "Danh sách khách", legacy: "Chưa kết bạn Zalo" },
+      nav: { overview: "Tổng quan", add: "Thêm khách", collections: "Nhận kính", members: "Danh sách khách", legacy: "Chưa kết bạn Zalo", resources: "Tài liệu" },
+      r: { title: "Tài liệu đào tạo", hint: "Slide buổi đào tạo MSG mỗi tuần, theo ngôn ngữ đang chọn — lật từng trang hoặc tải file gốc.", week: "Tuần {n}", slide: "{i} / {n}", download: "Tải .pptx", full: "Toàn màn hình", close: "Đóng", loading: "Đang tải danh sách…", none: "Chưa có tài liệu.", failed: "Không tải được danh sách tài liệu.", noLang: "Tuần này chưa có bản {l}, đang hiện bản {o}.", prev: "Trang trước", next: "Trang sau" },
       g: { btn: "Hướng dẫn", title: "Hướng dẫn sử dụng", version: "Phiên bản {v}", hello: "Chào {da}!", welcome: "Đây là bảng việc Zalo của bạn: tin cần gửi hôm nay, khách mới từ báo cáo QK và ngày nhận kính — tất cả ở một chỗ, tự ghi vào CRM.",
         startTour: "Xem hướng dẫn từng bước", later: "Để sau", gotit: "Đã hiểu", tourThis: "Dẫn trang này", next: "Tiếp", back: "Lại", done: "Xong", skip: "Thoát", stepOf: "Bước {i}/{n}", routineTitle: "Việc mỗi ngày",
         routine: ["Mở Tổng quan: nhìn 3 ô số rồi làm mục Hôm nay — mỗi khách một tin, gửi xong bấm ✓.", "Gửi hàng loạt: cùng một mẫu tin cho cả nhóm — chọn tất cả, gửi, bấm Đã gửi.", "Quá hạn: trễ dưới 1 tuần vẫn gửi bình thường; cũ hơn 2 tuần được gấp lại, mở khi cần.", "Cứ 2–3 ngày: tải báo cáo QK ở Thêm khách (khách mới), rồi sang Nhận kính (xác nhận ngày nhận).", "Khách nhận kính: tick ở Nhận kính, đổi tag N→Y trong Zalo rồi bấm xác nhận.", "Bấm nhầm? Mọi thao tác đều có Hoàn tác trong vài giây."],
-        pages: { overview: ["3 ô số: hôm nay đã gửi / phải gửi · trễ trong tuần · nhóm gửi hàng loạt đã xong.", "Hôm nay (chăm sóc kỹ): từng khách với nội dung ghi sẵn; bấm ✓ khi gửi xong, tick từng mục nếu gửi dở.", "Tuần này: việc sắp tới để chủ động.", "Gửi hàng loạt (nhẹ): cùng mốc, cùng nội dung — chọn tất cả → Đã gửi; Sao chép tên để tìm nhanh trong Zalo.", "Quá hạn: ân hạn 1 tuần; cũ hơn 2 tuần được gấp lại."],
+        pages: { resources: ["Slide đào tạo MSG mỗi tuần, tuần mới nhất ở trên; bản hiện ra theo ngôn ngữ đang chọn (VI/EN/中文), đổi được bằng nút trên mỗi tuần.", "Lật trang bằng mũi tên, vuốt, hoặc phím ←/→; Toàn màn hình để xem lớn.", "Tải .pptx để lưu file gốc về máy."], overview: ["3 ô số: hôm nay đã gửi / phải gửi · trễ trong tuần · nhóm gửi hàng loạt đã xong.", "Hôm nay (chăm sóc kỹ): từng khách với nội dung ghi sẵn; bấm ✓ khi gửi xong, tick từng mục nếu gửi dở.", "Tuần này: việc sắp tới để chủ động.", "Gửi hàng loạt (nhẹ): cùng mốc, cùng nội dung — chọn tất cả → Đã gửi; Sao chép tên để tìm nhanh trong Zalo.", "Quá hạn: ân hạn 1 tuần; cũ hơn 2 tuần được gấp lại."],
           add: ["Thêm từng khách: tên bé, phụ huynh, quan hệ, SĐT, sản phẩm, ngày cọc; tag Zalo tự gợi ý; tick “Chưa kết bạn Zalo” nếu chưa add được — khách vào danh sách chờ.", "Nhập từ báo cáo QK: tải file .xlsx (hoặc tab SO TTKSCT dạng .csv) 2–3 ngày một lần; khách mới hiện theo ngày cọc mới nhất.", "Tick “Đã kết bạn Zalo” → tag được gợi ý → bổ sung phần thiếu → Ghi. Khách không tick sẽ sang danh sách Chưa kết bạn Zalo.", "Mua lại (cùng bé, cùng SĐT, cọc sau lần nhận trước) hiện như khách mới kèm nhãn “mua lại”; ghi sẽ tạo dòng mới và lịch chăm sóc bắt đầu lại."],
           collections: ["Chờ nhận kính: mọi khách có ngày cọc nhưng chưa có ngày nhận; tick + chọn ngày + Lưu khi khách đã lấy kính.", "Cập nhật tag: sau khi nhận kính, trang đề xuất tag N→Y (hoặc tag & cho anh em) — đổi tên trong Zalo trước, rồi bấm xác nhận để ghi vào sheet.", "Cập nhật từ báo cáo QK: cùng file đã tải, các khách báo cáo ghi DONE — kiểm tra rồi Ghi."],
           members: ["Tìm theo tên, tag, SĐT hoặc tên phụ huynh — lọc ngay khi gõ.", "Lọc theo sản phẩm, Cần sửa (thiếu dữ liệu) hoặc Chưa có tag; lọc theo ngày cọc / ngày nhận; sắp xếp.", "Bấm vào khách để xem chi tiết, lịch chăm sóc và sửa thông tin; sửa tag sẽ đi qua Cập nhật tag."],
           legacy: ["Khách chưa kết bạn Zalo (kể cả khách cũ trước CRM), gom theo tháng; mỗi tháng gấp/mở được.", "Khi đã add Zalo: bấm Thêm vào CRM (form điền sẵn) hoặc Ẩn nếu không theo nữa.", "Đơn mua lại của khách cũ nằm riêng với nút Bắt đầu chu kỳ mới."] },
-        steps: { "ov-tiles": ["Ba ô số", "Hôm nay đã gửi / phải gửi · trễ trong tuần · nhóm gửi hàng loạt đã xong. Xanh là ổn."], "ov-over": ["Quá hạn", "Bấm để mở. Trễ dưới 1 tuần vẫn gửi bình thường; cũ hơn 2 tuần gấp lại phía dưới."], "ov-today": ["Hôm nay", "Mỗi thẻ là một khách với nội dung cần gửi. Gửi xong bấm ✓; gửi dở thì tick từng mục. Bấm ✓ lần nữa để hoàn tác."], "ov-up": ["Tuần này", "Việc của các ngày tới, để bạn chủ động."], "ov-mass": ["Gửi hàng loạt", "Cùng mốc, cùng nội dung: chọn tất cả → Đã gửi. Sao chép tên để dán vào ô tìm kiếm Zalo."],
+        steps: { "rs-week": ["Tuần đào tạo", "Mỗi tuần một khung, tuần mới nhất mở sẵn; bấm tiêu đề để gấp hoặc mở."], "rs-view": ["Lật trang", "Mũi tên, vuốt hoặc phím ←/→. Bấm vào slide để sang trang sau."], "rs-dl": ["Ngôn ngữ và tải về", "Bản hiện theo ngôn ngữ đang chọn; đổi tại đây. Tải .pptx để lưu file gốc; Toàn màn hình để xem lớn."], "ov-tiles": ["Ba ô số", "Hôm nay đã gửi / phải gửi · trễ trong tuần · nhóm gửi hàng loạt đã xong. Xanh là ổn."], "ov-over": ["Quá hạn", "Bấm để mở. Trễ dưới 1 tuần vẫn gửi bình thường; cũ hơn 2 tuần gấp lại phía dưới."], "ov-today": ["Hôm nay", "Mỗi thẻ là một khách với nội dung cần gửi. Gửi xong bấm ✓; gửi dở thì tick từng mục. Bấm ✓ lần nữa để hoàn tác."], "ov-up": ["Tuần này", "Việc của các ngày tới, để bạn chủ động."], "ov-mass": ["Gửi hàng loạt", "Cùng mốc, cùng nội dung: chọn tất cả → Đã gửi. Sao chép tên để dán vào ô tìm kiếm Zalo."],
           "ad-form": ["Thêm từng khách", "Điền tên bé, SĐT, sản phẩm, ngày cọc — tag Zalo tự gợi ý. Chưa add được Zalo thì tick “Chưa kết bạn Zalo”."], "ad-imp": ["Nhập từ báo cáo QK", "2–3 ngày một lần: tải file QK lên, khách mới hiện ở đây, mới nhất trước."], "ad-drop": ["Chọn file", "File .xlsx như tải về, hoặc tab SO TTKSCT lưu .csv. Khoảng ngày là tuỳ chọn."], "ad-tick": ["Đã kết bạn Zalo", "Tick khách bạn đã add → tag được gợi ý → bổ sung phần thiếu → Ghi. Không tick sẽ sang danh sách chờ."],
           "co-pend": ["Chờ nhận kính", "Khách đã lấy kính: tick, chọn ngày, Lưu. Lịch chăm sóc chuyển sang các mốc sau nhận."], "co-tags": ["Cập nhật tag", "Đổi tên trong Zalo trước (N→Y), rồi bấm xác nhận — lúc đó sheet mới được ghi."], "co-imp": ["Cập nhật từ báo cáo QK", "Cùng file đã tải: khách báo cáo ghi DONE được tick sẵn — kiểm tra rồi Ghi."],
           "me-search": ["Tìm khách", "Gõ tên, tag, SĐT hoặc tên phụ huynh."], "me-chips": ["Bộ lọc", "Theo sản phẩm, Cần sửa, Chưa có tag."], "me-date": ["Ngày và sắp xếp", "Lọc theo ngày cọc hoặc ngày nhận; sắp xếp theo mới nhất, tên, ngày."], "me-row": ["Thẻ khách", "Bấm vào để xem chi tiết, lịch chăm sóc và sửa thông tin."],
@@ -85,16 +86,17 @@
       tSkipped: "Tag kept as is", iUndoWrite: "Undo this write", aUndo: "Undo (remove the row just written)", undoneRow: "Undone: the row just written was cleared", undoneImport: "The write was undone", collUndone: "Collected date removed",
       iLibFail: "The Excel reader could not be loaded. Try again, or save the SO TTKSCT tab as .csv and upload that.", iReading: "Reading {f}… (a large file can take up to a minute)",
       iRepeatOf: "repeat purchase · last collected {d}", iTagAfterTick: "suggested once Zalo added is ticked", iAlsoColl: "Same file: {n} collection confirmations →", iReadAs: "What was read — tabs: {tabs} · first row: {row}", iAlsoNew: "Same file: {n} new members →",
-      nav: { overview: "Overview", add: "Add members", collections: "Glass collections", members: "Member list", legacy: "No Zalo Add List" },
+      nav: { overview: "Overview", add: "Add members", collections: "Glass collections", members: "Member list", legacy: "No Zalo Add List", resources: "Resources" },
+      r: { title: "Training resources", hint: "The weekly MSG training deck in the language you have selected — flip through it or download the original file.", week: "Week {n}", slide: "{i} / {n}", download: "Download .pptx", full: "Full screen", close: "Close", loading: "Loading the list…", none: "No resources yet.", failed: "The resource list could not be loaded.", noLang: "No {l} deck this week, showing {o}.", prev: "Previous", next: "Next" },
       g: { btn: "Guide", title: "How to use this dashboard", version: "Version {v}", hello: "Hi {da}!", welcome: "This is your Zalo work list: every message due today, new members from the QK report and glass collections, in one place and written to the CRM for you.",
         startTour: "Show me around", later: "Later", gotit: "Got it", tourThis: "Tour this page", next: "Next", back: "Back", done: "Done", skip: "Exit", stepOf: "Step {i}/{n}", routineTitle: "Daily routine",
         routine: ["Open Overview: glance at the three tiles, then work Due today — one message per member, ✓ when sent.", "Mass send: one template for the whole group — select all, send, Mark sent.", "Overdue: under a week late still goes out; older than two weeks folds away until you need it.", "Every 2–3 days: upload the QK report under Add members (new members), then Glass collections (collection dates).", "Glasses collected: tick under Glass collections, rename the tag N→Y in Zalo, then confirm.", "Wrong tap? Everything has Undo for a few seconds."],
-        pages: { overview: ["Three tiles: sent / due today · missed this week · mass groups done.", "Due today (high touch): one card per member with the content to send; ✓ when sent, tick single items for a partial send.", "This week: what is coming, so you can plan.", "Mass send (low touch): same milestone, same content — select all → Mark sent; Copy names to find them in Zalo.", "Overdue: one week of grace; older than two weeks is folded."],
+        pages: { resources: ["The weekly MSG training deck, newest week on top; the deck shown follows the page language (VI/EN/中文), switchable per week.", "Flip with the arrows, a swipe, or the ←/→ keys; Full screen to see it large.", "Download .pptx keeps the original file."], overview: ["Three tiles: sent / due today · missed this week · mass groups done.", "Due today (high touch): one card per member with the content to send; ✓ when sent, tick single items for a partial send.", "This week: what is coming, so you can plan.", "Mass send (low touch): same milestone, same content — select all → Mark sent; Copy names to find them in Zalo.", "Overdue: one week of grace; older than two weeks is folded."],
           add: ["Add one member: child, parent, relation, phone, product, deposit date; the Zalo tag is suggested; tick “Zalo not added” when you could not add them — they go to the waiting list.", "QK report import: upload the .xlsx (or the SO TTKSCT tab as .csv) every 2–3 days; new members appear newest deposit first.", "Tick “Zalo added” → the tag is suggested → complete what is missing → Write. Unticked rows go to the No Zalo Add List.", "Repeat purchases (same child and phone, deposit after the last collection) appear as new entries with a “repeat purchase” chip; writing adds a new row and the cadence starts again."],
           collections: ["Pending collection: every member with a deposit and no collected date; tick + date + Save when the glasses are picked up.", "Tag updates: after a collection the page proposes N→Y (or the & tag for siblings) — rename in Zalo first, then confirm to write the sheet.", "Collection updates from the QK: the same upload, members the report marks DONE — check, then Write."],
           members: ["Search by name, tag, phone or parent — filters as you type.", "Filter by product, To fix (missing data) or No tag; by deposit / collected date; sort.", "Tap a member for details, the cadence timeline and editable fields; tag edits go through Tag updates."],
           legacy: ["Members not on Zalo yet (including customers from before the CRM), grouped by month; every month folds.", "Once they add Zalo: Add to CRM (form pre-filled) or Dismiss.", "Repeat orders of existing members sit apart with Start a new cadence."] },
-        steps: { "ov-tiles": ["Three tiles", "Sent / due today · missed this week · mass groups done. Green means fine."], "ov-over": ["Overdue", "Tap to open. Under a week late still goes out; older than two weeks folds below."], "ov-today": ["Due today", "Each card is a member with the content to send. Tap ✓ when sent; tick single items for a partial send. ✓ again undoes."], "ov-up": ["This week", "The coming days, so you can plan."], "ov-mass": ["Mass send", "Same milestone, same content: select all → Mark sent. Copy names to paste into Zalo search."],
+        steps: { "rs-week": ["Training week", "One panel per week, the newest open; tap the heading to fold or unfold."], "rs-view": ["Flip through", "Arrows, swipe, or the ←/→ keys. Tap the slide for the next one."], "rs-dl": ["Language and download", "The deck follows the page language; switch it here. Download .pptx keeps the original; Full screen shows it large."], "ov-tiles": ["Three tiles", "Sent / due today · missed this week · mass groups done. Green means fine."], "ov-over": ["Overdue", "Tap to open. Under a week late still goes out; older than two weeks folds below."], "ov-today": ["Due today", "Each card is a member with the content to send. Tap ✓ when sent; tick single items for a partial send. ✓ again undoes."], "ov-up": ["This week", "The coming days, so you can plan."], "ov-mass": ["Mass send", "Same milestone, same content: select all → Mark sent. Copy names to paste into Zalo search."],
           "ad-form": ["Add one member", "Child, phone, product, deposit date — the tag is suggested. Could not add them on Zalo? Tick “Zalo not added”."], "ad-imp": ["QK report import", "Every 2–3 days: upload the report; new members appear here, newest first."], "ad-drop": ["Choose the file", "The .xlsx as downloaded, or the SO TTKSCT tab saved as .csv. The date range is optional."], "ad-tick": ["Zalo added", "Tick the ones you added → tag suggested → complete → Write. Unticked rows go to the waiting list."],
           "co-pend": ["Pending collection", "Glasses picked up: tick, pick the date, Save. The cadence moves to the post-collection milestones."], "co-tags": ["Tag updates", "Rename in Zalo first (N→Y), then confirm — only then is the sheet written."], "co-imp": ["Collection updates from the QK", "Same upload: members the report marks DONE are pre-ticked — check, then Write."],
           "me-search": ["Search", "Name, tag, phone or the parent's name."], "me-chips": ["Filters", "Product, To fix, No tag."], "me-date": ["Dates and sort", "Filter by deposit or collected date; sort by newest, name, date."], "me-row": ["Member card", "Tap for details, the timeline and edits."],
@@ -147,16 +149,17 @@
       tSkipped: "已保留标签", iUndoWrite: "撤销本次写入", aUndo: "撤销（删除刚写入的行）", undoneRow: "已撤销：刚写入的行已清除", undoneImport: "已撤销本次写入", collUndone: "已移除取镜日期",
       iLibFail: "无法加载 Excel 读取器。请重试，或将 SO TTKSCT 工作表另存为 .csv 后上传。", iReading: "正在读取 {f}…（大文件可能需要一分钟）",
       iRepeatOf: "复购 · 上次取镜 {d}", iTagAfterTick: "勾选“已加 Zalo”后给出建议", iAlsoColl: "同一文件：{n} 位需确认取镜日期 →", iReadAs: "已读取 — 工作表：{tabs} · 首行：{row}", iAlsoNew: "同一文件：{n} 位新会员 →",
-      nav: { overview: "总览", add: "新增会员", collections: "取镜", members: "会员列表", legacy: "未加 Zalo 名单" },
+      nav: { overview: "总览", add: "新增会员", collections: "取镜", members: "会员列表", legacy: "未加 Zalo 名单", resources: "资料" },
+      r: { title: "培训资料", hint: "每周 MSG 培训幻灯片，按当前语言显示——逐页翻看或下载原文件。", week: "第 {n} 周", slide: "{i} / {n}", download: "下载 .pptx", full: "全屏", close: "关闭", loading: "正在加载列表…", none: "暂无资料。", failed: "无法加载资料列表。", noLang: "本周没有{l}版本，显示{o}版本。", prev: "上一页", next: "下一页" },
       g: { btn: "使用指南", title: "使用指南", version: "版本 {v}", hello: "{da}，你好！", welcome: "这是你的 Zalo 工作清单：今天要发的消息、QK 报表里的新会员和取镜日期，全在一处，并自动写入 CRM。",
         startTour: "逐步引导", later: "稍后", gotit: "知道了", tourThis: "引导本页", next: "下一步", back: "上一步", done: "完成", skip: "退出", stepOf: "第 {i}/{n} 步", routineTitle: "每日流程",
         routine: ["打开总览：看一眼三个数字块，然后处理“今天”——每位会员一条消息，发完点 ✓。", "批量发送：同一模板发给整组——全选、发送、点“已发送”。", "逾期：迟一周内照常发送；超过两周会折叠起来，需要时再展开。", "每 2–3 天：在“新增会员”上传 QK 报表（新会员），再到“取镜”确认取镜日期。", "会员取镜后：在“取镜”勾选，在 Zalo 里把标签 N→Y 改名，然后确认。", "点错了？所有操作几秒内都可撤销。"],
-        pages: { overview: ["三个数字块：今天已发 / 应发 · 本周错过 · 批量组已完成。", "今天（重点关怀）：每位会员一张卡片，附要发的内容；发完点 ✓，部分发送则勾选单项。", "本周：即将到来的事项，便于安排。", "批量发送（轻度）：同一节点、同一内容——全选 → 已发送；复制姓名以便在 Zalo 里查找。", "逾期：一周宽限；超过两周折叠。"],
+        pages: { resources: ["每周 MSG 培训幻灯片，最新一周在最上；显示的版本跟随页面语言（VI/EN/中文），每周可单独切换。", "用箭头、滑动或 ←/→ 键翻页；全屏可放大查看。", "下载 .pptx 保存原文件。"], overview: ["三个数字块：今天已发 / 应发 · 本周错过 · 批量组已完成。", "今天（重点关怀）：每位会员一张卡片，附要发的内容；发完点 ✓，部分发送则勾选单项。", "本周：即将到来的事项，便于安排。", "批量发送（轻度）：同一节点、同一内容——全选 → 已发送；复制姓名以便在 Zalo 里查找。", "逾期：一周宽限；超过两周折叠。"],
           add: ["逐个新增：孩子姓名、家长、关系、电话、产品、订金日期；自动建议 Zalo 标签；加不上 Zalo 就勾“未加 Zalo”——进入等待名单。", "从 QK 报表导入：每 2–3 天上传 .xlsx（或 SO TTKSCT 工作表另存的 .csv）；新会员按订金日期从新到旧显示。", "勾“已加 Zalo”→ 给出标签建议 → 补齐缺项 → 写入。未勾选的进入“未加 Zalo 名单”。", "复购（同一孩子、同一电话、订金晚于上次取镜）作为新条目显示并带“复购”标记；写入会新增一行，关怀周期重新开始。"],
           collections: ["待取镜：所有有订金日期但没有取镜日期的会员；取镜后勾选 + 选日期 + 保存。", "标签更新：取镜后页面会建议 N→Y（兄弟姐妹则是 & 标签）——先在 Zalo 里改名，再点确认写入表格。", "从 QK 报表更新：同一文件，报表标为 DONE 的会员——核对后写入。"],
           members: ["按姓名、标签、电话或家长姓名搜索——边输入边筛选。", "按产品、待修正（缺数据）或无标签筛选；按订金 / 取镜日期筛选；排序。", "点击会员查看详情、关怀时间线并编辑；标签修改会走“标签更新”。"],
           legacy: ["尚未加 Zalo 的会员（含 CRM 之前的老客户），按月分组；每个月可折叠。", "加上 Zalo 后：点“加入 CRM”（表单已预填）或“忽略”。", "老会员的复购订单单独列出，可“开始新周期”。"] },
-        steps: { "ov-tiles": ["三个数字块", "今天已发 / 应发 · 本周错过 · 批量组已完成。绿色表示正常。"], "ov-over": ["逾期", "点击展开。迟一周内照常发送；超过两周折叠在下方。"], "ov-today": ["今天", "每张卡片是一位会员和要发的内容。发完点 ✓；部分发送则勾选单项。再点 ✓ 可撤销。"], "ov-up": ["本周", "接下来几天的事项，便于安排。"], "ov-mass": ["批量发送", "同一节点、同一内容：全选 → 已发送。复制姓名粘贴到 Zalo 搜索框。"],
+        steps: { "rs-week": ["培训周", "每周一个面板，最新一周默认展开；点标题折叠或展开。"], "rs-view": ["翻页", "箭头、滑动或 ←/→ 键。点击幻灯片进入下一页。"], "rs-dl": ["语言与下载", "版本跟随页面语言，可在此切换。下载 .pptx 保存原文件；全屏放大查看。"], "ov-tiles": ["三个数字块", "今天已发 / 应发 · 本周错过 · 批量组已完成。绿色表示正常。"], "ov-over": ["逾期", "点击展开。迟一周内照常发送；超过两周折叠在下方。"], "ov-today": ["今天", "每张卡片是一位会员和要发的内容。发完点 ✓；部分发送则勾选单项。再点 ✓ 可撤销。"], "ov-up": ["本周", "接下来几天的事项，便于安排。"], "ov-mass": ["批量发送", "同一节点、同一内容：全选 → 已发送。复制姓名粘贴到 Zalo 搜索框。"],
           "ad-form": ["逐个新增", "填孩子姓名、电话、产品、订金日期——自动建议标签。加不上 Zalo 就勾“未加 Zalo”。"], "ad-imp": ["从 QK 报表导入", "每 2–3 天：上传报表，新会员显示在这里，最新在前。"], "ad-drop": ["选择文件", "下载的 .xlsx 原文件，或 SO TTKSCT 工作表另存的 .csv。日期范围可选。"], "ad-tick": ["已加 Zalo", "勾选已加的会员 → 建议标签 → 补齐 → 写入。未勾选的进入等待名单。"],
           "co-pend": ["待取镜", "已取镜：勾选、选日期、保存。关怀周期转到取镜后的节点。"], "co-tags": ["标签更新", "先在 Zalo 改名（N→Y），再点确认——此时才写入表格。"], "co-imp": ["从 QK 报表更新", "同一文件：报表标为 DONE 的会员已预先勾选——核对后写入。"],
           "me-search": ["搜索", "姓名、标签、电话或家长姓名。"], "me-chips": ["筛选", "产品、待修正、无标签。"], "me-date": ["日期与排序", "按订金或取镜日期筛选；按最新、姓名、日期排序。"], "me-row": ["会员卡片", "点击查看详情、时间线并编辑。"],
@@ -201,7 +204,7 @@
   /* ------------------------------------------------------------------ state */
   var st = { lang: "vi", clinic: "", da: "", u: "", h: "", session: false, demo: false, data: null, cust: [], byKey: {}, det: {}, tasks: [], imports: [], cadence: [], settings: {},
              today: "", feed: { mode: "offline", at: "" }, route: "tasks", busy: false,
-             ui: { search: "", cfilter: "all", dateKind: "dep", from: "", to: "", sort: "new", overdueOpen: false, foldOpen: false, massSel: {}, imp: null, impRaw: null, impResult: {}, showDismissed: false, addPrefill: null, addDone: null, sheetKey: "", folds: {} } };
+             ui: { res: {}, search: "", cfilter: "all", dateKind: "dep", from: "", to: "", sort: "new", overdueOpen: false, foldOpen: false, massSel: {}, imp: null, impRaw: null, impResult: {}, showDismissed: false, addPrefill: null, addDone: null, sheetKey: "", folds: {} } };
 
   /* ------------------------------------------------------------------ utils */
   function $(id){ return document.getElementById(id); }
@@ -377,7 +380,7 @@
   function renderChrome(){
     var t = T(), p = st.plan;
     var counts = { overview: p ? (p.tiles.today.due - p.tiles.today.done) + p.tiles.missed : 0, collections: st.cust.filter(function (c) { return c.dep && !c.coll && !c.exam; }).length + tagProposals().length, legacy: parkedImports().length };
-    $("nav").innerHTML = ["overview", "add", "collections", "members", "legacy"].map(function (r) {
+    $("nav").innerHTML = ["overview", "add", "collections", "members", "legacy", "resources"].map(function (r) {
       return '<a href="#/' + r + '"' + (st.route === r ? ' aria-current="page"' : "") + ">" + esc(t.nav[r]) + (counts[r] ? '<span class="cn">' + counts[r] + "</span>" : "") + "</a>";
     }).join("");
     $("pgSub").innerHTML = esc(fill(t.sub, { c: st.clinic, d: st.da })) + " · " + esc(dmy(st.today));
@@ -392,13 +395,13 @@
     if (!st.session) return;
     st.plan = currentPlan();
     renderChrome(); $("helpBtn").title = T().g.btn;
-    var r = st.route, h = r === "members" ? pageMembers() : r === "add" ? pageAdd() : r === "collections" ? pageCollections() : r === "legacy" ? pageLegacy() : pageTasks();
+    var r = st.route, h = r === "members" ? pageMembers() : r === "add" ? pageAdd() : r === "collections" ? pageCollections() : r === "legacy" ? pageLegacy() : r === "resources" ? pageResources() : pageTasks();
     $("app").innerHTML = h;
     afterRender();
     maybeConfetti();
   }
   var ALIAS = { tasks: "overview", customers: "members", pending: "collections", tags: "collections", import: "add", nozalo: "legacy" };
-  function route(){ var m = /^#\/([a-z]+)/.exec(location.hash || ""); st.route = m ? (ALIAS[m[1]] || m[1]) : "overview"; if (["overview", "add", "collections", "members", "legacy"].indexOf(st.route) === -1) st.route = "overview"; render(); window.scrollTo(0, 0); }
+  function route(){ var m = /^#\/([a-z]+)/.exec(location.hash || ""); st.route = m ? (ALIAS[m[1]] || m[1]) : "overview"; if (["overview", "add", "collections", "members", "legacy", "resources"].indexOf(st.route) === -1) st.route = "overview"; render(); window.scrollTo(0, 0); }
 
   /* ------------------------------------------------------------------ shared pieces */
   function section(title, hint, cnt){ return '<div class="sec"><h2>' + esc(title) + "</h2>" + (hint ? '<span class="hint">' + esc(hint) + "</span>" : "") + (cnt !== undefined && cnt !== "" ? '<span class="cnt">' + esc(cnt) + "</span>" : "") + "</div>"; }
@@ -884,6 +887,80 @@
         + '<button type="button" class="btn sm" data-act="lg-dismiss" data-code="' + esc(i.code) + '">' + esc(t.lDismiss) + "</button>") + "</div></div></div>";
   }
 
+  /* ------------------------------------------------------------------ page: resources */
+  /* zalo/resources/manifest.json lists the weeks (zalo/tools/add-week.py writes it); each deck is
+     a folder of JPEG slides plus the original .pptx for download. */
+  var LANG_ORDER = ["vi", "en", "zh"], LANG_LABEL = { vi: "VI", en: "EN", zh: "中文" };
+  function loadResources(){
+    if (st.res) return; st.res = "loading";
+    fetch("resources/manifest.json?v=" + VERSION, { cache: "no-cache" }).then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+      .then(function (m) { st.res = m && m.weeks ? m : { weeks: [] }; if (st.route === "resources") render(); })
+      .catch(function () { st.res = { weeks: [], error: true }; if (st.route === "resources") render(); });
+  }
+  function resWeeks(){ return ((st.res && st.res.weeks) || []).slice().sort(function (a, b) { return a.date < b.date ? 1 : a.date > b.date ? -1 : 0; }); }
+  function resWeek(date){ return resWeeks().filter(function (w) { return w.date === date; })[0]; }
+  function resLangs(w){ return LANG_ORDER.filter(function (l) { return w.decks && w.decks[l] && w.decks[l].slides; }); }
+  /* the deck shown follows the page language; a tab on the week overrides it until the language is toggled again */
+  function resState(w){
+    var langs = resLangs(w), ui = st.ui.res[w.date] = st.ui.res[w.date] || { i: 0, lang: "", langFor: "", full: false };
+    if (ui.langFor !== st.lang || langs.indexOf(ui.lang) === -1) { ui.lang = langs.indexOf(st.lang) !== -1 ? st.lang : langs[0]; ui.langFor = st.lang; ui.i = 0; }
+    return ui;
+  }
+  function slideUrl(w, lang, i){ var d = w.decks[lang]; return "resources/" + w.date + "/" + lang + "/" + Z.pad2(i + 1) + ".jpg?r=" + (d.rev || ""); }
+  function pageResources(){
+    var t = T(), r = t.r;
+    loadResources();
+    if (!st.res || st.res === "loading") return '<div class="panel"><div class="empty">' + esc(r.loading) + "</div></div>";
+    var weeks = resWeeks(), h = '<p class="hint" style="margin:0 0 10px">' + esc(r.hint) + "</p>";
+    if (!weeks.length) return h + '<div class="panel"><div class="empty">' + esc(st.res.error ? r.failed : r.none) + "</div></div>";
+    weeks.forEach(function (w, i) {
+      var id = "res:" + w.date;
+      if (st.ui.folds[id] === undefined && i > 0) st.ui.folds[id] = true;                 /* older weeks start folded */
+      h += '<div class="panel">' + foldHead(id, esc(fill(r.week, { n: weeks.length - i })) + ' <span class="dsub">' + esc(dmy(w.date)) + "</span>", w.title || "");
+      if (!isFolded(id) && resLangs(w).length) h += viewerHtml(w);
+      h += "</div>";
+    });
+    return h;
+  }
+  function viewerHtml(w){
+    var t = T(), r = t.r, ui = resState(w), langs = resLangs(w), d = w.decks[ui.lang], n = d.slides || 0, wd = esc(w.date), cnt = fill(r.slide, { i: ui.i + 1, n: n });
+    var dots = n <= 30 ? '<div class="sdots">' + Array.apply(null, Array(n)).map(function (_, k) { return '<button type="button" data-act="res-go" data-week="' + wd + '" data-i="' + k + '"' + (k === ui.i ? ' class="on"' : "") + ' aria-label="' + (k + 1) + '"></button>'; }).join("") + "</div>" : "";
+    return '<div class="rv' + (ui.full ? " full" : "") + '" id="rv-' + wd + '" data-week="' + wd + '" tabindex="-1">'
+      + '<div class="rbar"><div class="rtabs">' + langs.map(function (l) { return '<button type="button" data-act="res-lang" data-week="' + wd + '" data-l="' + l + '" aria-pressed="' + (l === ui.lang) + '">' + LANG_LABEL[l] + "</button>"; }).join("") + "</div>"
+      + (langs.indexOf(st.lang) === -1 ? '<span class="hint">' + esc(fill(r.noLang, { l: LANG_LABEL[st.lang] || st.lang, o: LANG_LABEL[ui.lang] })) + "</span>" : "")
+      + '<span class="cnt rcount">' + esc(cnt) + "</span>"
+      + '<a class="btn sm" href="resources/' + wd + "/" + esc(d.file) + '" download="' + esc(d.name || d.file) + '">' + esc(r.download) + "</a>"
+      + '<button type="button" class="btn sm" data-act="res-full" data-week="' + wd + '">' + esc(ui.full ? r.close : r.full) + "</button></div>"
+      + '<div class="slides"><button type="button" class="sarr prev" data-act="res-prev" data-week="' + wd + '" aria-label="' + esc(r.prev) + '"' + (ui.i > 0 ? "" : " disabled") + ">‹</button>"
+      + '<img class="slide" src="' + esc(slideUrl(w, ui.lang, ui.i)) + '" alt="' + esc(cnt) + '" data-act="res-next" data-week="' + wd + '" width="' + (d.w || 1600) + '" height="' + (d.h || 900) + '">'
+      + '<button type="button" class="sarr next" data-act="res-next" data-week="' + wd + '" aria-label="' + esc(r.next) + '"' + (ui.i < n - 1 ? "" : " disabled") + ">›</button></div>" + dots + "</div>";
+  }
+  function resGo(date, i){
+    var w = resWeek(date); if (!w) return; var ui = resState(w), n = (w.decks[ui.lang] || {}).slides || 0, cnt;
+    ui.i = Math.max(0, Math.min(n - 1, i)); cnt = fill(T().r.slide, { i: ui.i + 1, n: n });
+    var rv = $("rv-" + date); if (!rv) return render();
+    var img = rv.querySelector("img.slide"); img.src = slideUrl(w, ui.lang, ui.i); img.alt = cnt;
+    rv.querySelector(".rcount").textContent = cnt;
+    rv.querySelector(".sarr.prev").disabled = ui.i <= 0; rv.querySelector(".sarr.next").disabled = ui.i >= n - 1;
+    rv.querySelectorAll(".sdots button").forEach(function (b, k) { b.classList.toggle("on", k === ui.i); });
+    if (ui.i + 1 < n) { var pre = new Image(); pre.src = slideUrl(w, ui.lang, ui.i + 1); }
+  }
+  function resLang(date, l){ var w = resWeek(date); if (!w || !w.decks[l]) return; var ui = resState(w); ui.lang = l; ui.langFor = st.lang; ui.i = 0; render(); }
+  function fullRes(){ var d = ""; Object.keys(st.ui.res).forEach(function (k) { if (st.ui.res[k].full) d = k; }); return d; }
+  function resFull(date){
+    var w = resWeek(date); if (!w) return; var ui = resState(w), on = !ui.full;
+    Object.keys(st.ui.res).forEach(function (k) { st.ui.res[k].full = false; }); ui.full = on;
+    document.body.style.overflow = on ? "hidden" : ""; render(); var rv = $("rv-" + date); if (rv) rv.focus();
+  }
+  function openRes(){ var f = fullRes(); if (f) return f; var rv = document.querySelector(".rv"); return rv ? rv.dataset.week : ""; }
+  var swipe = null;
+  document.addEventListener("touchstart", function (ev) { var sl = ev.target.closest(".slides"); swipe = sl ? { x: ev.touches[0].clientX, y: ev.touches[0].clientY, week: sl.closest(".rv").dataset.week } : null; }, { passive: true });
+  document.addEventListener("touchend", function (ev) {
+    if (!swipe) return; var dx = ev.changedTouches[0].clientX - swipe.x, dy = ev.changedTouches[0].clientY - swipe.y;
+    if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) && st.ui.res[swipe.week]) resGo(swipe.week, st.ui.res[swipe.week].i + (dx < 0 ? 1 : -1));
+    swipe = null;
+  }, { passive: true });
+
   /* ------------------------------------------------------------------ guide and tour */
   /* Tour steps per page: a selector and a key into t.g.steps. Steps whose element is not on the
      page right now (no overdue band, no file loaded) are skipped. */
@@ -892,9 +969,10 @@
     add: [{ sel: '[data-act="fold-panel"][data-id="addform"]', k: "ad-form" }, { sel: '[data-act="fold-panel"][data-id="imp-members"]', k: "ad-imp" }, { sel: ".drop", k: "ad-drop" }, { sel: ".zck", k: "ad-tick" }],
     collections: [{ sel: '[data-act="fold-panel"][data-id="pending"]', k: "co-pend" }, { sel: '[data-act="fold-panel"][data-id="tags"]', k: "co-tags" }, { sel: '[data-act="fold-panel"][data-id="imp-collections"]', k: "co-imp" }],
     members: [{ sel: "#custSearch", k: "me-search" }, { sel: ".chips", k: "me-chips" }, { sel: ".fbar", k: "me-date" }, { sel: ".lrow", k: "me-row" }],
-    legacy: [{ sel: '[data-act="fold-panel"][data-id="legacy"]', k: "lg-list" }, { sel: '[data-act="lg-add"]', k: "lg-add" }, { sel: '[data-act="fold-panel"][data-id="repeats"]', k: "lg-rep" }]
+    legacy: [{ sel: '[data-act="fold-panel"][data-id="legacy"]', k: "lg-list" }, { sel: '[data-act="lg-add"]', k: "lg-add" }, { sel: '[data-act="fold-panel"][data-id="repeats"]', k: "lg-rep" }],
+    resources: [{ sel: '[data-act="fold-panel"][data-id^="res:"]', k: "rs-week" }, { sel: ".slides", k: "rs-view" }, { sel: ".rbar", k: "rs-dl" }]
   };
-  var PAGES = ["overview", "add", "collections", "members", "legacy"], tour = null;
+  var PAGES = ["overview", "add", "collections", "members", "legacy", "resources"], tour = null;
   function guideHtml(mode){
     var t = T(), g = t.g, welcome = mode === "welcome";
     var h = '<div class="guide">' + (welcome ? "<h2>" + esc(fill(g.hello, { da: st.da || "" })) + '</h2><p class="lede">' + esc(g.welcome) + "</p>"
@@ -1059,6 +1137,11 @@
       case "tour-next": if (tour) { tour.i++; showStep(); } break;
       case "tour-back": if (tour) { tour.i--; showStep(); } break;
       case "tour-end": endTour(); break;
+      case "res-prev": if (st.ui.res[el.dataset.week]) resGo(el.dataset.week, st.ui.res[el.dataset.week].i - 1); break;
+      case "res-next": if (st.ui.res[el.dataset.week]) resGo(el.dataset.week, st.ui.res[el.dataset.week].i + 1); break;
+      case "res-go": resGo(el.dataset.week, +el.dataset.i); break;
+      case "res-lang": resLang(el.dataset.week, el.dataset.l); break;
+      case "res-full": resFull(el.dataset.week); break;
       case "lg-month": st.ui.folds["lg:" + el.dataset.m] = el.dataset.open === "1"; store("zalo_folds", JSON.stringify(st.ui.folds)); render(); break;
     }
   });
@@ -1076,7 +1159,12 @@
   });
   document.addEventListener("input", function (ev) { var el = ev.target; if (el.dataset && el.dataset.imp && ["child", "parent", "phone", "note", "tag"].indexOf(el.dataset.imp) !== -1) { var e = st.ui.imp.edits[el.dataset.code]; if (e) { e[el.dataset.imp] = el.value; if (el.dataset.imp === "tag") e.tagManual = true; } } });
   $("sheetClose").onclick = closeSheet; $("sheet").addEventListener("click", function (ev) { if (ev.target === $("sheet")) closeSheet(); });
-  document.addEventListener("keydown", function (ev) { if (ev.key === "Escape") { if (tour) endTour(); else closeSheet(); } });
+  document.addEventListener("keydown", function (ev) {
+    if (ev.key === "Escape") { if (tour) endTour(); else if (fullRes()) resFull(fullRes()); else closeSheet(); return; }
+    if ((ev.key === "ArrowLeft" || ev.key === "ArrowRight") && st.route === "resources" && !/INPUT|TEXTAREA|SELECT/.test((ev.target && ev.target.tagName) || "")) {
+      var wk = openRes(); if (wk && st.ui.res[wk]) { resGo(wk, st.ui.res[wk].i + (ev.key === "ArrowRight" ? 1 : -1)); ev.preventDefault(); }
+    }
+  });
 
   /* ------------------------------------------------------------------ confetti */
   function maybeConfetti(){
