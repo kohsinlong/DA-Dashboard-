@@ -99,7 +99,7 @@ Files in `zalo/`:
 | Change the go-live date, import cutoff, grace periods | `DA_Settings` tab |
 | Move a milestone between high and low touch | `Cadence (VN)` column E |
 | Change what a milestone says to do | `Cadence (VN)` column C |
-| Change the username or password | `USERS` / `PW_HASH` in `zalo-sop.gs` (sha256 of the new password), then publish a new version of the script |
+| Change the username or password | `USERS` / `PW_HASHES` in `zalo-sop.gs` (sha256 of the new password; keep the old hash in the list until everyone has switched), then publish a new version of the script |
 | Add a clinic or a username | add the workbook to `CLINICS` and the username to `USERS` in `zalo-sop.gs`, then publish a new version |
 | Change the reviewer's password, or the clinics he audits | `REVIEWERS` in `zalo-sop.gs` (sha256 of the new password; clinic code → his tracker's spreadsheet ID), then publish a new version |
 | Change the audit sample size, the first audited week, or who gets the Complete-week email | `设置 Settings` tab in the tracker (`sample_size`, `start_week`, `email_ho`) |
@@ -114,8 +114,8 @@ Files in `zalo/`:
 
 ### 2.1 Sign-in and access
 
-- Username `NGT_DA`, one shared password (usernames are not case-sensitive). Only usernames listed in `USERS` can sign in. Only the SHA-256 hash of the password is stored, and
-  only in the script (`PW_HASH` in `zalo-sop.gs`); the page holds neither the password nor its
+- Username `NGT_DA` (`NGT_DA1` still works as an alias), one shared password (usernames are not case-sensitive). `PW_HASHES` may hold more than one hash during a password changeover; remove the old one afterwards. Only usernames listed in `USERS` can sign in. Only the SHA-256 hash of the password is stored, and
+  only in the script (`PW_HASHES` in `zalo-sop.gs`); the page holds neither the password nor its
   hash, so nothing in the public page source can be brute-forced. The page hashes what the DA
   types, sends the hash with every request, and the script refuses anything else.
 - After sign-in the DA picks her name once (the list comes from column H); the phone remembers it.
@@ -427,7 +427,7 @@ already created on 16 Oct 2026, and `setup()` is safe to run again):
 
 1. Open https://script.google.com → **New project** → delete the sample code → paste the whole
    of `zalo/tools/zalo-sop.gs` → name the project (e.g. "DA Zalo Dashboard"). `CLINICS` already
-   holds the NGT workbook ID and `PW_HASH` the agreed password's hash; change either there if
+   holds the NGT workbook ID and `PW_HASHES` the agreed password's hash; change either there if
    needed.
 2. Run `setup` once from the editor's function dropdown (▶). The first run asks for permission
    to use your Google Sheets; allow it. The log should read "NGT: tabs ok".

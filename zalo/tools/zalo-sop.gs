@@ -5,7 +5,7 @@
  * SHA-256 of the password; this script holds the reference hash, reads the CRM workbook and
  * writes to it. See zalo/README.md §2.8 (API), §2.10 (deployment).
  *
- * Deploy once: script.google.com → New project → paste this file → fill CLINICS and PW_HASH
+ * Deploy once: script.google.com → New project → paste this file → fill CLINICS and PW_HASHES
  * → run setup() from the editor → Deploy → New deployment → Web app, execute as Me, access
  * Anyone → copy the /exec URL into API.url at the top of zalo/app.js.
  * After editing: Deploy → Manage deployments → Edit → Version: New version.
