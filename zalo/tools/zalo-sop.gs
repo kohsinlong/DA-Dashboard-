@@ -9,6 +9,13 @@
  * → run setup() from the editor → Deploy → New deployment → Web app, execute as Me, access
  * Anyone → copy the /exec URL into API.url at the top of zalo/app.js.
  * After editing: Deploy → Manage deployments → Edit → Version: New version.
+ *
+ * Reviewers (1.4.0): a username listed in REVIEWERS signs in on the same page and gets the QA
+ * audit view instead of the DA's task list. The reviewer path only READS the clinics' CRM
+ * workbooks (never ensureTabs, never a write there); everything a reviewer records goes to the
+ * reviewer's own tracker workbook (tabs created by ensureTracker) and screenshots to Drive.
+ * See zalo/README.md §2.15. After adding this section, run setupReviewer() once from the
+ * editor (it asks for the Drive permission the screenshots need), then publish a new version.
  */
 
 var CLINICS = {
@@ -16,6 +23,11 @@ var CLINICS = {
   "NGT": { id: "1IdKCJ58wJHrjFkaQmnTKwPo3rWtAvAA3CUYRkH_4IJI", sheet: "Membership_NGT" }
 };
 var USERS = { "NGT_DA1": "NGT" };    /* username → clinic; only names listed here can sign in */
+/* QA reviewers: username → own password hash and, per clinic they audit, their tracker workbook. */
+var REVIEWERS = {
+  "CZ": { name: "ChenZhong", hash: "c7425b8bfb79932f5d6f5b46f3ddc20bb7c5050dd516aef9e87425afc4cf51c3",
+          clinics: { "NGT": "1ki5FZBdnNDM83S5kYSKYk2uLVuSEoMa3559y4Av7OG8" } }
+};
 var PW_HASH = "d006b3f546ac914c34dfc209ad535ea530f32a1e8e0ae822ea049b3a783e4d20";   /* sha256 of the shared password */
 var TZ = "Asia/Ho_Chi_Minh";
 var CADENCE_SHEET = "Cadence (VN)";
@@ -49,6 +61,8 @@ var TOUCH_HIGH = {
 function doGet(e) {
   var p = (e && e.parameter) || {};
   try {
+    var rv = reviewerOf(p.u, p.h);
+    if (rv) return out(reviewerGet(rv, p));
     var clinic = auth(p.u, p.h);
     if (p.action === "ping") return out({ ok: 1, clinic: clinic, at: now() });
     return out(bootstrap(clinic, p));
@@ -60,6 +74,11 @@ function doPost(e) {
   try { body = JSON.parse((e && e.postData && e.postData.contents) || "{}"); }
   catch (err) { return out({ error: "bad json" }); }
   try {
+    var rv = reviewerOf(body.u, body.h);
+    if (rv) {
+      var rlock = LockService.getScriptLock(); rlock.waitLock(25000);
+      try { return out(reviewerPost(rv, body)); } finally { rlock.releaseLock(); }
+    }
     var clinic = auth(body.u, body.h), by = String(body.da || body.u || "").slice(0, 80);
     var lock = LockService.getScriptLock(); lock.waitLock(25000);
     try { return out(dispatch(clinic, by, body)); } finally { lock.releaseLock(); }
@@ -426,6 +445,330 @@ function removeImport(ss, clinic, by, code) {
   var vals = last >= 2 ? sh.getRange(2, 1, last - 1, 2).getValues() : [];
   for (var i = vals.length - 1; i >= 0; i--) if (String(vals[i][0]) === String(code) && (!vals[i][1] || vals[i][1] === clinic)) { sh.deleteRow(i + 2); logRows(ss, by, "removeImport", String(code), i + 2, [["row", "", ""]]); return { ok: 1, removed: 1 }; }
   return { ok: 1, removed: 0 };
+}
+
+
+/* ================================================================ reviewers (QA audit, 1.4.0)
+   README §2.15. The reviewer reads each clinic's CRM workbook (customers, the DA's ticks in
+   DA_Tasks, the Cadence tab, DA_Settings) and writes only to the tracker workbook named for that
+   clinic in REVIEWERS: tabs Audit, Weekly, Screenshots, Settings. Screenshots are Drive files in a
+   folder next to the tracker; the page fetches them through this script, so they need no sharing.
+   ================================================================ */
+var RV_TABS = { audit: "审核 Audit", weekly: "周总评 Weekly", shots: "截图 Screenshots", settings: "设置 Settings" };
+var RV_HEADERS = {
+  audit: ["键 Key", "周 Week", "诊所 Clinic", "客户键 Customer key", "Zalo 标签 Zalo tag", "客户 Customer", "产品 Product", "助理 DA",
+          "本周到期 Due this week", "状态 Status", "结论 Verdict", "得分 Score", "已发送 Found", "缺失 Missing", "助理已勾未见 DA ticked, not found",
+          "备注 Remark", "数据问题 Data issue", "截图 Screenshots", "检查时间 Checked at", "审核人 By", "更新时间 Updated", "评分明细 Marks", "来源 Source", "抽样时间 Added"],
+  weekly: ["键 Key", "周 Week", "诊所 Clinic", "到期客户 Customers due", "到期节点 Cadences due", "抽样 Sampled", "已检查 Checked", "合规 Pass", "部分 Partial",
+           "未合规 Fail", "数据问题 Data issues", "得分 Score %", "本周节点得分 This week's cadences %", "助理已勾未见 DA ticked, not found", "助理自报已发 DA reported sent %",
+           "本周总评 Overall remark", "审核人 By", "更新时间 Updated"],
+  shots: ["编号 ID", "周 Week", "诊所 Clinic", "客户键 Customer key", "Zalo 标签 Zalo tag", "文件 File", "链接 Link", "Drive ID", "上传时间 Uploaded", "审核人 By", "已删除 Removed"],
+  settings: ["键 Key", "值 Value", "说明 Note"]
+};
+var RV_SETTINGS_DEFAULT = [
+  ["sample_size", "15", "每周每个诊所抽样数 / Chats to sample per clinic per week"],
+  ["start_week", "2026-10-12", "审核起始周（周一）/ First audited week (its Monday)"],
+  ["screenshot_folder", "", "截图文件夹 ID（首次上传时自动创建）/ Drive folder for screenshots, created on the first upload"],
+  ["switched_over", "", "旧周表导入时间（W 表已隐藏）/ When the old week sheets were imported and hidden"]
+];
+var RV_AUDIT_COLS = RV_HEADERS.audit.length;
+
+function reviewerOf(u, h) {
+  var id = String(u || "").trim().toUpperCase(), r = REVIEWERS[id];
+  if (!r) return null;
+  if (!r.hash || String(h || "").toLowerCase() !== r.hash) throw new Error("forbidden");
+  return { id: id, name: r.name || id, clinics: r.clinics || {}, cache: {} };
+}
+function rvTracker(rv, clinic) {
+  var id = rv.clinics[clinic];
+  if (!id) throw new Error("clinic " + clinic + " is not in your list");
+  if (!rv.cache[id]) { rv.cache[id] = SpreadsheetApp.openById(id); ensureTracker(rv.cache[id]); }
+  return rv.cache[id];
+}
+function rvToday() { return Utilities.formatDate(new Date(), TZ, "yyyy-MM-dd"); }
+function rvDay(v) { if (v instanceof Date) return iso(v); return cellText(v).replace(/^'/, "").trim().slice(0, 10); }
+function rvStamp(v) { return v instanceof Date && !isNaN(v) ? v.toISOString() : cellText(v); }
+
+/* ---------------------------------------------------------------- tracker tabs */
+function ensureTracker(ss) {
+  ["settings", "audit", "weekly", "shots"].forEach(function (k) {
+    var name = RV_TABS[k], hdr = RV_HEADERS[k], sh = ss.getSheetByName(name);
+    if (!sh) { sh = ss.insertSheet(name); sh.getRange(1, 1, 1, hdr.length).setValues([hdr]); sh.setFrozenRows(1); }
+    else {
+      if (sh.getMaxColumns() < hdr.length) sh.insertColumnsAfter(sh.getMaxColumns(), hdr.length - sh.getMaxColumns());
+      var cur = sh.getRange(1, 1, 1, hdr.length).getValues()[0];
+      for (var i = 0; i < hdr.length; i++) if (cellText(cur[i]).trim() === "") sh.getRange(1, i + 1).setValue(hdr[i]);
+    }
+    if (k === "settings") {
+      var have = {}, last = sh.getLastRow();
+      if (last >= 2) sh.getRange(2, 1, last - 1, 1).getValues().forEach(function (r) { have[cellText(r[0]).trim()] = 1; });
+      var add = RV_SETTINGS_DEFAULT.filter(function (d) { return !have[d[0]]; });
+      if (add.length) sh.getRange(sh.getLastRow() + 1, 1, add.length, 3).setValues(add);
+    }
+  });
+}
+function rvSettings(ss) {
+  var sh = ss.getSheetByName(RV_TABS.settings), o = {};
+  RV_SETTINGS_DEFAULT.forEach(function (d) { o[d[0]] = d[1]; });
+  if (!sh || sh.getLastRow() < 2) return o;
+  sh.getRange(2, 1, sh.getLastRow() - 1, 2).getValues().forEach(function (r) {
+    var k = cellText(r[0]).trim(); if (!k) return;
+    var v = r[1] instanceof Date ? iso(r[1]) : cellText(r[1]).trim();
+    if (v !== "" || o[k] === undefined) o[k] = v;
+  });
+  return o;
+}
+function setRvSetting(ss, key, value) {
+  var sh = ss.getSheetByName(RV_TABS.settings), last = sh.getLastRow();
+  var keys = last >= 2 ? sh.getRange(2, 1, last - 1, 1).getValues() : [];
+  for (var i = 0; i < keys.length; i++) if (cellText(keys[i][0]).trim() === key) { sh.getRange(i + 2, 2).setValue(value); return; }
+  sh.getRange(last + 1, 1, 1, 3).setValues([[key, value, ""]]);
+}
+/* rows of a tracker tab as arrays, with their sheet row numbers */
+function rvRows(ss, tab) {
+  var sh = ss.getSheetByName(RV_TABS[tab]); if (!sh) return [];
+  var last = sh.getLastRow(), n = RV_HEADERS[tab].length; if (last < 2) return [];
+  return sh.getRange(2, 1, last - 1, n).getValues().map(function (v, i) { return { row: i + 2, v: v }; })
+    .filter(function (r) { return cellText(r.v[0]).trim() !== ""; });
+}
+function rvFindRow(sh, key) {
+  var last = sh.getLastRow(); if (last < 2) return 0;
+  var keys = sh.getRange(2, 1, last - 1, 1).getValues();
+  for (var i = 0; i < keys.length; i++) if (cellText(keys[i][0]) === key) return i + 2;
+  return 0;
+}
+function readAudits(ss) {
+  return rvRows(ss, "audit").map(function (r) {
+    var v = r.v, marks = {};
+    try { marks = v[21] ? JSON.parse(v[21]) : {}; } catch (e) { marks = {}; }
+    return { key: cellText(v[0]), week: rvDay(v[1]), clinic: cellText(v[2]), custKey: cellText(v[3]), tag: cellText(v[4]), name: cellText(v[5]),
+             product: cellText(v[6]), da: cellText(v[7]), due: cellText(v[8]), status: cellText(v[9]), verdict: cellText(v[10]), score: v[11] === "" ? "" : Number(v[11]),
+             found: cellText(v[12]), missing: cellText(v[13]), notFound: cellText(v[14]), remark: cellText(v[15]), data: cellText(v[16]) ? 1 : 0,
+             shots: Number(v[17]) || 0, checkedAt: rvStamp(v[18]), by: cellText(v[19]), updated: rvStamp(v[20]), marks: marks, source: cellText(v[22]), added: rvStamp(v[23]) };
+  });
+}
+function readWeekly(ss) {
+  return rvRows(ss, "weekly").map(function (r) {
+    var v = r.v;
+    return { key: cellText(v[0]), week: rvDay(v[1]), clinic: cellText(v[2]), remark: cellText(v[15]), by: cellText(v[16]), updated: rvStamp(v[17]) };
+  });
+}
+function readShots(ss) {
+  return rvRows(ss, "shots").filter(function (r) { return !cellText(r.v[10]); }).map(function (r) {
+    var v = r.v;
+    return { id: cellText(v[0]), week: rvDay(v[1]), clinic: cellText(v[2]), custKey: cellText(v[3]), tag: cellText(v[4]), file: cellText(v[5]), url: cellText(v[6]), uploaded: rvStamp(v[8]), by: cellText(v[9]) };
+  });
+}
+/* Cadence (CN): the reviewer's own wording per product and milestone, shown in Chinese */
+function readCadenceCN(ss) {
+  var sh = ss.getSheetByName("Cadence (CN)"); if (!sh || sh.getLastRow() < 2) return [];
+  return sh.getRange(2, 1, sh.getLastRow() - 1, 3).getValues().filter(function (v) { return cellText(v[0]).trim() && cellText(v[1]).trim(); })
+    .map(function (v) { return { product: productKey(v[0]) || cellText(v[0]).trim(), stage: cellText(v[1]).trim(), text: cellText(v[2]).trim() }; });
+}
+
+/* ---------------------------------------------------------------- reading for the page */
+function reviewerGet(rv, p) {
+  if (p.action === "ping") return { ok: 1, role: "reviewer", reviewer: rv.id, at: now() };
+  if (p.action === "shot") return getShot(rv, p.id);
+  return reviewerBootstrap(rv);
+}
+function reviewerBootstrap(rv) {
+  var res = { ok: 1, role: "reviewer", reviewer: rv.id, name: rv.name, generated: now(), today: rvToday(),
+              clinics: {}, audits: [], weekly: [], shots: [], settings: {}, cadenceCN: [] }, done = {};
+  Object.keys(rv.clinics).forEach(function (code) {
+    if (!CLINICS[code]) { res.clinics[code] = { error: "clinic not configured" }; return; }
+    var crm = openClinic(code);                         /* read only on this path */
+    var customers = readMembership(crm, code), das = {};
+    customers.forEach(function (c) { if (c.da) das[c.da] = (das[c.da] || 0) + 1; });
+    res.clinics[code] = { customers: customers, das: das, cadence: readCadence(crm), tasks: readTab(crm, TABS.tasks, code), settings: readSettings(crm) };
+  });
+  Object.keys(rv.clinics).forEach(function (code) {
+    if (!res.clinics[code] || res.clinics[code].error) return;
+    var ss = rvTracker(rv, code);
+    switchOver(ss, rv, code, res.clinics[code].customers);
+    var mine = function (x) { return !x.clinic || x.clinic === code; };
+    res.audits = res.audits.concat(readAudits(ss).filter(mine));
+    res.weekly = res.weekly.concat(readWeekly(ss).filter(mine));
+    res.shots = res.shots.concat(readShots(ss).filter(mine));
+    if (!done[rv.clinics[code]]) { done[rv.clinics[code]] = 1; res.settings[code] = rvSettings(ss); if (!res.cadenceCN.length) res.cadenceCN = readCadenceCN(ss); }
+    else res.settings[code] = rvSettings(ss);
+  });
+  return res;
+}
+
+/* ---------------------------------------------------------------- switch-over from the week sheets
+   Once per tracker: the marks typed into the old week sheets (W42, W43 …) from start_week on are
+   copied into the Audit and Weekly tabs, and every W sheet is hidden (never deleted). */
+function switchOver(ss, rv, clinic, customers) {
+  var set = rvSettings(ss);
+  if (set.switched_over) return { skipped: 1 };
+  var start = set.start_week || "", byTag = {}, byPhone = {}, imported = 0, weeks = [];
+  customers.forEach(function (c) {
+    var t = compactTag(c.tag); if (t && !byTag[t]) byTag[t] = c;
+    var ph = normPhone(c.phone); if (ph) (byPhone[ph] = byPhone[ph] || []).push(c);
+  });
+  function match(tag){
+    var c = byTag[compactTag(tag)]; if (c) return c;
+    var m = /(0\d{9})\s*$/.exec(String(tag || "").replace(/\s+/g, " ").trim()), list = m ? byPhone[m[1]] : null;
+    if (!list || !list.length) return null;
+    if (list.length === 1) return list[0];
+    var words = normText(tag), best = list.filter(function (x) { var nm = normText(x.name).split(" "); return nm.length && words.indexOf(nm[nm.length - 1]) !== -1; });
+    return best[0] || list[0];
+  }
+  var auditSh = ss.getSheetByName(RV_TABS.audit), at = now();
+  ss.getSheets().forEach(function (sh) {
+    if (!/^W\d{1,2}$/.test(sh.getName())) return;
+    var last = sh.getLastRow(); if (last < 1) return;
+    var vals = sh.getRange(1, 1, last, 10).getValues();
+    var m = /(\d{4}-\d{2}-\d{2})/.exec(cellText(vals[0][0])), week = m ? m[1] : "";
+    if (!week || (start && week < start)) return;
+    var hdrRow = -1;
+    for (var i = 0; i < Math.min(vals.length, 20); i++) if (/Zalo/.test(cellText(vals[i][1])) && /客户|Customer/.test(cellText(vals[i][2]))) { hdrRow = i; break; }
+    var remark = "";
+    for (var j = 0; j < Math.min(vals.length, 9); j++) if (/综合评述|Overall remark/.test(cellText(vals[j][0]))) remark = cellText(vals[j][1]).trim();
+    var rows = [];
+    if (hdrRow >= 0) for (var r = hdrRow + 1; r < vals.length; r++) {
+      var v = vals[r], tag = cellText(v[1]).split("\n")[0].replace(/\s+/g, " ").trim(), miss = cellText(v[8]).trim(), fb = cellText(v[9]).trim();
+      if (!tag || (!miss && !fb)) continue;
+      var c = match(tag), ck = c ? keyOf(c.phone, c.name) : "tag:" + compactTag(tag);
+      var key = week + "|" + clinic + "|" + ck;
+      if (rvFindRow(auditSh, key)) continue;
+      var line = []; for (var k = 0; k < RV_AUDIT_COLS; k++) line.push("");
+      line[0] = key; line[1] = "'" + week; line[2] = clinic; line[3] = ck; line[4] = tag; line[5] = c ? c.name : cellText(v[2]);
+      line[6] = c ? (productKey(c.product) || cellText(v[4])) : cellText(v[4]); line[7] = c ? c.da : cellText(v[3]); line[8] = cellText(v[6]);
+      line[9] = "checked"; line[10] = "noted"; line[13] = miss; line[15] = fb; line[18] = at; line[19] = rv.id; line[20] = at; line[21] = "{}"; line[22] = "sheet " + sh.getName(); line[23] = at;
+      rows.push(line);
+    }
+    if (rows.length) { auditSh.getRange(auditSh.getLastRow() + 1, 1, rows.length, RV_AUDIT_COLS).setValues(rows); imported += rows.length; }
+    if (remark) upsertWeekly(ss, rv, { week: week, clinic: clinic, remark: remark });
+    weeks.push(sh.getName() + ":" + rows.length);
+  });
+  ss.getSheets().forEach(function (sh) { if (/^W\d{1,2}$/.test(sh.getName())) { try { sh.hideSheet(); } catch (e) {} } });
+  setRvSetting(ss, "switched_over", at + " · " + (weeks.join(", ") || "no marks"));
+  return { imported: imported, weeks: weeks };
+}
+function compactTag(t) { return String(t || "").split("\n")[0].replace(/\s+/g, "").toLowerCase(); }
+
+/* ---------------------------------------------------------------- writes */
+function reviewerPost(rv, body) {
+  switch (body.action) {
+    case "auditSave":     return auditSave(rv, body.audits || [], body.stats || []);
+    case "auditRemove":   return auditRemove(rv, body.keys || [], body.clinic, body.stats || []);
+    case "feedbackSave":  return feedbackSave(rv, body);
+    case "shotUpload":    return shotUpload(rv, body.shot || {});
+    case "shotRemove":    return shotSetRemoved(rv, body.clinic, body.id, true);
+    case "shotRestore":   return shotSetRemoved(rv, body.clinic, body.id, false);
+    default: throw new Error("unknown action: " + body.action);
+  }
+}
+function auditLine(rv, a) {
+  if (!a.key || !/^\d{4}-\d{2}-\d{2}$/.test(String(a.week || ""))) throw new Error("audit needs key and week");
+  var at = now(), line = [
+    String(a.key), "'" + a.week, String(a.clinic), cellText(a.custKey), cellText(a.tag).slice(0, 300), cellText(a.name).slice(0, 200), cellText(a.product), cellText(a.da),
+    cellText(a.due), a.status === "checked" ? "checked" : "sampled", cellText(a.verdict), a.score === "" || a.score === null || a.score === undefined ? "" : Number(a.score),
+    cellText(a.found).slice(0, 500), cellText(a.missing).slice(0, 2000), Number(a.notFound) || 0, cellText(a.remark).slice(0, 5000),
+    a.data ? "Y" : "", Number(a.shots) || 0, cellText(a.checkedAt), rv.id, at, JSON.stringify(a.marks || {}).slice(0, 20000), cellText(a.source || "app"), cellText(a.added || at)];
+  return line;
+}
+function auditSave(rv, audits, stats) {
+  var saved = 0, at = now();
+  audits.forEach(function (a) {
+    var ss = rvTracker(rv, a.clinic), sh = ss.getSheetByName(RV_TABS.audit), line = auditLine(rv, a), r = rvFindRow(sh, line[0]);
+    if (r) sh.getRange(r, 1, 1, RV_AUDIT_COLS).setValues([line]); else sh.getRange(sh.getLastRow() + 1, 1, 1, RV_AUDIT_COLS).setValues([line]);
+    saved++;
+  });
+  stats.forEach(function (s) { upsertWeekly(rvTracker(rv, s.clinic), rv, s); });
+  return { ok: 1, saved: saved, at: at };
+}
+function auditRemove(rv, keys, clinic, stats) {
+  var ss = rvTracker(rv, clinic), sh = ss.getSheetByName(RV_TABS.audit), removed = 0;
+  keys.forEach(function (k) { var r = rvFindRow(sh, String(k)); if (r) { sh.deleteRow(r); removed++; } });
+  stats.forEach(function (s) { upsertWeekly(rvTracker(rv, s.clinic), rv, s); });
+  return { ok: 1, removed: removed };
+}
+/* s: {week, clinic, remark?, dueCustomers, dueCadences, sampled, checked, pass, partial, fail, data, score, weekScore, notFound, daSent} */
+function upsertWeekly(ss, rv, s) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(s.week || ""))) throw new Error("weekly row needs week");
+  var sh = ss.getSheetByName(RV_TABS.weekly), key = s.week + "|" + s.clinic, r = rvFindRow(sh, key), n = RV_HEADERS.weekly.length;
+  var cur = r ? sh.getRange(r, 1, 1, n).getValues()[0] : [];
+  function keep(i, v) { return v === undefined ? (cur[i] === undefined ? "" : cur[i]) : v; }
+  var line = [key, "'" + s.week, s.clinic, keep(3, s.dueCustomers), keep(4, s.dueCadences), keep(5, s.sampled), keep(6, s.checked), keep(7, s.pass), keep(8, s.partial),
+              keep(9, s.fail), keep(10, s.data), keep(11, s.score), keep(12, s.weekScore), keep(13, s.notFound), keep(14, s.daSent),
+              s.remark === undefined ? cellText(cur[15]) : cellText(s.remark).slice(0, 8000), rv.id, now()];
+  line = line.map(function (v) { return v === null ? "" : v; });
+  if (r) sh.getRange(r, 1, 1, n).setValues([line]); else sh.getRange(sh.getLastRow() + 1, 1, 1, n).setValues([line]);
+  return { ok: 1, key: key };
+}
+function feedbackSave(rv, b) {
+  var ss = rvTracker(rv, b.clinic), s = Object.assign({}, b.stats || {}, { week: b.week, clinic: b.clinic, remark: cellText(b.text) });
+  upsertWeekly(ss, rv, s);
+  return { ok: 1, at: now() };
+}
+
+/* ---------------------------------------------------------------- screenshots */
+function shotFolder(ss) {
+  var id = rvSettings(ss).screenshot_folder;
+  if (id) { try { return DriveApp.getFolderById(id); } catch (e) {} }
+  var parent = null;
+  try { var it = DriveApp.getFileById(ss.getId()).getParents(); if (it.hasNext()) parent = it.next(); } catch (e) {}
+  var f = null, title = "CZ 审核截图 Audit screenshots";
+  if (parent) { try { f = parent.createFolder(title); } catch (e) { f = null; } }
+  if (!f) f = DriveApp.createFolder(title);
+  setRvSetting(ss, "screenshot_folder", f.getId());
+  return f;
+}
+function weekFolder(root, name) {
+  var it = root.getFoldersByName(name);
+  return it.hasNext() ? it.next() : root.createFolder(name);
+}
+/* shot: {id, week, clinic, custKey, tag, name, mime, data (base64, or a data: URL)} */
+function shotUpload(rv, s) {
+  var ss = rvTracker(rv, s.clinic), data = String(s.data || ""), m = /^data:([^;]+);base64,/.exec(data), mime = m ? m[1] : String(s.mime || "image/jpeg");
+  if (m) data = data.slice(m[0].length);
+  if (!/^image\//.test(mime)) throw new Error("screenshots must be images");
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(s.week || ""))) throw new Error("screenshot needs a week");
+  var bytes = Utilities.base64Decode(data);
+  if (bytes.length > 8 * 1024 * 1024) throw new Error("screenshot is larger than 8 MB");
+  var id = String(s.id || ("s" + new Date().getTime())), ext = mime === "image/png" ? ".png" : mime === "image/webp" ? ".webp" : ".jpg";
+  var fname = [s.week, s.clinic, cellText(s.tag).replace(/[\\/:*?"<>|]/g, "").slice(0, 60), id].join(" ") + ext;
+  var file = weekFolder(shotFolder(ss), s.week + " " + s.clinic).createFile(Utilities.newBlob(bytes, mime, fname));
+  var sh = ss.getSheetByName(RV_TABS.shots), at = now();
+  sh.getRange(sh.getLastRow() + 1, 1, 1, RV_HEADERS.shots.length).setValues([[id, "'" + s.week, s.clinic, cellText(s.custKey), cellText(s.tag), fname, file.getUrl(), file.getId(), at, rv.id, ""]]);
+  return { ok: 1, id: id, url: file.getUrl(), file: fname, uploaded: at };
+}
+function shotRow(rv, clinic, id) {
+  var codes = clinic ? [clinic] : Object.keys(rv.clinics);
+  for (var i = 0; i < codes.length; i++) {
+    var ss = rvTracker(rv, codes[i]), sh = ss.getSheetByName(RV_TABS.shots), r = rvFindRow(sh, String(id));
+    if (r) return { ss: ss, sh: sh, row: r, v: sh.getRange(r, 1, 1, RV_HEADERS.shots.length).getValues()[0] };
+  }
+  throw new Error("screenshot not found");
+}
+function getShot(rv, id) {
+  var f = shotRow(rv, "", id), file = DriveApp.getFileById(cellText(f.v[7])), blob = file.getBlob();
+  return { ok: 1, id: String(id), mime: blob.getContentType(), data: Utilities.base64Encode(blob.getBytes()) };
+}
+function shotSetRemoved(rv, clinic, id, removed) {
+  var f = shotRow(rv, clinic, id);
+  try { DriveApp.getFileById(cellText(f.v[7])).setTrashed(removed); } catch (e) {}
+  f.sh.getRange(f.row, 11).setValue(removed ? "Y" : "");
+  return { ok: 1, id: String(id), removed: removed ? 1 : 0 };
+}
+
+/* Run once from the editor after adding the reviewer section: creates the tracker tabs and the
+   screenshot folder, which makes Apps Script ask for the Drive permission before deploying. */
+function setupReviewer() {
+  var report = [];
+  Object.keys(REVIEWERS).forEach(function (id) {
+    var r = REVIEWERS[id];
+    Object.keys(r.clinics).forEach(function (code) {
+      var ss = SpreadsheetApp.openById(r.clinics[code]); ensureTracker(ss);
+      var f = shotFolder(ss);
+      report.push(id + " / " + code + ": tracker tabs ok, screenshots in " + f.getName());
+    });
+  });
+  Logger.log(report.join("\n"));
+  return report;
 }
 
 /* Run from the editor to check reading works before deploying. */
