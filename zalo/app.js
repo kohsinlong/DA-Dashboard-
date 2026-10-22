@@ -6,7 +6,7 @@
   /* Paste the Apps Script /exec URL here after deploying (README §2.10). ?api=<url> and the
      "Connect" box on the sign-in card override it for testing. */
   var API = { url: "https://script.google.com/macros/s/AKfycbwselLgmfAg8ffK5IqBpXVvY8Ppqv2hDNCOStNABLLNfSalUvx5UKR7GC6LIxKuVEO9kg/exec" };
-  var VERSION = "1.4.0";
+  var VERSION = "1.5.0";
 
   /* ------------------------------------------------------------------ strings */
   var L = {
@@ -380,11 +380,13 @@
   }
   function renderChrome(){
     var t = T(), p = st.plan, rv = st.role === "reviewer";
-    var counts = rv ? RV.navCounts() : { overview: p ? (p.tiles.today.due - p.tiles.today.done) + p.tiles.missed : 0, collections: st.cust.filter(function (c) { return c.dep && !c.coll && !c.exam; }).length + tagProposals().length, legacy: parkedImports().length };
-    $("nav").innerHTML = (rv ? RV.routes() : ["overview", "add", "collections", "members", "legacy", "resources"]).map(function (r) {
-      return '<a href="#/' + r + '"' + (st.route === r ? ' aria-current="page"' : "") + ">" + esc(rv ? RV.navLabel(r) : t.nav[r]) + (counts[r] ? '<span class="cn">' + counts[r] + "</span>" : "") + "</a>";
+    var counts = rv ? {} : { overview: p ? (p.tiles.today.due - p.tiles.today.done) + p.tiles.missed : 0, collections: st.cust.filter(function (c) { return c.dep && !c.coll && !c.exam; }).length + tagProposals().length, legacy: parkedImports().length };
+    $("nav").innerHTML = rv ? RV.navItems(st.route).map(function (it) {
+      return '<a href="#/' + it.route + '"' + (it.current ? ' aria-current="page"' : "") + (it.off ? ' class="off" tabindex="-1" aria-disabled="true"' : "") + ">" + esc(it.label) + (it.off ? "<small>" + esc(it.offLabel) + "</small>" : "") + (it.count ? '<span class="cn">' + it.count + "</span>" : "") + "</a>";
+    }).join("") : ["overview", "add", "collections", "members", "legacy", "resources"].map(function (r) {
+      return '<a href="#/' + r + '"' + (st.route === r ? ' aria-current="page"' : "") + ">" + esc(t.nav[r]) + (counts[r] ? '<span class="cn">' + counts[r] + "</span>" : "") + "</a>";
     }).join("");
-    $("pgTitle").textContent = rv ? RV.L[st.lang].title : "DA Zalo Dashboard";
+    $("pgTitle").textContent = rv ? RV.title() : "DA Zalo Dashboard";
     $("pgSub").innerHTML = esc(rv ? RV.subText() : fill(t.sub, { c: st.clinic, d: st.da })) + " · " + esc(dmy(st.today));
     $("whoami").innerHTML = '<button type="button" id="rlBtn">' + esc(t.reload) + "</button>" + (rv ? "" : '<button type="button" id="swBtn">' + esc(t.switchWho) + "</button>") + '<button type="button" id="soBtn">' + esc(t.signout) + "</button>";
     $("soBtn").onclick = signOut; if (!rv) $("swBtn").onclick = showPick; $("rlBtn").onclick = function () { reload(); };
@@ -404,9 +406,9 @@
   }
   var ALIAS = { tasks: "overview", customers: "members", pending: "collections", tags: "collections", import: "add", nozalo: "legacy" };
   function route(){
+    if (st.role === "reviewer") { var mr = /^#\/([a-z0-9-]+)/i.exec(location.hash || ""); st.route = RV.resolveRoute(mr ? mr[1] : ""); render(); window.scrollTo(0, 0); return; }
     var m = /^#\/([a-z]+)/.exec(location.hash || ""); st.route = m ? (ALIAS[m[1]] || m[1]) : "overview";
-    var allowed = st.role === "reviewer" ? RV.routes() : ["overview", "add", "collections", "members", "legacy", "resources"];
-    if (allowed.indexOf(st.route) === -1) st.route = allowed[0];
+    if (["overview", "add", "collections", "members", "legacy", "resources"].indexOf(st.route) === -1) st.route = "overview";
     render(); window.scrollTo(0, 0);
   }
 

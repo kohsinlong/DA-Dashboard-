@@ -309,3 +309,48 @@ a.btn{text-decoration:none}
 .rvsum{font-size:.82rem;color:var(--ink-2);margin-top:6px;display:flex;flex-direction:column;gap:2px}
 .rvsum .miss{color:var(--bad)}
 .rvrem{font-size:.84rem;white-space:pre-wrap;background:var(--surface-2);border-radius:6px;padding:8px 10px;margin-top:6px}
+
+/* reviewer 1.5.0: overview cards, scoreboard, quotas, status strip */
+.nav a.off{opacity:.42;pointer-events:none}
+.nav a.off small{font-family:"IBM Plex Mono",monospace;font-size:8.5px;letter-spacing:.08em;text-transform:uppercase;margin-left:6px;color:var(--muted)}
+.strip{display:flex;gap:12px;align-items:center;flex-wrap:wrap;background:var(--accent-soft);border:1px solid var(--accent);border-radius:6px;padding:10px 14px;margin:0 0 14px;font-size:.88rem}
+.strip .lab{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);font-weight:600}
+.strip .right{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.ccards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:4px 0 16px}
+@media (max-width:760px){.ccards{grid-template-columns:1fr 1fr}}
+@media (max-width:480px){.ccards{grid-template-columns:1fr}}
+.ccard{display:block;text-decoration:none;color:inherit;background:var(--surface);border:1px solid var(--rule);border-radius:6px;padding:14px 16px;box-shadow:var(--shadow);min-width:0}
+a.ccard:hover{border-color:var(--accent)}
+.ccard.off{opacity:.45;background:var(--surface-2)}
+.ccard .cname{font-family:"IBM Plex Serif",Georgia,serif;font-size:1.15rem;font-weight:600;display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.ccard .big{font-size:2.1rem;font-weight:600;letter-spacing:-.04em;line-height:1;margin:8px 0 2px;font-variant-numeric:tabular-nums}
+.ccard .big small{font-size:1rem;color:var(--muted);font-weight:500}
+.ccard .bl{font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.ccard .kv2{display:grid;grid-template-columns:1fr auto;gap:4px 10px;font-size:.8rem;color:var(--ink-2);margin-top:10px}
+.ccard .kv2 b{font-family:"IBM Plex Mono",monospace;color:var(--ink);text-align:right}
+.ccard .fbq{font-size:.8rem;color:var(--ink-2);margin-top:10px;border-left:3px solid var(--mark);padding-left:8px;line-height:1.4}
+.spark{display:flex;align-items:flex-end;gap:3px;height:34px;margin-top:10px}
+.spark i{flex:1;background:var(--accent);opacity:.35;border-radius:2px 2px 0 0;display:block}
+.spark i.last{opacity:1}
+.mb{height:8px;background:var(--surface-3);border-radius:3px;overflow:hidden;min-width:60px}
+.mb i{display:block;height:100%;border-radius:3px;background:var(--accent)}
+.mb.ok i{background:var(--ok)} .mb.bad i{background:var(--bad)}
+.heat td.h{text-align:center;font-family:"IBM Plex Mono",monospace;font-size:.82rem;font-weight:600}
+.hok{background:var(--ok-soft);color:var(--ok)} .hwarn{background:var(--warn-soft);color:var(--warn)} .hbad{background:var(--bad-soft);color:var(--bad)} .hoff{color:var(--muted)}
+.rank{display:grid;grid-template-columns:1fr 110px 56px;gap:8px 12px;align-items:center;font-size:.84rem;padding:5px 0;border-bottom:1px dashed var(--rule-2)}
+.rank:last-child{border-bottom:0}
+.rank .n{font-family:"IBM Plex Mono",monospace;text-align:right;font-variant-numeric:tabular-nums}
+.rank small{color:var(--muted);font-family:"IBM Plex Mono",monospace;font-size:10px;margin-left:6px}
+@media (max-width:480px){.rank{grid-template-columns:1fr 56px}.rank .mb{display:none}}
+.views{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.tiles.rv5{grid-template-columns:repeat(5,1fr)}
+@media (max-width:900px){.tiles.rv5{grid-template-columns:repeat(3,1fr)}}
+@media (max-width:560px){.tiles.rv5{grid-template-columns:1fr 1fr}.tiles.rv5 .stat:first-child{grid-column:auto}}
+.quota{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+.quota span{font-family:"IBM Plex Mono",monospace;font-size:10.5px;background:var(--surface-2);border:1px solid var(--rule-2);border-radius:4px;padding:2px 7px}
+.quota span.lab{background:none;border:0;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-size:9.5px}
+.quota span.full{background:var(--ok-soft);color:var(--ok);border-color:transparent}
+.quota span.over{background:var(--accent-soft);color:var(--accent);border-color:transparent}
+.note2{font-size:.78rem;color:var(--muted);margin-top:8px}
+.rvtbl tr.tot td{background:var(--surface-2);font-weight:600;border-top:1px solid var(--rule)}
+a.lrow{text-decoration:none;color:inherit}

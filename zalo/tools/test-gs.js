@@ -83,6 +83,7 @@ var drive = (function(){
 var sandbox = {
   SpreadsheetApp: { openById: function(id){ return id === "TRACKER1" ? tracker : ss; }, CopyPasteType: { PASTE_FORMULA: "formula" } },
   DriveApp: drive,
+  MailApp: { sent: [], sendEmail: function(m){ this.sent.push(m); } },
   Utilities: { formatDate: function(d, tz, fmt){ var t = new Date(d.getTime() + (tz === "UTC" ? 0 : 7 * 3600000)); var s = t.toISOString(); return fmt === "yyyy-MM-dd" ? s.slice(0, 10) : s; },
                base64Decode: function(s){ return Array.prototype.slice.call(Buffer.from(s, "base64")); }, base64Encode: function(bytes){ return Buffer.from(bytes).toString("base64"); },
                newBlob: function(bytes, mime, name){ return { bytes: bytes, mime: mime, name: name, getBytes: function(){ return bytes; }, getContentType: function(){ return mime; } }; } },
@@ -276,5 +277,30 @@ eq(rpost({ action: "markSent", items: [{ key: "k", stage: "D1" }] }).error, "unk
 eq(rpost({ action: "auditSave", audits: [{ key: "x", week: "bad", clinic: "NGT" }] }).error, "audit needs key and week", "bad week refused");
 eq(rpost({ action: "auditSave", audits: [{ key: "x", week: "2026-10-19", clinic: "XX" }] }).error, "clinic XX is not in your list", "unknown clinic refused");
 eq(get({ u: "NGT_DA1", h: H }).audits, undefined, "the DA's bootstrap carries no audit data");
+
+/* ---------- week status: complete → email → locked → reopen ---------- */
+eq(wk.rows[0].slice(18, 22), ["状态 Status", "提交时间 Submitted at", "审批人 Approved by", "发布时间 Published at"], "weekly tab gained the status and approval columns");
+eq(sandbox.rvSettings(tracker).email_ho, "sinlong.koh@kkr.com, anh.lhn@matsaigon.com", "HO addresses seeded in settings");
+var a2 = Object.assign({}, a1, { key: "2026-10-19|NGT|k2", custKey: "k2", status: "checked" });
+eq(rpost({ action: "auditSave", audits: [a2], stats: [stats] }).saved, 1, "a row can be saved while the week is marking");
+eq(rpost({ action: "weekStatus", week: "2026-10-19", clinic: "NGT", status: "marking" }).error, "only a submitted week can be reopened; it is marking", "cannot reopen a week that is not submitted");
+var done = rpost({ action: "weekStatus", week: "2026-10-19", clinic: "NGT", status: "submitted", stats: Object.assign({}, stats, { sampled: 15, checked: 15, score: 56, daSent: 72, notFound: 6 }) });
+eq([done.ok, done.status, done.emailed], [1, "submitted", 2], "completing the week emails both HO addresses");
+var mail = sandbox.MailApp.sent[0];
+eq(mail.to, "sinlong.koh@kkr.com,anh.lhn@matsaigon.com", "email recipients");
+eq(mail.subject, "[Zalo SOP] ChenZhong completed NGT week of 2026-10-19", "email subject");
+ok(/Sampled: 15 chats · checked: 15/.test(mail.body) && /Items sent: 56%/.test(mail.body) && /#\/clinic-ngt/.test(mail.body), "email body carries the figures and the link: " + mail.body.replace(/\n/g, " | "));
+wr = wk.rows.filter(function (r) { return r[0] === "2026-10-19|NGT"; })[0];
+eq([wr[18], wr[5], wr[11], !!wr[19]], ["submitted", 15, 56, true], "status, stats and submitted time written");
+eq(rget({}).weekly.filter(function (w) { return w.week === "2026-10-19"; })[0].status, "submitted", "status served on bootstrap");
+eq(rpost({ action: "auditSave", audits: [a2], stats: [stats] }).error, "week 2026-10-19 is submitted; reopen it first", "audit writes refused on a submitted week");
+eq(rpost({ action: "auditRemove", keys: [a2.key], clinic: "NGT" }).error, "week 2026-10-19 is submitted; reopen it first", "removal refused on a submitted week");
+eq(rpost({ action: "feedbackSave", week: "2026-10-19", clinic: "NGT", text: "x" }).error, "week 2026-10-19 is submitted; reopen it first", "feedback refused on a submitted week");
+eq(rpost({ action: "weekStatus", week: "2026-10-19", clinic: "NGT", status: "submitted" }).error, "week is already submitted", "cannot submit twice");
+eq(rpost({ action: "weekStatus", week: "2026-10-19", clinic: "NGT", status: "published" }).error, "unknown status: published", "a reviewer cannot publish");
+var re = rpost({ action: "weekStatus", week: "2026-10-19", clinic: "NGT", status: "marking" });
+eq([re.ok, re.status, re.emailed, sandbox.MailApp.sent.length], [1, "marking", 0, 1], "reopening sends no email");
+eq(rpost({ action: "auditSave", audits: [a2], stats: [stats] }).saved, 1, "writes allowed again after reopening");
+eq(rpost({ action: "auditRemove", keys: [a2.key], clinic: "NGT" }).removed, 1, "cleanup");
 console.log(n + " checks, " + bad + " failed");
 process.exit(bad ? 1 : 0);

@@ -461,7 +461,7 @@ var RV_HEADERS = {
           "备注 Remark", "数据问题 Data issue", "截图 Screenshots", "检查时间 Checked at", "审核人 By", "更新时间 Updated", "评分明细 Marks", "来源 Source", "抽样时间 Added"],
   weekly: ["键 Key", "周 Week", "诊所 Clinic", "到期客户 Customers due", "到期节点 Cadences due", "抽样 Sampled", "已检查 Checked", "合规 Pass", "部分 Partial",
            "未合规 Fail", "数据问题 Data issues", "得分 Score %", "本周节点得分 This week's cadences %", "助理已勾未见 DA ticked, not found", "助理自报已发 DA reported sent %",
-           "本周总评 Overall remark", "审核人 By", "更新时间 Updated"],
+           "本周总评 Overall remark", "审核人 By", "更新时间 Updated", "状态 Status", "提交时间 Submitted at", "审批人 Approved by", "发布时间 Published at"],
   shots: ["编号 ID", "周 Week", "诊所 Clinic", "客户键 Customer key", "Zalo 标签 Zalo tag", "文件 File", "链接 Link", "Drive ID", "上传时间 Uploaded", "审核人 By", "已删除 Removed"],
   settings: ["键 Key", "值 Value", "说明 Note"]
 };
@@ -469,8 +469,11 @@ var RV_SETTINGS_DEFAULT = [
   ["sample_size", "15", "每周每个诊所抽样数 / Chats to sample per clinic per week"],
   ["start_week", "2026-10-12", "审核起始周（周一）/ First audited week (its Monday)"],
   ["screenshot_folder", "", "截图文件夹 ID（首次上传时自动创建）/ Drive folder for screenshots, created on the first upload"],
-  ["switched_over", "", "旧周表导入时间（W 表已隐藏）/ When the old week sheets were imported and hidden"]
+  ["switched_over", "", "旧周表导入时间（W 表已隐藏）/ When the old week sheets were imported and hidden"],
+  ["email_ho", "sinlong.koh@kkr.com, anh.lhn@matsaigon.com", "完成本周时通知的 HO 邮箱（逗号分隔）/ HO addresses emailed when a week is completed"],
+  ["app_url", "https://kohsinlong.github.io/DA-Dashboard-/zalo/", "邮件中的链接 / Link used in the emails"]
 ];
+var RV_LOCKED = { submitted: 1, review: 1, published: 1, acknowledged: 1 };
 var RV_AUDIT_COLS = RV_HEADERS.audit.length;
 
 function reviewerOf(u, h) {
@@ -550,7 +553,8 @@ function readAudits(ss) {
 function readWeekly(ss) {
   return rvRows(ss, "weekly").map(function (r) {
     var v = r.v;
-    return { key: cellText(v[0]), week: rvDay(v[1]), clinic: cellText(v[2]), remark: cellText(v[15]), by: cellText(v[16]), updated: rvStamp(v[17]) };
+    return { key: cellText(v[0]), week: rvDay(v[1]), clinic: cellText(v[2]), remark: cellText(v[15]), by: cellText(v[16]), updated: rvStamp(v[17]),
+             status: cellText(v[18]) || "marking", submittedAt: rvStamp(v[19]), approvedBy: cellText(v[20]), publishedAt: rvStamp(v[21]) };
   });
 }
 function readShots(ss) {
@@ -655,6 +659,7 @@ function reviewerPost(rv, body) {
     case "auditSave":     return auditSave(rv, body.audits || [], body.stats || []);
     case "auditRemove":   return auditRemove(rv, body.keys || [], body.clinic, body.stats || []);
     case "feedbackSave":  return feedbackSave(rv, body);
+    case "weekStatus":    return weekStatus(rv, body);
     case "shotUpload":    return shotUpload(rv, body.shot || {});
     case "shotRemove":    return shotSetRemoved(rv, body.clinic, body.id, true);
     case "shotRestore":   return shotSetRemoved(rv, body.clinic, body.id, false);
@@ -670,10 +675,19 @@ function auditLine(rv, a) {
     a.data ? "Y" : "", Number(a.shots) || 0, cellText(a.checkedAt), rv.id, at, JSON.stringify(a.marks || {}).slice(0, 20000), cellText(a.source || "app"), cellText(a.added || at)];
   return line;
 }
+function weekRowStatus(ss, week, clinic) {
+  var sh = ss.getSheetByName(RV_TABS.weekly), r = rvFindRow(sh, week + "|" + clinic);
+  return r ? (cellText(sh.getRange(r, 19).getValue()) || "marking") : "marking";
+}
+function assertOpen(ss, week, clinic) {
+  var s = weekRowStatus(ss, week, clinic);
+  if (RV_LOCKED[s]) throw new Error("week " + week + " is " + s + "; reopen it first");
+}
 function auditSave(rv, audits, stats) {
   var saved = 0, at = now();
   audits.forEach(function (a) {
-    var ss = rvTracker(rv, a.clinic), sh = ss.getSheetByName(RV_TABS.audit), line = auditLine(rv, a), r = rvFindRow(sh, line[0]);
+    var ss = rvTracker(rv, a.clinic); assertOpen(ss, a.week, a.clinic);
+    var sh = ss.getSheetByName(RV_TABS.audit), line = auditLine(rv, a), r = rvFindRow(sh, line[0]);
     if (r) sh.getRange(r, 1, 1, RV_AUDIT_COLS).setValues([line]); else sh.getRange(sh.getLastRow() + 1, 1, 1, RV_AUDIT_COLS).setValues([line]);
     saved++;
   });
@@ -682,7 +696,7 @@ function auditSave(rv, audits, stats) {
 }
 function auditRemove(rv, keys, clinic, stats) {
   var ss = rvTracker(rv, clinic), sh = ss.getSheetByName(RV_TABS.audit), removed = 0;
-  keys.forEach(function (k) { var r = rvFindRow(sh, String(k)); if (r) { sh.deleteRow(r); removed++; } });
+  keys.forEach(function (k) { var r = rvFindRow(sh, String(k)); if (r) { assertOpen(ss, cellText(String(k)).split("|")[0], clinic); sh.deleteRow(r); removed++; } });
   stats.forEach(function (s) { upsertWeekly(rvTracker(rv, s.clinic), rv, s); });
   return { ok: 1, removed: removed };
 }
@@ -694,15 +708,46 @@ function upsertWeekly(ss, rv, s) {
   function keep(i, v) { return v === undefined ? (cur[i] === undefined ? "" : cur[i]) : v; }
   var line = [key, "'" + s.week, s.clinic, keep(3, s.dueCustomers), keep(4, s.dueCadences), keep(5, s.sampled), keep(6, s.checked), keep(7, s.pass), keep(8, s.partial),
               keep(9, s.fail), keep(10, s.data), keep(11, s.score), keep(12, s.weekScore), keep(13, s.notFound), keep(14, s.daSent),
-              s.remark === undefined ? cellText(cur[15]) : cellText(s.remark).slice(0, 8000), rv.id, now()];
+              s.remark === undefined ? cellText(cur[15]) : cellText(s.remark).slice(0, 8000), rv.id, now(),
+              s.status === undefined ? (cellText(cur[18]) || "marking") : s.status, s.submittedAt === undefined ? cellText(cur[19]) : s.submittedAt,
+              s.approvedBy === undefined ? cellText(cur[20]) : s.approvedBy, s.publishedAt === undefined ? cellText(cur[21]) : s.publishedAt];
   line = line.map(function (v) { return v === null ? "" : v; });
   if (r) sh.getRange(r, 1, 1, n).setValues([line]); else sh.getRange(sh.getLastRow() + 1, 1, 1, n).setValues([line]);
   return { ok: 1, key: key };
 }
 function feedbackSave(rv, b) {
-  var ss = rvTracker(rv, b.clinic), s = Object.assign({}, b.stats || {}, { week: b.week, clinic: b.clinic, remark: cellText(b.text) });
+  var ss = rvTracker(rv, b.clinic); assertOpen(ss, b.week, b.clinic);
+  var s = Object.assign({}, b.stats || {}, { week: b.week, clinic: b.clinic, remark: cellText(b.text) });
   upsertWeekly(ss, rv, s);
   return { ok: 1, at: now() };
+}
+/* body: {week, clinic, status: "submitted" | "marking", stats}. Completing a week (marking → submitted)
+   locks it and emails HO once; a reviewer may reopen (submitted → marking) until HO has taken it. */
+function weekStatus(rv, b) {
+  var ss = rvTracker(rv, b.clinic), cur = weekRowStatus(ss, b.week, b.clinic), next = String(b.status || "");
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(b.week || ""))) throw new Error("week needed");
+  if (next === "submitted") { if (cur !== "marking") throw new Error("week is already " + cur); }
+  else if (next === "marking") { if (cur !== "submitted") throw new Error("only a submitted week can be reopened; it is " + cur); }
+  else throw new Error("unknown status: " + next);
+  var at = now(), s = Object.assign({}, b.stats || {}, { week: b.week, clinic: b.clinic, status: next, submittedAt: next === "submitted" ? at : "" });
+  upsertWeekly(ss, rv, s);
+  var emailed = 0;
+  if (next === "submitted") emailed = notifyHo(ss, rv, b.clinic, b.week, b.stats || {});
+  return { ok: 1, status: next, at: at, emailed: emailed };
+}
+function notifyHo(ss, rv, clinic, week, st) {
+  var set = rvSettings(ss), to = String(set.email_ho || "").split(/[,;\s]+/).filter(Boolean);
+  if (!to.length) return 0;
+  var link = String(set.app_url || "") + "#/clinic-" + String(clinic).toLowerCase();
+  var subject = "[Zalo SOP] " + rv.name + " completed " + clinic + " week of " + week;
+  var body = rv.name + " has completed the Zalo SOP audit for " + clinic + ", week of " + week + ".\n\n"
+    + "Sampled: " + (st.sampled || 0) + " chats · checked: " + (st.checked || 0) + "\n"
+    + "Items sent: " + (st.score === "" || st.score === undefined ? "—" : st.score + "%") + " · DA reported: " + (st.daSent === "" || st.daSent === undefined ? "—" : st.daSent + "%")
+    + " · DA ticked, not found: " + (st.notFound || 0) + "\n"
+    + "Pass " + (st.pass || 0) + " · partial " + (st.partial || 0) + " · fail " + (st.fail || 0) + " · data issues " + (st.data || 0) + "\n\n"
+    + "Open it: " + link + "\n";
+  try { MailApp.sendEmail({ to: to.join(","), subject: subject, body: body }); return to.length; }
+  catch (err) { return 0; }
 }
 
 /* ---------------------------------------------------------------- screenshots */
