@@ -1,6 +1,6 @@
 # DA Zalo Dashboard — design, operations and change log
 
-**Status:** v1.6.2, 22 Oct 2026 — cards show only the cadences due that week; new sign-ins (`NGT_DA`, `ChengYF`, `OptoHO`) on top of 1.6.0's head office review mode and Claude translations. Script 1.6.1 is pasted, the Claude key is in Script properties and `testTranslation` passed on 22 Oct; the tracker's tabs, columns and settings are prepared. Publishing the new script version switches it on (§2.10) · DA dashboard live since 16 Oct 2026 · **Go-live:** 16 Oct 2026 · **Clinic:** NGT · **Last updated:** 22 Oct 2026
+**Status:** v1.6.3, 22 Oct 2026 — a checked chat reaches head office at once (translated), no emails, "sampled" and "checked" told apart everywhere; cards show only the cadences due that week; new sign-ins (`NGT_DA`, `ChengYF`, `OptoHO`) on top of 1.6.0's head office review mode and Claude translations. Script 1.6.1 is pasted, the Claude key is in Script properties and `testTranslation` passed on 22 Oct; the tracker's tabs, columns and settings are prepared. Publishing the new script version switches it on (§2.10) · DA dashboard live since 16 Oct 2026 · **Go-live:** 16 Oct 2026 · **Clinic:** NGT · **Last updated:** 22 Oct 2026
 
 This file is the single source of truth for the DA Zalo Dashboard. Part 1 is the view at a
 glance, Part 2 the granular rules, Part 3 the change log. Every change to the dashboard updates
@@ -542,8 +542,9 @@ needs-attention list (not started, marked but not completed, submitted and waiti
 
 **Clinic tab**, top to bottom:
 
-1. **Status strip** — Marking: marked / target, extras, checked, and **Complete week → send to
-   HO**. Submitted: the time, "entries locked", and **Reopen** (until HO takes the week).
+1. **Status strip** — Marking: sampled / target, checked / sampled, extras, and **Complete week →
+   send to HO** (it warns when sampled chats are still unchecked). Submitted: the time, "entries
+   locked", and **Reopen** (until HO takes the week).
 2. **Scoreboard** — tiles: items sent / possible (this week's cadences in the sample; the
    headline "ticks against the total possible"), SOP score (1 · 0.5 · 0 per cadence, as on the
    DA's page), DA-reported (her ticks across every due cadence), ticked-not-found, marked.
@@ -574,10 +575,12 @@ included after collection; milestones due before go-live are shown with a chip. 
 scores 1 when every item is ticked, 0.5 when some are, 0 when none; only milestones the reviewer
 marked count; a chat's verdict is pass / partial / fail / data issue,
 or "not checked" until something is marked. Marks copied from the old week sheets read "noted".
-Phone numbers sit behind **Show phone**. Every change saves itself; **Complete week** is the only
-submit: it sets the week to Submitted, locks every entry (the script refuses writes), and emails
-the HO addresses in `email_ho` once with the figures and a link. Reopen (Submitted → Marking)
-sends nothing.
+Phone numbers sit behind **Show phone**. Every change saves itself. **Mark as checked** is what
+hands a chat to head office: the script translates its remark on that save and HO can review it
+straight away, while the rest of the week is still being marked (1.6.3). **Complete week** closes
+the week: it sets it to Submitted, locks every entry (the script refuses writes) and, only when
+`email_ho` holds addresses, emails them once; `email_ho` has been empty since 22 Oct, so no email
+is sent and HO sees the week in its queue instead. Reopen (Submitted → Marking) sends nothing.
 
 **Tracker workbook** (tabs created by `setupReviewer()` or the first reviewer sign-in):
 
@@ -601,7 +604,7 @@ entries (matched by tag, or by the phone in the tag), copies each week's remark 
 |---|---|
 | `GET` (bootstrap) | clinics (customers, DA ticks, cadence, settings — read only), audits, weekly, shots, tracker settings, `Cadence (CN)` |
 | `GET ?action=shot&id=` | one screenshot as base64 |
-| `POST auditSave {audits, stats}` · `auditRemove {keys, clinic, stats}` | audit rows and the week's stats row; refused on a locked week |
+| `POST auditSave {audits, stats}` · `auditRemove {keys, clinic, stats}` | audit rows and the week's stats row; a checked row is translated on the spot and the translations returned; refused on a locked week |
 | `POST feedbackSave {week, clinic, text, stats}` | the week's overall remark; refused on a locked week |
 | `POST weekStatus {week, clinic, status, stats}` | `submitted` (from marking; emails HO) or `marking` (reopen, from submitted) |
 | `POST shotUpload {shot}` · `shotRemove` · `shotRestore` | screenshots |
@@ -622,7 +625,10 @@ carries who and when.
   **compliance ladder** per live clinic: DA-reported against audited, per cadence.
 - **Clinic tab in review mode.** The status strip says who completed the week and when, and
   carries **Start review**, **Send back to reviewer** and **Publish to DA** (Submitted or Under
-  review), or **Reopen review** (Published). While CZ is still marking, everything is read only.
+  review), or **Reopen review** (Published). While CZ is still marking, the chats he has marked
+  as checked can already be reviewed (ticks, Vietnamese, note, visibility); the others wait, and
+  publishing waits for Complete week. The review queue lists such weeks in progress with the
+  checked count.
   The overall feedback and every chat show the remark three ways: **CZ's original**, **English**
   (for HO) and **Vietnamese — what the DA reads**, editable, plus an **HO note** the DA never
   sees. Tick boxes in the customer journey can be corrected; a corrected chat is tagged "tick
@@ -682,7 +688,7 @@ Script API for head office (same `u` / `h` scheme; `hoOf` routes after `reviewer
 | Call | Does |
 |---|---|
 | `GET` (bootstrap) | as the reviewer's, with `role: "ho"`, the approver names and each clinic's reviewer |
-| `POST hoEdit {clinic, week, key, ho: {hoMarks, remarkVi, hoNote, visible}, log, derived, stats}` | HO's columns of one chat (fields left out keep their cell), the new log entries appended, the derived verdict columns; takes a Submitted week into review; refused while Marking or once Published |
+| `POST hoEdit {clinic, week, key, ho: {hoMarks, remarkVi, hoNote, visible}, log, derived, stats}` | HO's columns of one chat (fields left out keep their cell), the new log entries appended, the derived verdict columns; takes a Submitted week into review; allowed while Marking on chats the reviewer has checked; refused once Published |
 | `POST hoFeedback {clinic, week, remarkVi, hoNote, log, stats}` | HO's wording of the overall feedback |
 | `POST hoTranslate {clinic, week, keys?, weekly?, force?}` | translate the week's remarks on demand (both roles may call it) |
 | `POST weekStatus {week, clinic, status, approvedBy?, note?, stats}` | HO: `review`, `published` (approver required, emails CZ), `marking` (note required, emails CZ) |
@@ -690,6 +696,9 @@ Script API for head office (same `u` / `h` scheme; `hoOf` routes after `reviewer
 `?demo=ho` opens the head-office view on the demo data with last week already completed by the
 reviewer (marks, remarks and translations seeded); `?demo=reviewer` then shows the same week as
 CZ sees it, including HO's edits.
+
+A chat the reviewer saves again keeps HO's tick corrections unless his own marks changed on it
+(the log keeps them either way).
 
 **Next (agreed, not built).** *DA page:* a "Weekly feedback" tab showing published weeks with the
 score, the feedback in Vietnamese with "view original", the visible chats with what was missing
@@ -768,6 +777,7 @@ Newest first. Each entry: date · version · what changed · why · files.
 
 | Date | Version | Change | Why | Files |
 |---|---|---|---|---|
+| 2026-10-22 | 1.6.3 | A chat marked as checked is translated on that save and can be reviewed by head office at once, while the week is still being marked; the HO queue lists weeks in progress with the checked count; Complete week no longer needs to notify anyone (`email_ho` emptied; the strip's hint and the guide say so) and warns when sampled chats are unchecked; "sampled" and "checked" are told apart on the strip, tiles, cards, queue and prompts (the strip used to say "15 of 15 marked" for the sample); HO's tick corrections survive a reviewer re-save unless his marks changed. | Asked after the first live sign-in: the week lock and the email were in the way, and "marked" read as "audited". | `zalo/tools/zalo-sop.gs`, `zalo/review.js`, `zalo/app.js`, `zalo/index.html`, `zalo/version.json`, `zalo/tools/test-gs.js`, `zalo/README.md` |
 | 2026-10-22 | 1.6.2 | A sampled chat shows and scores **only the cadences due that week**; earlier milestones of the journey are no longer listed or counted, the tiles and notes no longer mention them, and the section is titled "Cadences due this week". | Asked after the first live look: the whole journey on every card was confusing, and the DA should later see exactly what was audited. | `zalo/review.js`, `zalo/app.js`, `zalo/index.html`, `zalo/version.json`, `zalo/README.md` |
 | 2026-10-22 | docs | Launch state recorded: script 1.6.1 pasted, Claude key set and verified with `testTranslation`, the live tracker widened with the HO columns and the three new settings rows (translation stays inside the script; no scheduled job outside it). | So the README says exactly where the launch stands. | `zalo/README.md` |
 | 2026-10-22 | docs | §2.16 added: the hand-over checklist for moving the script, workbooks, page and translation key under MSG's own accounts, and how translation keeps working without an Anthropic key. | Asked at launch: what changes when the dashboard moves from personal accounts to MSG. | `zalo/README.md` |

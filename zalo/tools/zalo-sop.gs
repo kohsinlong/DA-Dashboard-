@@ -752,16 +752,28 @@ function assertOpen(ss, week, clinic) {
   if (RV_LOCKED[s]) throw new Error("week " + week + " is " + s + "; reopen it first");
 }
 function auditSave(rv, audits, stats) {
-  var saved = 0, at = now();
+  var saved = 0, at = now(), translated = { by: "none", rows: {}, weekly: null, errors: [] };
   audits.forEach(function (a) {
     var ss = rvTracker(rv, a.clinic); assertOpen(ss, a.week, a.clinic);
     var sh = ss.getSheetByName(RV_TABS.audit), line = auditLine(rv, a), r = rvFindRow(sh, line[0]);
-    if (r) { sh.getRange(r, 1, 1, RV_AUDIT_RV_COLS).setValues([line]); if (cellText(sh.getRange(r, 31).getValue())) sh.getRange(r, 31).setValue(""); }
-    else sh.getRange(sh.getLastRow() + 1, 1, 1, RV_AUDIT_RV_COLS).setValues([line]);
+    if (r) {
+      /* head office's tick corrections survive a re-save unless the reviewer's own marks changed (the log keeps them either way) */
+      var oldMarks = cellText(sh.getRange(r, 22).getValue());
+      sh.getRange(r, 1, 1, RV_AUDIT_RV_COLS).setValues([line]);
+      if (oldMarks !== line[21] && cellText(sh.getRange(r, 31).getValue())) sh.getRange(r, 31).setValue("");
+    } else sh.getRange(sh.getLastRow() + 1, 1, 1, RV_AUDIT_RV_COLS).setValues([line]);
     saved++;
+    /* a checked chat is ready for head office: translate its remark now (nothing happens when it was translated already) */
+    if (line[9] === "checked") {
+      var tr = safeTranslate(ss, rv, a.clinic, a.week, { keys: [line[0]], weekly: 0 });
+      if (tr && tr.rows) Object.keys(tr.rows).forEach(function (k) { translated.rows[k] = tr.rows[k]; });
+      if (tr && tr.by && tr.by !== "none") translated.by = tr.by;
+      if (tr && tr.errors) translated.errors = translated.errors.concat(tr.errors);
+      if (tr && tr.error) translated.errors.push(tr.error);
+    }
   });
   stats.forEach(function (s) { upsertWeekly(rvTracker(rv, s.clinic), rv, s); });
-  return { ok: 1, saved: saved, at: at };
+  return { ok: 1, saved: saved, at: at, translated: translated };
 }
 function auditRemove(rv, keys, clinic, stats) {
   var ss = rvTracker(rv, clinic), sh = ss.getSheetByName(RV_TABS.audit), removed = 0;
@@ -792,10 +804,11 @@ function feedbackSave(rv, b) {
   var ss = rvTracker(rv, b.clinic); assertOpen(ss, b.week, b.clinic);
   var s = Object.assign({}, b.stats || {}, { week: b.week, clinic: b.clinic, remark: cellText(b.text) });
   upsertWeekly(ss, rv, s);
-  return { ok: 1, at: now() };
+  var translated = cellText(b.text) ? safeTranslate(ss, rv, b.clinic, b.week, { keys: [], weekly: 1 }) : null;
+  return { ok: 1, at: now(), translated: translated };
 }
 /* body: {week, clinic, status, stats, note?, approvedBy?}.
-   Reviewer: marking → submitted (Complete: locks the week, translates the remarks, emails HO once);
+   Reviewer: marking → submitted (Complete: locks the week, translates what is left, emails HO once when email_ho is set);
              submitted → marking (Reopen, no email).
    HO:       submitted → review (Start review); submitted | review → published (Publish, needs approvedBy,
              emails the reviewer); submitted | review → marking (Send back, needs a note, emails the reviewer);
@@ -877,10 +890,10 @@ function notifyCz(ss, rv, clinic, week, what, x) {
    HO edits live in their own columns of the Audit and Weekly tabs; the reviewer's cells are never
    rewritten by HO. Every change carries who and when in the "HO edits" log. README §2.14.
    ================================================================ */
+/* HO may edit while the week is marking (chats the reviewer has checked), submitted or under review; not once published */
 function assertHoOpen(ss, week, clinic) {
   var s = weekRowStatus(ss, week, clinic);
-  if (s === "marking") throw new Error("week " + week + " is still being marked by the reviewer");
-  if (!HO_OPEN[s]) throw new Error("week " + week + " is " + s + "; reopen the review first");
+  if (s !== "marking" && !HO_OPEN[s]) throw new Error("week " + week + " is " + s + "; reopen the review first");
   return s;
 }
 /* a first HO write on a submitted week takes it into review */
@@ -896,6 +909,7 @@ function takeWeek(ss, rv, week, clinic, status) {
 function hoEdit(rv, b) {
   var ss = rvTracker(rv, b.clinic), status = assertHoOpen(ss, b.week, b.clinic);
   var sh = ss.getSheetByName(RV_TABS.audit), r = rvFindRow(sh, String(b.key || "")); if (!r) throw new Error("audit row not found: " + b.key);
+  if (status === "marking" && cellText(sh.getRange(r, 10).getValue()) !== "checked") throw new Error("the reviewer has not checked this chat yet");
   takeWeek(ss, rv, b.week, b.clinic, status);
   var h = b.ho || {}, d = b.derived || {}, cur = sh.getRange(r, 25, 1, 7).getValues()[0];
   function text(i, v, max) { return v === undefined ? cellText(cur[i]) : cellText(v).slice(0, max || 5000); }

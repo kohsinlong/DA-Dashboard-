@@ -33,14 +33,14 @@ window.ZALO_REVIEW = (function () {
       title: "Zalo SOP 合规追踪", nav: { overview: "总览", crm: "CRM" }, sub: "{c} · 审核人 {r}", notLive: "未上线",
       thisWeek: "本周", lastWeek: "上周", prevWeek: "上一周", nextWeek: "下一周",
       stMarking: "标记中", stSubmitted: "已提交 · 等待 HO", stReview: "HO 审核中", stPublished: "已发布给助理", stAck: "助理已确认",
-      stripMarking: "{n} / {t} 已标记 · {x} 额外 · {c} 已检查", stripLocked: "已提交 {t} · 等待 HO 审核 · 内容已锁定", stripHint: "内容随时自动保存。完成后会发送一封邮件给 HO，并锁定本周。",
-      complete: "完成本周 → 发送给 HO", completeAsk: "将 {c} 第 {w} 周发送给 HO？已标记 {n} / {t}，额外 {x}。发送后内容锁定。", completeShort: "只标记了 {n} / {t} 个对话。仍然发送？", reopen: "重新打开", reopenAsk: "重新打开本周以继续修改？不会发送邮件。",
+      stripMarking: "已抽样 {n} / {t} · 已检查 {c} / {n} · 额外 {x}", stripLocked: "已提交 {t} · 等待 HO 审核 · 内容已锁定", stripHint: "内容随时自动保存。完成后会发送一封邮件给 HO，并锁定本周。", stripHintNoMail: "内容随时自动保存。已检查的对话会立刻出现在 HO 看板；完成本周后锁定，供 HO 发布。",
+      complete: "完成本周 → 发送给 HO", completeAsk: "将 {c} 第 {w} 周发送给 HO？已检查 {k} / {n} 个抽样对话，额外 {x}。发送后内容锁定。", completeShort: "只抽样了 {n} / {t} 个对话。仍然发送？", completeUnchecked: "还有 {u} 个抽样对话未检查。仍然发送？", reopen: "重新打开", reopenAsk: "重新打开本周以继续修改？不会发送邮件。",
       sent: "已发送给 HO", reopened: "已重新打开",
-      ovCard: { items: "已发送内容", sop: "SOP 得分 (1 · 0.5 · 0)", da: "助理自报", gap: "勾了但未见", marked: "已标记", noCrm: "尚未接入 CRM 表" },
+      ovCard: { items: "已发送内容", sop: "SOP 得分 (1 · 0.5 · 0)", da: "助理自报", gap: "勾了但未见", marked: "已抽样 / 已检查", noCrm: "尚未接入 CRM 表" },
       across: "各诊所对比", acrossHint: "每个节点的审核合规率 · 本周", mostMissed: "最常缺失", mostDone: "最常完成", acrossLive: "所有已上线诊所 · 审核样本", noneYet: "本周尚无审核记录",
-      attention: "需要处理", attNotDone: "{c} · {w} · 已标记 {n} / {t}，尚未完成", attNotDoneX: "在 {c} 页点“完成本周”发送给 HO", attNone: "{c} · {w} · 尚未开始标记", attNoneX: "打开 {c} 页点“抽样”", attWaiting: "{c} · {w} · 已提交，等待 HO", attWaitingX: "提交于 {t}", attNothing: "本周没有待处理事项。", openClinic: "打开 {c}",
+      attention: "需要处理", attNotDone: "{c} · {w} · 已检查 {k} / {n} 个抽样对话，尚未完成", attNotDoneX: "在 {c} 页点“完成本周”发送给 HO", attNone: "{c} · {w} · 尚未开始标记", attNoneX: "打开 {c} 页点“抽样”", attWaiting: "{c} · {w} · 已提交，等待 HO", attWaitingX: "提交于 {t}", attNothing: "本周没有待处理事项。", openClinic: "打开 {c}",
       sb: "记分板", sbHint: "勾了多少，总共可以勾多少", vCad: "节点", vItems: "内容项", vWeeks: "逐周", srcAudit: "审核样本", srcDa: "助理自报 · 全部到期",
-      tItems: "已发送内容", tItemsX: "本周到期节点 {n} 个，在 {m} 个对话中", tSop: "SOP 得分", tSopX: "1 全部 · 0.5 部分 · 0 未发，与助理页面一致", tDa: "助理自报", tDaX: "全部 {n} 个到期节点 · 她的勾选", tGap: "勾了但未见", tGapX: "助理勾了、聊天中未见的内容", tMarked: "已标记", tMarkedX: "+{x} 额外 · {c} 已检查", none: "尚未检查",
+      tItems: "已发送内容", tItemsX: "本周到期节点 {n} 个，在 {m} 个对话中", tSop: "SOP 得分", tSopX: "1 全部 · 0.5 部分 · 0 未发，与助理页面一致", tDa: "助理自报", tDaX: "全部 {n} 个到期节点 · 她的勾选", tGap: "勾了但未见", tGapX: "助理勾了、聊天中未见的内容", tMarked: "已抽样", tMarkedX: "已检查 {c} / {n} · 额外 {x}", none: "尚未检查",
       thCad: "节点", thDue: "到期（全部）", thSample: "样本中", thItems: "已发送内容", thFull: "全部", thPartial: "部分", thMissed: "未发", thScore: "得分", thDa: "助理自报", thNotTicked: "未勾", total: "合计",
       cadNote: "每个对话只显示并评分本周到期的节点；更早的节点不显示。", daNote: "助理在自己看板上勾选的内容，覆盖本周全部到期对话。",
       itemsMissed: "最常缺失的内容", itemsDone: "最常完成的内容", itemsNone: "本周还没有标记任何节点。",
@@ -57,13 +57,13 @@ window.ZALO_REVIEW = (function () {
       stSent: "已勾", stPartial: "部分", stNone: "未勾",
       hist: "历史记录", histHint: "逐周结果与所有审核记录 · 导出 CSV", entries: "所有审核记录", entriesHint: "{n} 条", allWeeks: "全部周", allVerdicts: "全部结论", withShots: "有截图", csv: "导出 CSV", noEntries: "没有符合的记录。", openWeek: "打开该周",
       crmHint: "只读 · 与助理看板相同的数据", saved: "已保存", saving: "保存中…", failed: "未能保存：{e}", localOnly: "演示：仅保存在本浏览器", locked: "本周已提交，内容已锁定。",
-      g: { title: "审核人指南", lines: ["每周一打开诊所页：默认显示上一周（已结束的一周）。", "点“抽样”，系统按节点和产品分散抽取 15 个对话；也可从到期名单或搜索框添加。其他到期对话可选标记，计为额外。", "逐个打开 Zalo 聊天，在本周到期的节点中勾选找到的内容；“助理已勾”表示助理在她的看板上标记已发送。", "写备注、添加截图、必要时勾“数据问题”，最后点“标记为已检查”。", "写下本周总评，点“完成本周”发送给 HO。HO 审核后发布给助理。总览页汇总各诊所。"] },
+      g: { title: "审核人指南", lines: ["每周一打开诊所页：默认显示上一周（已结束的一周）。", "点“抽样”，系统按节点和产品分散抽取 15 个对话；也可从到期名单或搜索框添加。其他到期对话可选标记，计为额外。", "逐个打开 Zalo 聊天，在本周到期的节点中勾选找到的内容；“助理已勾”表示助理在她的看板上标记已发送。", "写备注、添加截图、必要时勾“数据问题”，最后点“标记为已检查”。", "每检查一个对话，HO 即可审核它。写下本周总评，点“完成本周”锁定本周，HO 再发布给助理。总览页汇总各诊所。"] },
       months: ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"],
       ho: {
         sub: "{c} · 总部 {r}", queue: "待审核", queueHint: "审核人已完成的周，以及等待您处理的事项", review: "审核", openWeek: "打开",
-        qSubmitted: "{r} 已完成 {t}", qReview: "{h} 审核中 · 自 {t}", qPublished: "已发布 {t} · 审批人 {a}", qMarking: "{r} 标记中 · {n} / {t}", qNone: "目前没有等待审核的周。",
+        qSubmitted: "{r} 已完成 {t}", qReview: "{h} 审核中 · 自 {t}", qPublished: "已发布 {t} · 审批人 {a}", qMarking: "{r} 标记中 · 已检查 {c} / {n}", qMarkingC: "{r} 标记中 · 已检查 {c} / {n} 个抽样对话，可先审核", qNone: "目前没有等待审核的周。",
         qLine: "{n} 个对话 + {x} 额外 · 审核 {s} · 助理自报 {d} · 勾了但未见 {g} · 数据问题 {i}",
-        stripMarking: "{r} 标记中 · {n} / {t} 已标记 · {x} 额外 · {c} 已检查", stripMarkingX: "等 {r} 完成本周后即可审核。",
+        stripMarking: "{r} 标记中 · 已检查 {c} / {n} 个抽样对话 · 额外 {x}", stripMarkingX: "{r} 已检查的对话现在就可以审核；完成本周后才能发布。", notCheckedYet: "{r} 尚未检查这个对话。",
         stripSubmitted: "{r} 已完成 {t} · {n} 个对话 · {c} 已检查", stripReview: "{h} 审核中 · 自 {t} · {e} 处修改", stripPublished: "已发布 {t} · 审批人 {a}", stripAck: "助理已确认 {t}",
         sentBack: "已退回给 {r} {t}：{note}", hoStatus: "HO 状态",
         start: "开始审核", sendBack: "退回给审核人", publish: "发布给助理", reopen: "重新审核", reopenAsk: "把这个已发布的周收回重新审核？在再次发布前助理将看不到它。",
@@ -84,14 +84,14 @@ window.ZALO_REVIEW = (function () {
       title: "Zalo SOP Compliance Tracker", nav: { overview: "Overview", crm: "CRM" }, sub: "{c} · reviewer {r}", notLive: "not live",
       thisWeek: "this week", lastWeek: "last week", prevWeek: "Previous week", nextWeek: "Next week",
       stMarking: "Marking", stSubmitted: "Submitted · waiting for HO", stReview: "Under HO review", stPublished: "Published to DA", stAck: "Acknowledged by DA",
-      stripMarking: "{n} of {t} marked · {x} extra · {c} checked", stripLocked: "Submitted {t} · waiting for HO review · entries locked", stripHint: "Everything saves as you go. Completing sends one email to HO and locks the week.",
-      complete: "Complete week → send to HO", completeAsk: "Send {c} {w} to HO? {n} of {t} marked, {x} extra. Entries lock after sending.", completeShort: "Only {n} of {t} chats are marked. Send anyway?", reopen: "Reopen week", reopenAsk: "Reopen this week for changes? No email is sent.",
+      stripMarking: "{n} of {t} sampled · {c} of {n} checked · {x} extra", stripLocked: "Submitted {t} · waiting for HO review · entries locked", stripHint: "Everything saves as you go. Completing sends one email to HO and locks the week.", stripHintNoMail: "Everything saves as you go. Checked chats reach HO at once; Complete week closes the week for HO to publish and locks it.",
+      complete: "Complete week → send to HO", completeAsk: "Send {c} {w} to HO? {k} of {n} sampled chats checked, {x} extra. Entries lock after sending.", completeShort: "Only {n} of {t} chats are sampled. Send anyway?", completeUnchecked: "{u} sampled chats are not checked yet. Send anyway?", reopen: "Reopen week", reopenAsk: "Reopen this week for changes? No email is sent.",
       sent: "Sent to HO", reopened: "Week reopened",
-      ovCard: { items: "items sent", sop: "SOP score (1 · 0.5 · 0)", da: "DA-reported", gap: "Ticked, not found", marked: "Marked", noCrm: "no CRM form connected yet" },
+      ovCard: { items: "items sent", sop: "SOP score (1 · 0.5 · 0)", da: "DA-reported", gap: "Ticked, not found", marked: "Sampled / checked", noCrm: "no CRM form connected yet" },
       across: "Across clinics", acrossHint: "audited score per cadence · this week", mostMissed: "Most missed items", mostDone: "Most done items", acrossLive: "all live clinics · audited sample", noneYet: "nothing audited this week yet",
-      attention: "Needs attention", attNotDone: "{c} · {w} · {n} of {t} marked, not yet completed", attNotDoneX: "Press Complete week on the {c} tab to send it to HO", attNone: "{c} · {w} · marking not started", attNoneX: "Open the {c} tab and press Draw", attWaiting: "{c} · {w} · submitted, waiting for HO", attWaitingX: "submitted {t}", attNothing: "Nothing waiting this week.", openClinic: "Open {c}",
+      attention: "Needs attention", attNotDone: "{c} · {w} · {k} of {n} sampled chats checked, not yet completed", attNotDoneX: "Press Complete week on the {c} tab to send it to HO", attNone: "{c} · {w} · marking not started", attNoneX: "Open the {c} tab and press Draw", attWaiting: "{c} · {w} · submitted, waiting for HO", attWaitingX: "submitted {t}", attNothing: "Nothing waiting this week.", openClinic: "Open {c}",
       sb: "Scoreboard", sbHint: "how many ticks against the total possible", vCad: "Cadences", vItems: "Items", vWeeks: "Weeks", srcAudit: "Audited sample", srcDa: "DA-reported · all due",
-      tItems: "items sent", tItemsX: "{n} cadences due this week in {m} chats", tSop: "SOP score", tSopX: "1 full · 0.5 partial · 0 missed, as on the DA's page", tDa: "DA-reported", tDaX: "all {n} due cadences · her ticks", tGap: "ticked, not found", tGapX: "items she ticked that the chat does not show", tMarked: "marked", tMarkedX: "+{x} extra · {c} checked", none: "nothing checked yet",
+      tItems: "items sent", tItemsX: "{n} cadences due this week in {m} chats", tSop: "SOP score", tSopX: "1 full · 0.5 partial · 0 missed, as on the DA's page", tDa: "DA-reported", tDaX: "all {n} due cadences · her ticks", tGap: "ticked, not found", tGapX: "items she ticked that the chat does not show", tMarked: "sampled", tMarkedX: "{c} of {n} checked · {x} extra", none: "nothing checked yet",
       thCad: "Cadence", thDue: "Due (all)", thSample: "In sample", thItems: "Items sent", thFull: "Full", thPartial: "Partial", thMissed: "Missed", thScore: "Score", thDa: "DA-reported", thNotTicked: "Not ticked", total: "Total",
       cadNote: "Each chat shows and scores only the cadences due this week; earlier milestones are not shown.", daNote: "What the DA ticked on her own dashboard, across every chat due this week.",
       itemsMissed: "Most missed items", itemsDone: "Most done items", itemsNone: "No cadence marked yet this week.",
@@ -108,13 +108,13 @@ window.ZALO_REVIEW = (function () {
       stSent: "ticked", stPartial: "partial", stNone: "not ticked",
       hist: "History", histHint: "week by week and every audited chat · CSV export", entries: "All audited chats", entriesHint: "{n} entries", allWeeks: "All weeks", allVerdicts: "All verdicts", withShots: "With screenshots", csv: "Export CSV", noEntries: "No entries match.", openWeek: "Open week",
       crmHint: "Read only · the same data the DA sees", saved: "Saved", saving: "Saving…", failed: "Could not save: {e}", localOnly: "Demo: kept in this browser only", locked: "This week is submitted; entries are locked.",
-      g: { title: "Reviewer guide", lines: ["Open a clinic tab on Monday: it shows last week, the one just closed.", "Press Draw: 15 chats spread across the cadences and products due. Add others from the due list or the search box. Other due chats can be marked too; they count as extra.", "Open each Zalo chat and tick what you find for the cadences due this week. “DA ticked” means the DA marked it sent on her dashboard.", "Write a remark, add screenshots, flag a data issue if needed, then Mark as checked.", "Write the week's overall feedback and press Complete week to send it to HO. HO reviews and publishes to the DA. Overview sums up every clinic."] },
+      g: { title: "Reviewer guide", lines: ["Open a clinic tab on Monday: it shows last week, the one just closed.", "Press Draw: 15 chats spread across the cadences and products due. Add others from the due list or the search box. Other due chats can be marked too; they count as extra.", "Open each Zalo chat and tick what you find for the cadences due this week. “DA ticked” means the DA marked it sent on her dashboard.", "Write a remark, add screenshots, flag a data issue if needed, then Mark as checked.", "Each chat you mark as checked is ready for HO at once. Write the week's overall feedback and press Complete week to close the week; HO then publishes to the DA. Overview sums up every clinic."] },
       months: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
       ho: {
         sub: "{c} · head office {r}", queue: "Review queue", queueHint: "what the reviewer has completed and what is waiting on you", review: "Review", openWeek: "Open",
-        qSubmitted: "completed by {r} {t}", qReview: "under review by {h} since {t}", qPublished: "published {t} · approved by {a}", qMarking: "{r} is marking · {n} of {t}", qNone: "Nothing is waiting for review.",
+        qSubmitted: "completed by {r} {t}", qReview: "under review by {h} since {t}", qPublished: "published {t} · approved by {a}", qMarking: "{r} is marking · {c} of {n} checked", qMarkingC: "{r} is marking · {c} of {n} sampled chats checked, ready to review", qNone: "Nothing is waiting for review.",
         qLine: "{n} chats + {x} extra · audited {s} · DA-reported {d} · {g} ticked, not found · {i} data issues",
-        stripMarking: "{r} is marking · {n} of {t} marked · {x} extra · {c} checked", stripMarkingX: "You can review the week once {r} completes it.",
+        stripMarking: "{r} is marking · {c} of {n} sampled chats checked · {x} extra", stripMarkingX: "Chats {r} has checked can be reviewed now; Publish once the week is completed.", notCheckedYet: "{r} has not checked this chat yet.",
         stripSubmitted: "completed by {r} {t} · {n} chats · {c} checked", stripReview: "under review by {h} since {t} · {e} edits", stripPublished: "published {t} · approved by {a}", stripAck: "acknowledged by the DA {t}",
         sentBack: "sent back to {r} {t}: {note}", hoStatus: "HO status",
         start: "Start review", sendBack: "Send back to reviewer", publish: "Publish to DA", reopen: "Reopen review", reopenAsk: "Take this published week back into review? The DA stops seeing it until it is published again.",
@@ -135,14 +135,14 @@ window.ZALO_REVIEW = (function () {
       title: "Theo dõi tuân thủ SOP Zalo", nav: { overview: "Tổng quan", crm: "CRM" }, sub: "{c} · người kiểm {r}", notLive: "chưa triển khai",
       thisWeek: "tuần này", lastWeek: "tuần trước", prevWeek: "Tuần trước", nextWeek: "Tuần sau",
       stMarking: "Đang chấm", stSubmitted: "Đã gửi · chờ HO", stReview: "HO đang duyệt", stPublished: "Đã gửi cho trợ lý", stAck: "Trợ lý đã xác nhận",
-      stripMarking: "{n} / {t} đã chấm · {x} thêm · {c} đã kiểm", stripLocked: "Đã gửi {t} · chờ HO duyệt · đã khoá", stripHint: "Mọi thứ tự lưu. Hoàn tất sẽ gửi một email cho HO và khoá tuần.",
-      complete: "Hoàn tất tuần → gửi HO", completeAsk: "Gửi {c} {w} cho HO? {n} / {t} đã chấm, {x} thêm. Sau khi gửi sẽ khoá.", completeShort: "Mới chấm {n} / {t} hội thoại. Vẫn gửi?", reopen: "Mở lại tuần", reopenAsk: "Mở lại tuần này để sửa? Không gửi email.",
+      stripMarking: "đã rút {n} / {t} · {c} / {n} đã kiểm · {x} thêm", stripLocked: "Đã gửi {t} · chờ HO duyệt · đã khoá", stripHint: "Mọi thứ tự lưu. Hoàn tất sẽ gửi một email cho HO và khoá tuần.", stripHintNoMail: "Mọi thứ tự lưu. Hội thoại đã kiểm hiện ngay trên bảng HO; Hoàn tất tuần sẽ khoá tuần để HO gửi cho trợ lý.",
+      complete: "Hoàn tất tuần → gửi HO", completeAsk: "Gửi {c} {w} cho HO? {k} / {n} hội thoại trong mẫu đã kiểm, {x} thêm. Sau khi gửi sẽ khoá.", completeShort: "Mới rút {n} / {t} hội thoại. Vẫn gửi?", completeUnchecked: "Còn {u} hội thoại trong mẫu chưa kiểm. Vẫn gửi?", reopen: "Mở lại tuần", reopenAsk: "Mở lại tuần này để sửa? Không gửi email.",
       sent: "Đã gửi cho HO", reopened: "Đã mở lại",
-      ovCard: { items: "nội dung đã gửi", sop: "Điểm SOP (1 · 0.5 · 0)", da: "Trợ lý tự báo", gap: "Đã tick, không thấy", marked: "Đã chấm", noCrm: "chưa kết nối CRM" },
+      ovCard: { items: "nội dung đã gửi", sop: "Điểm SOP (1 · 0.5 · 0)", da: "Trợ lý tự báo", gap: "Đã tick, không thấy", marked: "Đã rút / đã kiểm", noCrm: "chưa kết nối CRM" },
       across: "So sánh phòng khám", acrossHint: "điểm kiểm theo cadence · tuần này", mostMissed: "Thiếu nhiều nhất", mostDone: "Làm nhiều nhất", acrossLive: "các phòng khám đang chạy · mẫu kiểm", noneYet: "tuần này chưa kiểm",
-      attention: "Cần xử lý", attNotDone: "{c} · {w} · {n} / {t} đã chấm, chưa hoàn tất", attNotDoneX: "Bấm Hoàn tất tuần ở tab {c} để gửi HO", attNone: "{c} · {w} · chưa bắt đầu chấm", attNoneX: "Mở tab {c} và bấm Rút", attWaiting: "{c} · {w} · đã gửi, chờ HO", attWaitingX: "gửi lúc {t}", attNothing: "Tuần này không có gì chờ.", openClinic: "Mở {c}",
+      attention: "Cần xử lý", attNotDone: "{c} · {w} · {k} / {n} hội thoại trong mẫu đã kiểm, chưa hoàn tất", attNotDoneX: "Bấm Hoàn tất tuần ở tab {c} để gửi HO", attNone: "{c} · {w} · chưa bắt đầu chấm", attNoneX: "Mở tab {c} và bấm Rút", attWaiting: "{c} · {w} · đã gửi, chờ HO", attWaitingX: "gửi lúc {t}", attNothing: "Tuần này không có gì chờ.", openClinic: "Mở {c}",
       sb: "Bảng điểm", sbHint: "đã tick bao nhiêu trên tổng có thể", vCad: "Cadence", vItems: "Nội dung", vWeeks: "Tuần", srcAudit: "Mẫu kiểm", srcDa: "Trợ lý tự báo · tất cả đến hạn",
-      tItems: "nội dung đã gửi", tItemsX: "{n} cadence đến hạn tuần này trong {m} hội thoại", tSop: "Điểm SOP", tSopX: "1 đủ · 0.5 một phần · 0 không gửi, như trang trợ lý", tDa: "Trợ lý tự báo", tDaX: "toàn bộ {n} cadence đến hạn · tick của cô ấy", tGap: "đã tick, không thấy", tGapX: "nội dung cô ấy tick nhưng hội thoại không có", tMarked: "đã chấm", tMarkedX: "+{x} thêm · {c} đã kiểm", none: "chưa kiểm",
+      tItems: "nội dung đã gửi", tItemsX: "{n} cadence đến hạn tuần này trong {m} hội thoại", tSop: "Điểm SOP", tSopX: "1 đủ · 0.5 một phần · 0 không gửi, như trang trợ lý", tDa: "Trợ lý tự báo", tDaX: "toàn bộ {n} cadence đến hạn · tick của cô ấy", tGap: "đã tick, không thấy", tGapX: "nội dung cô ấy tick nhưng hội thoại không có", tMarked: "đã rút mẫu", tMarkedX: "{c} / {n} đã kiểm · {x} thêm", none: "chưa kiểm",
       thCad: "Cadence", thDue: "Đến hạn (tất cả)", thSample: "Trong mẫu", thItems: "Nội dung đã gửi", thFull: "Đủ", thPartial: "Một phần", thMissed: "Không gửi", thScore: "Điểm", thDa: "Trợ lý báo", thNotTicked: "Chưa tick", total: "Tổng",
       cadNote: "Mỗi hội thoại chỉ hiện và chấm các cadence đến hạn tuần này; các mốc trước không hiện.", daNote: "Những gì trợ lý đã tick trên bảng của cô ấy, trên mọi hội thoại đến hạn tuần này.",
       itemsMissed: "Nội dung thiếu nhiều nhất", itemsDone: "Nội dung làm nhiều nhất", itemsNone: "Tuần này chưa chấm cadence nào.",
@@ -159,13 +159,13 @@ window.ZALO_REVIEW = (function () {
       stSent: "đã tick", stPartial: "một phần", stNone: "chưa tick",
       hist: "Lịch sử", histHint: "theo tuần và mọi hội thoại đã kiểm · xuất CSV", entries: "Tất cả hội thoại đã kiểm", entriesHint: "{n} mục", allWeeks: "Tất cả tuần", allVerdicts: "Tất cả kết luận", withShots: "Có ảnh chụp", csv: "Xuất CSV", noEntries: "Không có mục phù hợp.", openWeek: "Mở tuần",
       crmHint: "Chỉ đọc · cùng dữ liệu trợ lý nhìn thấy", saved: "Đã lưu", saving: "Đang lưu…", failed: "Không lưu được: {e}", localOnly: "Demo: chỉ lưu trong trình duyệt này", locked: "Tuần này đã gửi; đã khoá.",
-      g: { title: "Hướng dẫn người kiểm", lines: ["Thứ Hai mở tab phòng khám: mặc định hiện tuần vừa kết thúc.", "Bấm Rút: 15 hội thoại trải đều theo cadence và sản phẩm đến hạn. Thêm khách khác từ danh sách đến hạn hoặc ô tìm. Các hội thoại đến hạn khác cũng chấm được, tính là thêm.", "Mở từng hội thoại Zalo và tick những gì tìm thấy cho các cadence đến hạn tuần này. “Trợ lý đã tick” nghĩa là trợ lý đã đánh dấu đã gửi trên bảng của cô ấy.", "Viết nhận xét, thêm ảnh chụp, tick Lỗi dữ liệu nếu cần, rồi Đánh dấu đã kiểm.", "Viết nhận xét chung và bấm Hoàn tất tuần để gửi HO. HO duyệt rồi gửi cho trợ lý. Tổng quan gom mọi phòng khám."] },
+      g: { title: "Hướng dẫn người kiểm", lines: ["Thứ Hai mở tab phòng khám: mặc định hiện tuần vừa kết thúc.", "Bấm Rút: 15 hội thoại trải đều theo cadence và sản phẩm đến hạn. Thêm khách khác từ danh sách đến hạn hoặc ô tìm. Các hội thoại đến hạn khác cũng chấm được, tính là thêm.", "Mở từng hội thoại Zalo và tick những gì tìm thấy cho các cadence đến hạn tuần này. “Trợ lý đã tick” nghĩa là trợ lý đã đánh dấu đã gửi trên bảng của cô ấy.", "Viết nhận xét, thêm ảnh chụp, tick Lỗi dữ liệu nếu cần, rồi Đánh dấu đã kiểm.", "Mỗi hội thoại đã kiểm là HO duyệt được ngay. Viết nhận xét chung và bấm Hoàn tất tuần để khoá tuần; HO gửi cho trợ lý. Tổng quan gom mọi phòng khám."] },
       months: ["Th1", "Th2", "Th3", "Th4", "Th5", "Th6", "Th7", "Th8", "Th9", "Th10", "Th11", "Th12"],
       ho: {
         sub: "{c} · văn phòng {r}", queue: "Chờ duyệt", queueHint: "những tuần người kiểm đã hoàn tất và việc đang chờ bạn", review: "Duyệt", openWeek: "Mở",
-        qSubmitted: "{r} hoàn tất {t}", qReview: "{h} đang duyệt · từ {t}", qPublished: "đã gửi {t} · duyệt bởi {a}", qMarking: "{r} đang chấm · {n} / {t}", qNone: "Không có tuần nào chờ duyệt.",
+        qSubmitted: "{r} hoàn tất {t}", qReview: "{h} đang duyệt · từ {t}", qPublished: "đã gửi {t} · duyệt bởi {a}", qMarking: "{r} đang chấm · {c} / {n} đã kiểm", qMarkingC: "{r} đang chấm · {c} / {n} hội thoại trong mẫu đã kiểm, duyệt được ngay", qNone: "Không có tuần nào chờ duyệt.",
         qLine: "{n} hội thoại + {x} thêm · kiểm {s} · trợ lý báo {d} · {g} tick không thấy · {i} lỗi dữ liệu",
-        stripMarking: "{r} đang chấm · {n} / {t} đã chấm · {x} thêm · {c} đã kiểm", stripMarkingX: "Bạn duyệt được khi {r} hoàn tất tuần.",
+        stripMarking: "{r} đang chấm · {c} / {n} hội thoại trong mẫu đã kiểm · {x} thêm", stripMarkingX: "Hội thoại {r} đã kiểm có thể duyệt ngay; Gửi cho trợ lý sau khi tuần hoàn tất.", notCheckedYet: "{r} chưa kiểm hội thoại này.",
         stripSubmitted: "{r} hoàn tất {t} · {n} hội thoại · {c} đã kiểm", stripReview: "{h} đang duyệt · từ {t} · {e} chỉnh sửa", stripPublished: "đã gửi {t} · duyệt bởi {a}", stripAck: "trợ lý đã xác nhận {t}",
         sentBack: "đã trả lại {r} {t}: {note}", hoStatus: "Trạng thái HO",
         start: "Bắt đầu duyệt", sendBack: "Trả lại người kiểm", publish: "Gửi cho trợ lý", reopen: "Duyệt lại", reopenAsk: "Thu hồi tuần đã gửi để duyệt lại? Trợ lý sẽ không thấy cho đến khi gửi lại.",
@@ -216,8 +216,11 @@ window.ZALO_REVIEW = (function () {
   function TH(){ return T().ho; }
   /* the marks that count: head office's corrections override the reviewer's ticks */
   function marksOf(a){ return a.hoMarks || a.marks || {}; }
-  function hoCan(week, clinic){ var s = weekStatus(week, clinic); return isHo() && (s === "submitted" || s === "review"); }
-  function canEdit(week, clinic){ return isHo() ? hoCan(week, clinic) : !isLocked(week, clinic); }
+  function hoActs(week, clinic){ var s = weekStatus(week, clinic); return isHo() && (s === "submitted" || s === "review"); }   /* Start review, Send back, Publish */
+  function hoCanWeek(week, clinic){ var s = weekStatus(week, clinic); return isHo() && (s === "marking" || s === "submitted" || s === "review"); }
+  function hoCanCard(a){ return hoCanWeek(a.week, a.clinic) && (weekStatus(a.week, a.clinic) !== "marking" || a.status === "checked"); }   /* while marking: checked chats only */
+  function hoCan(week, clinic){ return hoActs(week, clinic); }
+  function canEdit(week, clinic){ return isHo() ? hoCanWeek(week, clinic) : !isLocked(week, clinic); }
   function hasHoEdits(a){ return !!(a.hoMarks || (a.hoEdits || []).length); }
   function viEdited(x){ return (x.hoEdits || []).filter(function (e) { return e.f === "remarkVi"; }).pop() || null; }
   function clone(o){ return JSON.parse(JSON.stringify(o || {})); }
@@ -373,7 +376,7 @@ window.ZALO_REVIEW = (function () {
     clearTimeout(st.timers[a.key]); setStatus(a.key, "saving");
     st.timers[a.key] = setTimeout(function () {
       A.post({ action: "auditSave", audits: [toSheet(a)], stats: [statsLine(weekStats(a.week, a.clinic))] })
-        .then(function (r) { setStatus(a.key, r && r.local ? "local" : "saved"); })
+        .then(function (r) { if (r && r.translated) applyTranslations(r.translated, a.week, a.clinic); setStatus(a.key, r && r.local ? "local" : "saved"); })
         .catch(function (e) { setStatus(a.key, "failed " + e.message); });
     }, 700);
   }
@@ -443,7 +446,7 @@ window.ZALO_REVIEW = (function () {
     w.remark = text; w.updated = nowIso(); w.by = st.data.reviewer; st.weekly[k] = w;
     setStatus(k, "saving");
     A.post({ action: "feedbackSave", week: week, clinic: st.clinic, text: text, stats: statsLine(weekStats(week)) })
-      .then(function (r) { setStatus(k, r && r.local ? "local" : "saved"); R.render(); })
+      .then(function (r) { if (r && r.translated) applyTranslations(r.translated, week, st.clinic); setStatus(k, r && r.local ? "local" : "saved"); R.render(); })
       .catch(function (e) { setStatus(k, "failed " + e.message); });
   }
   /* every status change: the reviewer completes / reopens, head office starts, publishes, sends back, reopens.
@@ -517,7 +520,7 @@ window.ZALO_REVIEW = (function () {
   }
   /* ------------------------------------------------------------------ translation (through the script) */
   function needsVi(x){ return !!(x.remark && !x.remarkVi); }
-  function untranslated(week, clinic){ clinic = clinic || st.clinic; var n = recsOf(week, clinic).filter(needsVi).length, w = st.weekly[wKey(week, clinic)]; if (w && needsVi(w)) n++; return n; }
+  function untranslated(week, clinic){ clinic = clinic || st.clinic; var mk = weekStatus(week, clinic) === "marking"; var n = recsOf(week, clinic).filter(function (a) { return needsVi(a) && (!mk || a.status === "checked"); }).length, w = st.weekly[wKey(week, clinic)]; if (w && needsVi(w)) n++; return n; }
   function trBusy(week, clinic){ return !!st.busy["tr|" + week + "|" + (clinic || st.clinic)]; }
   function translateWeek(week, clinic, keys, weekly, force){
     var th = TH(), k = "tr|" + week + "|" + clinic; if (st.busy[k]) return Promise.resolve();
@@ -564,7 +567,9 @@ window.ZALO_REVIEW = (function () {
   function completeWeek(week){
     var t = T(), s = weekStats(week);
     if (s.drawn < s.target && !window.confirm(fill(t.completeShort, { n: s.drawn, t: s.target }))) return;
-    if (!window.confirm(fill(t.completeAsk, { c: st.clinic, w: wTag(week), n: s.drawn, t: s.target, x: s.extra }))) return;
+    var unchecked = recsOf(week).filter(function (a) { return !isExtra(a) && a.status !== "checked"; }).length;
+    if (unchecked && !window.confirm(fill(t.completeUnchecked, { u: unchecked }))) return;
+    if (!window.confirm(fill(t.completeAsk, { c: st.clinic, w: wTag(week), k: s.checked, n: s.drawn, x: s.extra }))) return;
     setWeekStatus(week, "submitted");
   }
 
@@ -660,7 +665,7 @@ window.ZALO_REVIEW = (function () {
       var s = stats[c], wk = st.weekly[wKey(week, c)] || {}, hist = weeksList().slice(-8).map(function (w) { var x = w === week ? s : weekStats(w, c); return x.itemsPct === null ? 0 : x.itemsPct; });
       return '<a class="ccard" href="#/clinic-' + c.toLowerCase() + '"><div class="cname">' + esc(c) + " " + statusPill(s.status) + "</div>"
         + '<div class="big" style="color:' + scoreColour(s.itemsPct) + '">' + (s.itemsPct === null ? "—" : s.itemsPct + "<small>%</small>") + '</div><div class="bl">' + esc(t.ovCard.items) + " " + s.itemsOn + " / " + s.itemsN + "</div>"
-        + '<div class="kv2"><span>' + esc(t.ovCard.sop) + "</span><b>" + (s.score === null ? "—" : s.score) + "</b><span>" + esc(t.ovCard.da) + "</span><b>" + (s.daSent === null ? "—" : s.daSent + "%") + "</b><span>" + esc(t.ovCard.gap) + '</span><b style="color:' + (s.notFound ? "var(--bad)" : "inherit") + '">' + s.notFound + "</b><span>" + esc(t.ovCard.marked) + "</span><b>" + s.drawn + "/" + s.target + (s.extra ? " + " + s.extra : "") + "</b></div>"
+        + '<div class="kv2"><span>' + esc(t.ovCard.sop) + "</span><b>" + (s.score === null ? "—" : s.score) + "</b><span>" + esc(t.ovCard.da) + "</span><b>" + (s.daSent === null ? "—" : s.daSent + "%") + "</b><span>" + esc(t.ovCard.gap) + '</span><b style="color:' + (s.notFound ? "var(--bad)" : "inherit") + '">' + s.notFound + "</b><span>" + esc(t.ovCard.marked) + "</span><b>" + s.drawn + "/" + s.target + " · " + s.checked + (s.extra ? " + " + s.extra : "") + "</b></div>"
         + (wk.remark || wk.remarkVi ? '<div class="fbq">' + esc(langText(wk).length > 140 ? langText(wk).slice(0, 140) + "…" : langText(wk)) + "</div>" : "")
         + '<div class="spark">' + hist.map(function (v, i) { return "<i" + (i === hist.length - 1 ? ' class="last"' : "") + ' style="height:' + Math.max(8, v) + '%"></i>'; }).join("") + "</div></a>";
     }).join("") + "</div>";
@@ -689,7 +694,7 @@ window.ZALO_REVIEW = (function () {
       if (s.status === "submitted") att.push([fill(t.attWaiting, { c: c, w: wTag(week) }), fill(t.attWaitingX, { t: fmtWhen(wk.submittedAt || wk.updated) }), c]);
       else if (s.status === "review") att.push([c + " · " + wTag(week) + " · " + statusLabel("review"), fill(TH().qReview, { h: hoLabel(wk.hoBy), t: fmtWhen(wk.takenAt) }), c]);
       else if (s.status === "marking" && wk.sendBack) att.push([c + " · " + wTag(week) + " · " + statusLabel("marking"), fill(TH().sentBack, { r: rvName(c), t: fmtWhen(sentBackAt(wk)), note: wk.sendBack }), c]);
-      else if (s.status === "marking" && s.sampled) att.push([fill(t.attNotDone, { c: c, w: wTag(week), n: s.drawn, t: s.target }), fill(t.attNotDoneX, { c: c }), c]);
+      else if (s.status === "marking" && s.sampled) att.push([fill(t.attNotDone, { c: c, w: wTag(week), k: s.checked, n: s.drawn }), fill(t.attNotDoneX, { c: c }), c]);
       else if (s.status === "marking" && s.dueCadences) att.push([fill(t.attNone, { c: c, w: wTag(week) }), fill(t.attNoneX, { c: c }), c]);
     });
     h += '<div class="panel"><h3>' + esc(t.attention) + "</h3>" + (att.length ? att.map(function (r) { return '<a class="lrow" href="#/clinic-' + r[2].toLowerCase() + '"><div><div class="nm">' + esc(r[0]) + '</div><div class="meta">' + esc(r[1]) + '</div></div><div class="right"><span class="btn sm">' + esc(fill(t.openClinic, { c: r[2] })) + "</span></div></a>"; }).join("") : '<div class="empty">' + esc(t.attNothing) + "</div>") + "</div>";
@@ -699,16 +704,19 @@ window.ZALO_REVIEW = (function () {
   function queuePanel(){
     var th = TH(), rows = Object.keys(st.weekly).map(function (k) { return st.weekly[k]; }).filter(function (w) { return isLive(w.clinic) && (w.status === "submitted" || w.status === "review"); });
     rows.sort(function (a, b) { return a.week < b.week ? 1 : a.week > b.week ? -1 : a.clinic.localeCompare(b.clinic); });
-    var marking = st.live.filter(function (c) { return weekStatus(st.week, c) === "marking" && weekStats(st.week, c).dueCadences; });
+    var marking = [];
+    Object.keys(st.weekly).forEach(function (k) { var w = st.weekly[k]; if (!isLive(w.clinic) || w.status !== "marking") return; var s = weekStats(w.week, w.clinic); if (s.checked) marking.push({ c: w.clinic, week: w.week, s: s }); });
+    st.live.forEach(function (c) { if (weekStatus(st.week, c) !== "marking" || marking.some(function (m) { return m.c === c && m.week === st.week; })) return; var s = weekStats(st.week, c); if (s.dueCadences) marking.push({ c: c, week: st.week, s: s }); });
+    marking.sort(function (a, b) { return a.week < b.week ? 1 : a.week > b.week ? -1 : a.c.localeCompare(b.c); });
     var h = '<div class="panel"><h3>' + esc(th.queue) + ' <span class="hint">' + esc(th.queueHint) + "</span></h3>";
     if (!rows.length && !marking.length) h += '<div class="empty">' + esc(th.qNone) + "</div>";
     rows.forEach(function (w) {
       var s = weekStats(w.week, w.clinic), when = w.status === "review" ? fill(th.qReview, { h: hoLabel(w.hoBy), t: fmtWhen(w.takenAt) }) : fill(th.qSubmitted, { r: rvName(w.clinic), t: fmtWhen(w.submittedAt) });
       h += '<a class="lrow" href="#/clinic-' + w.clinic.toLowerCase() + '" data-act="rv-goto" data-w="' + esc(w.week) + '"><div><div class="nm">' + esc(w.clinic) + " · " + esc(wTag(w.week)) + " " + statusPill(w.status) + '</div><div class="meta">' + esc(when) + " · " + esc(fill(th.qLine, { n: s.drawn, x: s.extra, s: s.itemsPct === null ? "—" : s.itemsPct + "%", d: s.daSent === null ? "—" : s.daSent + "%", g: s.notFound, i: s.data })) + '</div></div><div class="right"><span class="btn primary sm">' + esc(th.review) + "</span></div></a>";
     });
-    marking.forEach(function (c) {
-      var s = weekStats(st.week, c);
-      h += '<a class="lrow" href="#/clinic-' + c.toLowerCase() + '" data-act="rv-goto" data-w="' + esc(st.week) + '"><div><div class="nm">' + esc(c) + " · " + esc(wTag(st.week)) + " " + statusPill("marking") + '</div><div class="meta">' + esc(fill(th.qMarking, { r: rvName(c), n: s.drawn, t: s.target })) + '</div></div><div class="right"><span class="btn sm">' + esc(th.openWeek) + "</span></div></a>";
+    marking.forEach(function (m) {
+      var s = m.s, c = m.c;
+      h += '<a class="lrow" href="#/clinic-' + c.toLowerCase() + '" data-act="rv-goto" data-w="' + esc(m.week) + '"><div><div class="nm">' + esc(c) + " · " + esc(wTag(m.week)) + " " + statusPill("marking") + '</div><div class="meta">' + esc(s.checked ? fill(th.qMarkingC, { r: rvName(c), c: s.checked, n: s.drawn }) : fill(th.qMarking, { r: rvName(c), c: s.checked, n: s.drawn })) + '</div></div><div class="right"><span class="btn ' + (s.checked ? "primary " : "") + 'sm">' + esc(s.checked ? th.review : th.openWeek) + "</span></div></a>";
     });
     return h + "</div>";
   }
@@ -749,12 +757,12 @@ window.ZALO_REVIEW = (function () {
     var t = T(), th = TH(), status = s.status, h = '<div class="strip" id="rvStrip"><span class="lab">' + esc(wTag(week)) + " · " + esc(statusLabel(status)) + "</span>";
     var hoText = status === "review" ? fill(th.stripReview, { h: hoLabel(wk.hoBy), t: fmtWhen(wk.takenAt), e: hoEditCount(week) }) : status === "published" ? fill(th.stripPublished, { t: fmtWhen(wk.publishedAt), a: wk.approvedBy || "" }) : status === "acknowledged" ? fill(th.stripAck, { t: fmtWhen(wk.updated) }) : "";
     if (isHo()) {
-      var can = hoCan(week), un = untranslated(week);
+      var can = hoActs(week), un = untranslated(week);
       h += "<span>" + esc(status === "marking" ? fill(th.stripMarking, { r: rvName(), n: s.drawn, t: s.target, x: s.extra, c: s.checked }) : status === "submitted" ? fill(th.stripSubmitted, { r: rvName(), t: fmtWhen(wk.submittedAt), n: s.sampled, c: s.checked }) : hoText) + "</span>";
       h += '<span class="right">';
       if (status === "marking") h += '<span class="hint">' + esc(fill(th.stripMarkingX, { r: rvName() })) + "</span>";
+      if (hoCanWeek(week) && un) h += '<button type="button" class="btn sm" data-act="rv-translate"' + (trBusy(week) ? " disabled" : "") + ">" + esc(trBusy(week) ? th.translating : fill(th.translateAll, { n: un })) + "</button>";
       if (can) {
-        if (un) h += '<button type="button" class="btn sm" data-act="rv-translate"' + (trBusy(week) ? " disabled" : "") + ">" + esc(trBusy(week) ? th.translating : fill(th.translateAll, { n: un })) + "</button>";
         if (status === "submitted") h += '<button type="button" class="btn sm" data-act="rv-start">' + esc(th.start) + "</button>";
         h += '<button type="button" class="btn sm" data-act="rv-sendback">' + esc(th.sendBack) + '</button><button type="button" class="btn good" data-act="rv-publish">' + esc(th.publish) + "</button>";
       }
@@ -763,7 +771,7 @@ window.ZALO_REVIEW = (function () {
     } else {
       var locked = status !== "marking";
       h += "<span>" + esc(!locked ? fill(t.stripMarking, { n: s.drawn, t: s.target, x: s.extra, c: s.checked }) : status === "submitted" ? fill(t.stripLocked, { t: fmtWhen(wk.submittedAt || wk.updated) }) : hoText) + "</span>";
-      h += '<span class="right">' + (locked ? (status === "submitted" ? '<button type="button" class="btn sm" data-act="rv-reopen">' + esc(t.reopen) + "</button>" : "") : '<span class="hint">' + esc(t.stripHint) + '</span><button type="button" class="btn primary" data-act="rv-complete">' + esc(t.complete) + "</button>") + "</span>";
+      h += '<span class="right">' + (locked ? (status === "submitted" ? '<button type="button" class="btn sm" data-act="rv-reopen">' + esc(t.reopen) + "</button>" : "") : '<span class="hint">' + esc(settingsOf().email_ho ? t.stripHint : t.stripHintNoMail) + '</span><button type="button" class="btn primary" data-act="rv-complete">' + esc(t.complete) + "</button>") + "</span>";
     }
     if (status === "marking" && wk.sendBack) h += '<span class="sbnote">↩ ' + esc(fill(th.sentBack, { r: rvName(), t: fmtWhen(sentBackAt(wk)), note: wk.sendBack })) + "</span>";
     return h + "</div>";
@@ -799,7 +807,7 @@ window.ZALO_REVIEW = (function () {
       + tile("", s.score === null ? "—" : String(s.score), t.tSop, t.tSopX)
       + tile("", s.daSent === null ? "—" : s.daSent + "<small>%</small>", t.tDa, fill(t.tDaX, { n: s.dueCadences }))
       + tile(s.notFound ? "bad" : "", String(s.notFound), t.tGap, t.tGapX)
-      + tile(s.drawn >= s.target ? "ok" : "", s.drawn + "<small>/" + s.target + "</small>", t.tMarked, fill(t.tMarkedX, { x: s.extra, c: s.checked })) + "</div>";
+      + tile(s.drawn >= s.target ? "ok" : "", s.drawn + "<small>/" + s.target + "</small>", t.tMarked, fill(t.tMarkedX, { x: s.extra, c: s.checked, n: s.drawn })) + "</div>";
     var stages = Object.keys(s.byStage).sort(stageOrder);
     if (u.view === "cad") {
       h += '<div class="tblwrap"><table class="rvtbl"><thead><tr><th>' + esc(t.thCad) + '</th><th class="n">' + esc(t.thDue) + "</th>";
@@ -871,7 +879,7 @@ window.ZALO_REVIEW = (function () {
 
   /* head office: the reviewer's overall feedback as original · English · editable Vietnamese · HO note */
   function hoFeedbackPanel(week, wk){
-    var t = T(), th = TH(), fk = wKey(week, st.clinic), can = hoCan(week);
+    var t = T(), th = TH(), fk = wKey(week, st.clinic), can = hoCanWeek(week);
     var h = '<div class="panel rvfb"><h3>' + esc(t.fbTitle) + ' <span class="hint">' + esc(t.fbHint) + '</span></h3><div class="pad">';
     if (!wk.remark && !wk.remarkVi) return h + '<div class="empty" style="padding:8px">' + esc(th.noFeedback) + "</div></div></div>";
     return h + trio(wk, fk, can, "") + "</div></div>";
@@ -904,7 +912,7 @@ window.ZALO_REVIEW = (function () {
     var th = TH(), recs = recsOf(week).slice().sort(function (a, b) { return (isExtra(a) ? 1 : 0) - (isExtra(b) ? 1 : 0) || byAdded(a, b); });
     var h = '<div class="panel" id="rvSample"><h3>' + esc(th.chats) + " · " + recs.length + ' <span class="hint">' + esc(th.chatsHint) + "</span></h3>";
     if (!recs.length) h += '<div class="empty">' + esc(T().sampleEmpty) + "</div>";
-    recs.forEach(function (a, i) { h += auditCard(a, i + 1, !hoCan(week)); });
+    recs.forEach(function (a, i) { h += auditCard(a, i + 1, !hoCanCard(a)); });
     return h + "</div>";
   }
 
@@ -1113,7 +1121,7 @@ window.ZALO_REVIEW = (function () {
       case "rv-remove": if (guard()) return true; a = st.audits[el.dataset.key]; if (a) { removeFromSample(a); R.render(); } return true;
       case "rv-toggle": st.ui.open[el.dataset.key] = el.dataset.open === "1"; R.render(); return true;
       case "rv-phone": st.ui.phones[el.dataset.key] = true; R.render(); return true;
-      case "rv-all": if (guard()) return true; a = st.audits[el.dataset.key]; if (a) { var ctx = ctxOf(a.clinic), c2 = ctx.byKey[a.custKey], m = c2 ? journey(c2, ctx).filter(function (x) { return x.stage === el.dataset.stage; })[0] : null; if (m) { if (isHo()) hoAll(a, m, el.dataset.v); else { a.marks = a.marks || {}; a.marks[m.stage] = m.items.map(function () { return el.dataset.v; }).join(""); save(a); } R.render(); } } return true;
+      case "rv-all": if (guard()) return true; a = st.audits[el.dataset.key]; if (a) { var ctx = ctxOf(a.clinic), c2 = ctx.byKey[a.custKey], m = c2 ? journey(c2, ctx).filter(function (x) { return x.stage === el.dataset.stage; })[0] : null; if (m) { if (isHo()) { if (!hoCanCard(a)) { A.toast(fill(TH().notCheckedYet, { r: rvName(a.clinic) }), true); return true; } hoAll(a, m, el.dataset.v); } else { a.marks = a.marks || {}; a.marks[m.stage] = m.items.map(function () { return el.dataset.v; }).join(""); save(a); } R.render(); } } return true;
       case "rv-goto": st.week = monday(el.dataset.w); st.ui.duePage = 0; R.render(); return true;
       case "rv-start": if (hoCan(st.week)) setWeekStatus(st.week, "review"); return true;
       case "rv-sendback": if (hoCan(st.week)) openSendBack(st.week); return true;
@@ -1138,9 +1146,9 @@ window.ZALO_REVIEW = (function () {
   };
   R.change = function (el) {
     if (el.dataset.rvtick) { if (guard()) { R.render(); return true; } var a = st.audits[el.dataset.rvtick], ctx = a && ctxOf(a.clinic), c = a && ctx.byKey[a.custKey], m = c ? journey(c, ctx).filter(function (x) { return x.stage === el.dataset.stage; })[0] : null; if (!m) return true;
-      if (isHo()) { hoTick(a, m, +el.dataset.i, el.checked); R.render(); return true; }
+      if (isHo()) { if (!hoCanCard(a)) { A.toast(fill(TH().notCheckedYet, { r: rvName(a.clinic) }), true); R.render(); return true; } hoTick(a, m, +el.dataset.i, el.checked); R.render(); return true; }
       a.marks = a.marks || {}; var bits = (a.marks[m.stage] || "").split(""); while (bits.length < m.items.length) bits.push("0"); bits[+el.dataset.i] = el.checked ? "1" : "0"; a.marks[m.stage] = bits.join(""); save(a); R.render(); return true; }
-    if (el.dataset.hovis) { if (guard()) { R.render(); return true; } var v = st.audits[el.dataset.hovis]; if (v) { var old = v.visible === 0 ? 0 : 1; v.visible = el.checked ? 1 : 0; pushLog(v, v.key, logEntry("visible", { old: old, "new": v.visible })); hoSave(v); R.render(); } return true; }
+    if (el.dataset.hovis) { if (guard()) { R.render(); return true; } var v = st.audits[el.dataset.hovis]; if (v && !hoCanCard(v)) { A.toast(fill(TH().notCheckedYet, { r: rvName(v.clinic) }), true); R.render(); return true; } if (v) { var old = v.visible === 0 ? 0 : 1; v.visible = el.checked ? 1 : 0; pushLog(v, v.key, logEntry("visible", { old: old, "new": v.visible })); hoSave(v); R.render(); } return true; }
     if (el.dataset.rvdata) { if (guard()) { R.render(); return true; } var b = st.audits[el.dataset.rvdata]; if (b) { b.data = el.checked ? 1 : 0; save(b); R.render(); } return true; }
     if (el.dataset.rvsel) { st.ui[el.dataset.rvsel] = el.value; st.ui.duePage = 0; R.render(); return true; }
     if (el.dataset.rvchk) { st.ui[el.dataset.rvchk] = el.checked; st.ui.duePage = 0; R.render(); return true; }
