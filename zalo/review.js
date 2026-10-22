@@ -40,15 +40,15 @@ window.ZALO_REVIEW = (function () {
       across: "各诊所对比", acrossHint: "每个节点的审核合规率 · 本周", mostMissed: "最常缺失", mostDone: "最常完成", acrossLive: "所有已上线诊所 · 审核样本", noneYet: "本周尚无审核记录",
       attention: "需要处理", attNotDone: "{c} · {w} · 已标记 {n} / {t}，尚未完成", attNotDoneX: "在 {c} 页点“完成本周”发送给 HO", attNone: "{c} · {w} · 尚未开始标记", attNoneX: "打开 {c} 页点“抽样”", attWaiting: "{c} · {w} · 已提交，等待 HO", attWaitingX: "提交于 {t}", attNothing: "本周没有待处理事项。", openClinic: "打开 {c}",
       sb: "记分板", sbHint: "勾了多少，总共可以勾多少", vCad: "节点", vItems: "内容项", vWeeks: "逐周", srcAudit: "审核样本", srcDa: "助理自报 · 全部到期",
-      tItems: "已发送内容", tItemsX: "本周到期节点 {n} 个，在 {m} 个对话中 · 含更早节点 {a}", tSop: "SOP 得分", tSopX: "1 全部 · 0.5 部分 · 0 未发，与助理页面一致", tDa: "助理自报", tDaX: "全部 {n} 个到期节点 · 她的勾选", tGap: "勾了但未见", tGapX: "助理勾了、聊天中未见的内容", tMarked: "已标记", tMarkedX: "+{x} 额外 · {c} 已检查", none: "尚未检查",
+      tItems: "已发送内容", tItemsX: "本周到期节点 {n} 个，在 {m} 个对话中", tSop: "SOP 得分", tSopX: "1 全部 · 0.5 部分 · 0 未发，与助理页面一致", tDa: "助理自报", tDaX: "全部 {n} 个到期节点 · 她的勾选", tGap: "勾了但未见", tGapX: "助理勾了、聊天中未见的内容", tMarked: "已标记", tMarkedX: "+{x} 额外 · {c} 已检查", none: "尚未检查",
       thCad: "节点", thDue: "到期（全部）", thSample: "样本中", thItems: "已发送内容", thFull: "全部", thPartial: "部分", thMissed: "未发", thScore: "得分", thDa: "助理自报", thNotTicked: "未勾", total: "合计",
-      cadNote: "样本对话更早的节点（本周前 {n} 个）也已标记并计入对话得分，但不计入本周各行。", daNote: "助理在自己看板上勾选的内容，覆盖本周全部到期对话。",
+      cadNote: "每个对话只显示并评分本周到期的节点；更早的节点不显示。", daNote: "助理在自己看板上勾选的内容，覆盖本周全部到期对话。",
       itemsMissed: "最常缺失的内容", itemsDone: "最常完成的内容", itemsNone: "本周还没有标记任何节点。",
       thWeek: "周", thSampled: "抽样", thChecked: "已检查", thWeekScore: "本周节点", thPass: "合规", thFail: "未合规", thData: "数据", thStatus: "状态", thRemark: "总评",
       fbTitle: "本周总评", fbHint: "诊所本周表现：做得好的、需改进的。HO 审核后发布给助理。", fbPh: "写下本周对 {c} 的总评…", fbSave: "保存总评", fbSaved: "已保存 {t}",
       toMark: "待标记", toMarkHint: "{t} 个对话 · 每个节点 3–5 个为参考，按本周到期节点分配", quota: "配额", draw: "抽样 {n} 个", drawHint: "按本周到期的节点和产品分散抽取", drawDone: "样本已满", drawNone: "本周没有更多到期客户可抽", addAny: "添加任意客户…",
       sampleEmpty: "本周尚未抽样。", sampleEmptyHint: "点“抽样”按节点和产品分散抽取，或从下方到期名单逐个添加。",
-      journey: "客户旅程", thisWeekChip: "本周到期", beforeLive: "上线前", daTicked: "助理已勾", daNone: "助理未勾", notFound: "助理已勾但未见", allSent: "全部已发", noneSent: "全部未发", notChecked: "未检查",
+      journey: "本周到期节点", thisWeekChip: "本周到期", beforeLive: "上线前", daTicked: "助理已勾", daNone: "助理未勾", notFound: "助理已勾但未见", allSent: "全部已发", noneSent: "全部未发", notChecked: "未检查",
       remarkPh: "备注：缺了什么、做得好的、需要修正的…", dataIssue: "数据问题（标签错误、日期错误、找不到聊天）", shots: "截图", addShot: "添加截图", shotFail: "截图上传失败：{e}",
       checked: "已检查 ✓", markChecked: "标记为已检查", remove: "移出样本", open: "展开", close: "收起", showPhone: "显示电话", extra: "额外",
       vOpen: "未检查", vPass: "合规", vPartial: "部分", vFail: "未合规", vData: "数据问题", vNoted: "已记录",
@@ -57,7 +57,7 @@ window.ZALO_REVIEW = (function () {
       stSent: "已勾", stPartial: "部分", stNone: "未勾",
       hist: "历史记录", histHint: "逐周结果与所有审核记录 · 导出 CSV", entries: "所有审核记录", entriesHint: "{n} 条", allWeeks: "全部周", allVerdicts: "全部结论", withShots: "有截图", csv: "导出 CSV", noEntries: "没有符合的记录。", openWeek: "打开该周",
       crmHint: "只读 · 与助理看板相同的数据", saved: "已保存", saving: "保存中…", failed: "未能保存：{e}", localOnly: "演示：仅保存在本浏览器", locked: "本周已提交，内容已锁定。",
-      g: { title: "审核人指南", lines: ["每周一打开诊所页：默认显示上一周（已结束的一周）。", "点“抽样”，系统按节点和产品分散抽取 15 个对话；也可从到期名单或搜索框添加。其他到期对话可选标记，计为额外。", "逐个打开 Zalo 聊天，在客户旅程中勾选找到的内容；“助理已勾”表示助理在她的看板上标记已发送。", "写备注、添加截图、必要时勾“数据问题”，最后点“标记为已检查”。", "写下本周总评，点“完成本周”发送给 HO。HO 审核后发布给助理。总览页汇总各诊所。"] },
+      g: { title: "审核人指南", lines: ["每周一打开诊所页：默认显示上一周（已结束的一周）。", "点“抽样”，系统按节点和产品分散抽取 15 个对话；也可从到期名单或搜索框添加。其他到期对话可选标记，计为额外。", "逐个打开 Zalo 聊天，在本周到期的节点中勾选找到的内容；“助理已勾”表示助理在她的看板上标记已发送。", "写备注、添加截图、必要时勾“数据问题”，最后点“标记为已检查”。", "写下本周总评，点“完成本周”发送给 HO。HO 审核后发布给助理。总览页汇总各诊所。"] },
       months: ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"],
       ho: {
         sub: "{c} · 总部 {r}", queue: "待审核", queueHint: "审核人已完成的周，以及等待您处理的事项", review: "审核", openWeek: "打开",
@@ -91,15 +91,15 @@ window.ZALO_REVIEW = (function () {
       across: "Across clinics", acrossHint: "audited score per cadence · this week", mostMissed: "Most missed items", mostDone: "Most done items", acrossLive: "all live clinics · audited sample", noneYet: "nothing audited this week yet",
       attention: "Needs attention", attNotDone: "{c} · {w} · {n} of {t} marked, not yet completed", attNotDoneX: "Press Complete week on the {c} tab to send it to HO", attNone: "{c} · {w} · marking not started", attNoneX: "Open the {c} tab and press Draw", attWaiting: "{c} · {w} · submitted, waiting for HO", attWaitingX: "submitted {t}", attNothing: "Nothing waiting this week.", openClinic: "Open {c}",
       sb: "Scoreboard", sbHint: "how many ticks against the total possible", vCad: "Cadences", vItems: "Items", vWeeks: "Weeks", srcAudit: "Audited sample", srcDa: "DA-reported · all due",
-      tItems: "items sent", tItemsX: "{n} cadences due this week in {m} chats · with earlier milestones {a}", tSop: "SOP score", tSopX: "1 full · 0.5 partial · 0 missed, as on the DA's page", tDa: "DA-reported", tDaX: "all {n} due cadences · her ticks", tGap: "ticked, not found", tGapX: "items she ticked that the chat does not show", tMarked: "marked", tMarkedX: "+{x} extra · {c} checked", none: "nothing checked yet",
+      tItems: "items sent", tItemsX: "{n} cadences due this week in {m} chats", tSop: "SOP score", tSopX: "1 full · 0.5 partial · 0 missed, as on the DA's page", tDa: "DA-reported", tDaX: "all {n} due cadences · her ticks", tGap: "ticked, not found", tGapX: "items she ticked that the chat does not show", tMarked: "marked", tMarkedX: "+{x} extra · {c} checked", none: "nothing checked yet",
       thCad: "Cadence", thDue: "Due (all)", thSample: "In sample", thItems: "Items sent", thFull: "Full", thPartial: "Partial", thMissed: "Missed", thScore: "Score", thDa: "DA-reported", thNotTicked: "Not ticked", total: "Total",
-      cadNote: "Earlier milestones of the sampled chats ({n} before this week) are marked too and count in each chat's score, but not in this week's rows.", daNote: "What the DA ticked on her own dashboard, across every chat due this week.",
+      cadNote: "Each chat shows and scores only the cadences due this week; earlier milestones are not shown.", daNote: "What the DA ticked on her own dashboard, across every chat due this week.",
       itemsMissed: "Most missed items", itemsDone: "Most done items", itemsNone: "No cadence marked yet this week.",
       thWeek: "Week", thSampled: "Sampled", thChecked: "Checked", thWeekScore: "This week's", thPass: "Pass", thFail: "Fail", thData: "Data", thStatus: "Status", thRemark: "Feedback",
       fbTitle: "Overall feedback", fbHint: "How the clinic did this week: what went well, what to improve. Published to the DA after HO review.", fbPh: "Write this week's overall feedback for {c}…", fbSave: "Save feedback", fbSaved: "Saved {t}",
       toMark: "To mark", toMarkHint: "{t} chats · 3–5 per cadence as a guide, scaled to the cadences due this week", quota: "quota", draw: "Draw {n}", drawHint: "Spread across the cadences and products due this week", drawDone: "sample complete", drawNone: "No more customers due this week to draw from", addAny: "Add any customer…",
       sampleEmpty: "No chats sampled for this week yet.", sampleEmptyHint: "Use Draw for a spread across cadences and products, or add customers one by one from the due list below.",
-      journey: "Customer journey", thisWeekChip: "due this week", beforeLive: "before go-live", daTicked: "DA ticked", daNone: "DA did not tick", notFound: "DA ticked, not found", allSent: "All sent", noneSent: "Nothing sent", notChecked: "not checked",
+      journey: "Cadences due this week", thisWeekChip: "due this week", beforeLive: "before go-live", daTicked: "DA ticked", daNone: "DA did not tick", notFound: "DA ticked, not found", allSent: "All sent", noneSent: "Nothing sent", notChecked: "not checked",
       remarkPh: "Remark: what was missing, what was good, anything to fix…", dataIssue: "Data issue (wrong tag, wrong date, chat not found)", shots: "Screenshots", addShot: "Add screenshot", shotFail: "Screenshot upload failed: {e}",
       checked: "Checked ✓", markChecked: "Mark as checked", remove: "Remove from sample", open: "Expand", close: "Collapse", showPhone: "Show phone", extra: "extra",
       vOpen: "Not checked", vPass: "Pass", vPartial: "Partial", vFail: "Fail", vData: "Data issue", vNoted: "Noted",
@@ -108,7 +108,7 @@ window.ZALO_REVIEW = (function () {
       stSent: "ticked", stPartial: "partial", stNone: "not ticked",
       hist: "History", histHint: "week by week and every audited chat · CSV export", entries: "All audited chats", entriesHint: "{n} entries", allWeeks: "All weeks", allVerdicts: "All verdicts", withShots: "With screenshots", csv: "Export CSV", noEntries: "No entries match.", openWeek: "Open week",
       crmHint: "Read only · the same data the DA sees", saved: "Saved", saving: "Saving…", failed: "Could not save: {e}", localOnly: "Demo: kept in this browser only", locked: "This week is submitted; entries are locked.",
-      g: { title: "Reviewer guide", lines: ["Open a clinic tab on Monday: it shows last week, the one just closed.", "Press Draw: 15 chats spread across the cadences and products due. Add others from the due list or the search box. Other due chats can be marked too; they count as extra.", "Open each Zalo chat and tick what you find in the customer journey. “DA ticked” means the DA marked it sent on her dashboard.", "Write a remark, add screenshots, flag a data issue if needed, then Mark as checked.", "Write the week's overall feedback and press Complete week to send it to HO. HO reviews and publishes to the DA. Overview sums up every clinic."] },
+      g: { title: "Reviewer guide", lines: ["Open a clinic tab on Monday: it shows last week, the one just closed.", "Press Draw: 15 chats spread across the cadences and products due. Add others from the due list or the search box. Other due chats can be marked too; they count as extra.", "Open each Zalo chat and tick what you find for the cadences due this week. “DA ticked” means the DA marked it sent on her dashboard.", "Write a remark, add screenshots, flag a data issue if needed, then Mark as checked.", "Write the week's overall feedback and press Complete week to send it to HO. HO reviews and publishes to the DA. Overview sums up every clinic."] },
       months: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
       ho: {
         sub: "{c} · head office {r}", queue: "Review queue", queueHint: "what the reviewer has completed and what is waiting on you", review: "Review", openWeek: "Open",
@@ -142,15 +142,15 @@ window.ZALO_REVIEW = (function () {
       across: "So sánh phòng khám", acrossHint: "điểm kiểm theo cadence · tuần này", mostMissed: "Thiếu nhiều nhất", mostDone: "Làm nhiều nhất", acrossLive: "các phòng khám đang chạy · mẫu kiểm", noneYet: "tuần này chưa kiểm",
       attention: "Cần xử lý", attNotDone: "{c} · {w} · {n} / {t} đã chấm, chưa hoàn tất", attNotDoneX: "Bấm Hoàn tất tuần ở tab {c} để gửi HO", attNone: "{c} · {w} · chưa bắt đầu chấm", attNoneX: "Mở tab {c} và bấm Rút", attWaiting: "{c} · {w} · đã gửi, chờ HO", attWaitingX: "gửi lúc {t}", attNothing: "Tuần này không có gì chờ.", openClinic: "Mở {c}",
       sb: "Bảng điểm", sbHint: "đã tick bao nhiêu trên tổng có thể", vCad: "Cadence", vItems: "Nội dung", vWeeks: "Tuần", srcAudit: "Mẫu kiểm", srcDa: "Trợ lý tự báo · tất cả đến hạn",
-      tItems: "nội dung đã gửi", tItemsX: "{n} cadence đến hạn tuần này trong {m} hội thoại · kể cả mốc trước {a}", tSop: "Điểm SOP", tSopX: "1 đủ · 0.5 một phần · 0 không gửi, như trang trợ lý", tDa: "Trợ lý tự báo", tDaX: "toàn bộ {n} cadence đến hạn · tick của cô ấy", tGap: "đã tick, không thấy", tGapX: "nội dung cô ấy tick nhưng hội thoại không có", tMarked: "đã chấm", tMarkedX: "+{x} thêm · {c} đã kiểm", none: "chưa kiểm",
+      tItems: "nội dung đã gửi", tItemsX: "{n} cadence đến hạn tuần này trong {m} hội thoại", tSop: "Điểm SOP", tSopX: "1 đủ · 0.5 một phần · 0 không gửi, như trang trợ lý", tDa: "Trợ lý tự báo", tDaX: "toàn bộ {n} cadence đến hạn · tick của cô ấy", tGap: "đã tick, không thấy", tGapX: "nội dung cô ấy tick nhưng hội thoại không có", tMarked: "đã chấm", tMarkedX: "+{x} thêm · {c} đã kiểm", none: "chưa kiểm",
       thCad: "Cadence", thDue: "Đến hạn (tất cả)", thSample: "Trong mẫu", thItems: "Nội dung đã gửi", thFull: "Đủ", thPartial: "Một phần", thMissed: "Không gửi", thScore: "Điểm", thDa: "Trợ lý báo", thNotTicked: "Chưa tick", total: "Tổng",
-      cadNote: "Các mốc trước của hội thoại trong mẫu ({n} trước tuần này) cũng được chấm và tính vào điểm hội thoại, nhưng không vào các dòng tuần này.", daNote: "Những gì trợ lý đã tick trên bảng của cô ấy, trên mọi hội thoại đến hạn tuần này.",
+      cadNote: "Mỗi hội thoại chỉ hiện và chấm các cadence đến hạn tuần này; các mốc trước không hiện.", daNote: "Những gì trợ lý đã tick trên bảng của cô ấy, trên mọi hội thoại đến hạn tuần này.",
       itemsMissed: "Nội dung thiếu nhiều nhất", itemsDone: "Nội dung làm nhiều nhất", itemsNone: "Tuần này chưa chấm cadence nào.",
       thWeek: "Tuần", thSampled: "Mẫu", thChecked: "Đã kiểm", thWeekScore: "Tuần này", thPass: "Đạt", thFail: "Không đạt", thData: "Dữ liệu", thStatus: "Trạng thái", thRemark: "Nhận xét",
       fbTitle: "Nhận xét chung", fbHint: "Phòng khám tuần này: điểm tốt, điểm cần cải thiện. HO duyệt rồi gửi cho trợ lý.", fbPh: "Viết nhận xét chung tuần này cho {c}…", fbSave: "Lưu nhận xét", fbSaved: "Đã lưu {t}",
       toMark: "Cần chấm", toMarkHint: "{t} hội thoại · 3–5 mỗi cadence là mức tham khảo, chia theo cadence đến hạn tuần này", quota: "chỉ tiêu", draw: "Rút {n}", drawHint: "Trải đều theo cadence và sản phẩm đến hạn tuần này", drawDone: "mẫu đã đủ", drawNone: "Không còn khách đến hạn tuần này để rút", addAny: "Thêm khách bất kỳ…",
       sampleEmpty: "Tuần này chưa rút mẫu.", sampleEmptyHint: "Dùng Rút để trải đều theo cadence và sản phẩm, hoặc thêm từng khách từ danh sách đến hạn.",
-      journey: "Hành trình khách", thisWeekChip: "đến hạn tuần này", beforeLive: "trước go-live", daTicked: "Trợ lý đã tick", daNone: "Trợ lý chưa tick", notFound: "Đã tick, không thấy", allSent: "Gửi đủ", noneSent: "Không gửi", notChecked: "chưa kiểm",
+      journey: "Cadence đến hạn tuần này", thisWeekChip: "đến hạn tuần này", beforeLive: "trước go-live", daTicked: "Trợ lý đã tick", daNone: "Trợ lý chưa tick", notFound: "Đã tick, không thấy", allSent: "Gửi đủ", noneSent: "Không gửi", notChecked: "chưa kiểm",
       remarkPh: "Nhận xét: thiếu gì, tốt gì, cần sửa gì…", dataIssue: "Lỗi dữ liệu (sai tag, sai ngày, không tìm thấy hội thoại)", shots: "Ảnh chụp", addShot: "Thêm ảnh chụp", shotFail: "Không tải được ảnh: {e}",
       checked: "Đã kiểm ✓", markChecked: "Đánh dấu đã kiểm", remove: "Bỏ khỏi mẫu", open: "Mở", close: "Thu gọn", showPhone: "Hiện số điện thoại", extra: "thêm",
       vOpen: "Chưa kiểm", vPass: "Đạt", vPartial: "Một phần", vFail: "Không đạt", vData: "Lỗi dữ liệu", vNoted: "Ghi nhận",
@@ -159,7 +159,7 @@ window.ZALO_REVIEW = (function () {
       stSent: "đã tick", stPartial: "một phần", stNone: "chưa tick",
       hist: "Lịch sử", histHint: "theo tuần và mọi hội thoại đã kiểm · xuất CSV", entries: "Tất cả hội thoại đã kiểm", entriesHint: "{n} mục", allWeeks: "Tất cả tuần", allVerdicts: "Tất cả kết luận", withShots: "Có ảnh chụp", csv: "Xuất CSV", noEntries: "Không có mục phù hợp.", openWeek: "Mở tuần",
       crmHint: "Chỉ đọc · cùng dữ liệu trợ lý nhìn thấy", saved: "Đã lưu", saving: "Đang lưu…", failed: "Không lưu được: {e}", localOnly: "Demo: chỉ lưu trong trình duyệt này", locked: "Tuần này đã gửi; đã khoá.",
-      g: { title: "Hướng dẫn người kiểm", lines: ["Thứ Hai mở tab phòng khám: mặc định hiện tuần vừa kết thúc.", "Bấm Rút: 15 hội thoại trải đều theo cadence và sản phẩm đến hạn. Thêm khách khác từ danh sách đến hạn hoặc ô tìm. Các hội thoại đến hạn khác cũng chấm được, tính là thêm.", "Mở từng hội thoại Zalo và tick những gì tìm thấy trong hành trình khách. “Trợ lý đã tick” nghĩa là trợ lý đã đánh dấu đã gửi trên bảng của cô ấy.", "Viết nhận xét, thêm ảnh chụp, tick Lỗi dữ liệu nếu cần, rồi Đánh dấu đã kiểm.", "Viết nhận xét chung và bấm Hoàn tất tuần để gửi HO. HO duyệt rồi gửi cho trợ lý. Tổng quan gom mọi phòng khám."] },
+      g: { title: "Hướng dẫn người kiểm", lines: ["Thứ Hai mở tab phòng khám: mặc định hiện tuần vừa kết thúc.", "Bấm Rút: 15 hội thoại trải đều theo cadence và sản phẩm đến hạn. Thêm khách khác từ danh sách đến hạn hoặc ô tìm. Các hội thoại đến hạn khác cũng chấm được, tính là thêm.", "Mở từng hội thoại Zalo và tick những gì tìm thấy cho các cadence đến hạn tuần này. “Trợ lý đã tick” nghĩa là trợ lý đã đánh dấu đã gửi trên bảng của cô ấy.", "Viết nhận xét, thêm ảnh chụp, tick Lỗi dữ liệu nếu cần, rồi Đánh dấu đã kiểm.", "Viết nhận xét chung và bấm Hoàn tất tuần để gửi HO. HO duyệt rồi gửi cho trợ lý. Tổng quan gom mọi phòng khám."] },
       months: ["Th1", "Th2", "Th3", "Th4", "Th5", "Th6", "Th7", "Th8", "Th9", "Th10", "Th11", "Th12"],
       ho: {
         sub: "{c} · văn phòng {r}", queue: "Chờ duyệt", queueHint: "những tuần người kiểm đã hoàn tất và việc đang chờ bạn", review: "Duyệt", openWeek: "Mở",
@@ -296,8 +296,9 @@ window.ZALO_REVIEW = (function () {
     var e = { n: 0, score: null, weekScore: null, notFound: 0, verdict: "open", found: "", missing: "", items: { on: 0, n: 0 }, weekItems: { on: 0, n: 0 }, stages: [] };
     var pts = [], wk = [], full = 0, none = 0, found = [], missing = [];
     j.forEach(function (m) {
+      var inWeek = m.due >= a.week && m.due <= end; if (!inWeek) return;      /* only the cadences due that week are audited */
       var bits = marks[m.stage]; if (bits === undefined || bits === "") return;
-      var p = bitsPts(bits, m.items.length), inWeek = m.due >= a.week && m.due <= end, db = daBits(ctx, c, m.stage), miss = [], hits = [], misses = [];
+      var p = bitsPts(bits, m.items.length), db = daBits(ctx, c, m.stage), miss = [], hits = [], misses = [];
       e.n++; pts.push(p); if (p === 1) full++; if (p === 0) none++;
       if (inWeek) wk.push(p);
       m.items.forEach(function (it, i) {
@@ -794,7 +795,7 @@ window.ZALO_REVIEW = (function () {
       + [["cad", t.vCad], ["items", t.vItems], ["break", TH().vBreak], ["weeks", t.vWeeks]].map(function (v) { return '<button type="button" data-act="rv-view" data-v="' + v[0] + '" aria-pressed="' + (u.view === v[0]) + '">' + esc(v[1]) + "</button>"; }).join("") + '</span><span class="rtabs">'
       + [["audit", t.srcAudit], ["da", t.srcDa]].map(function (v) { return '<button type="button" data-act="rv-src" data-v="' + v[0] + '" aria-pressed="' + (u.src === v[0]) + '">' + esc(v[1]) + "</button>"; }).join("") + '</span></span></h3><div class="pad">';
     h += '<div class="tiles rv5" style="margin:0 0 12px">'
-      + tile(s.itemsPct === null ? "" : s.itemsPct >= 80 ? "ok" : s.itemsPct >= 50 ? "warn" : "bad", s.itemsN ? s.itemsOn + "<small>/" + s.itemsN + "</small>" : "—", t.tItems, s.itemsN ? fill(t.tItemsX, { n: s.cadences - s.earlier, m: s.sampled, a: s.allOn + "/" + s.allN }) : t.none)
+      + tile(s.itemsPct === null ? "" : s.itemsPct >= 80 ? "ok" : s.itemsPct >= 50 ? "warn" : "bad", s.itemsN ? s.itemsOn + "<small>/" + s.itemsN + "</small>" : "—", t.tItems, s.itemsN ? fill(t.tItemsX, { n: s.cadences, m: s.sampled }) : t.none)
       + tile("", s.score === null ? "—" : String(s.score), t.tSop, t.tSopX)
       + tile("", s.daSent === null ? "—" : s.daSent + "<small>%</small>", t.tDa, fill(t.tDaX, { n: s.dueCadences }))
       + tile(s.notFound ? "bad" : "", String(s.notFound), t.tGap, t.tGapX)
@@ -818,7 +819,7 @@ window.ZALO_REVIEW = (function () {
       h += '<tr class="tot"><td>' + esc(t.total) + '</td><td class="n">' + tot.due + "</td>";
       if (u.src === "audit") h += '<td class="n">' + tot.inSample + '</td><td class="n">' + (tot.n ? tot.on + " / " + tot.n : "—") + '</td><td class="n">' + tot.full + '</td><td class="n">' + tot.partial + '</td><td class="n">' + tot.missed + '</td><td class="n" style="color:' + scoreColour(tsc) + '">' + (tsc === null ? "—" : tsc + "%") + '</td><td class="n" style="color:var(--muted)">' + (tda === null ? "—" : tda + "%") + "</td>";
       else h += '<td class="n">' + tot.daOn + " / " + tot.daN + '</td><td class="n">' + tot.daFull + '</td><td class="n">' + tot.daPartial + '</td><td class="n">' + tot.daNone + '</td><td class="n" style="color:' + scoreColour(tda) + '">' + (tda === null ? "—" : tda + "%") + "</td>";
-      h += '</tr></tbody></table></div><div class="note2">' + esc(u.src === "audit" ? fill(t.cadNote, { n: s.earlier }) : t.daNote) + "</div>";
+      h += '</tr></tbody></table></div><div class="note2">' + esc(u.src === "audit" ? t.cadNote : t.daNote) + "</div>";
     } else if (u.view === "items") {
       var src = u.src === "audit" ? s.items : s.daItems, list = Object.keys(src).map(function (k) { return src[k]; });
       h += '<div class="grid2">' + rankPanel(t.itemsMissed, u.src === "audit" ? t.srcAudit : t.srcDa, list, true) + rankPanel(t.itemsDone, "", list, false) + "</div>";
@@ -929,7 +930,7 @@ window.ZALO_REVIEW = (function () {
   function auditCard(a, n, locked){
     var t = T(), th = TH(), ho = isHo(), ctx = ctxOf(a.clinic), c = ctx.byKey[a.custKey], e = evalRec(a), marks = marksOf(a);
     var open = st.ui.open[a.key] === true || (st.ui.open[a.key] !== false && !ho && a.status !== "checked" && !locked);
-    var j = c ? journey(c, ctx).filter(function (m) { return m.due <= Z.addDays(a.week, 6); }) : [], dis = locked ? " disabled" : "";
+    var end = Z.addDays(a.week, 6), j = c ? journey(c, ctx).filter(function (m) { return m.due >= a.week && m.due <= end; }) : [], dis = locked ? " disabled" : "";
     var corrBy = function () { var e2 = (a.hoEdits || []).filter(function (x) { return x.f === "tick" || x.f === "stage"; }).pop(); return e2 ? hoLabel(e2.by) : ""; };
     var h = '<div class="rvcard' + (a.status === "checked" ? " checked" : "") + (a.visible === 0 ? " hiddenda" : "") + '" data-key="' + esc(a.key) + '">';
     h += '<div class="rvhead">' + (n ? '<span class="rvn">' + n + "</span>" : "") + '<div class="rvwho"><div class="tag">' + esc(a.tag || a.name) + '</div><div class="meta">' + esc(a.name) + ' · <span class="prodchip">' + esc(prodLabel(a.product)) + "</span>"
@@ -942,12 +943,13 @@ window.ZALO_REVIEW = (function () {
       + ' <button type="button" class="btn sm" data-act="rv-toggle" data-key="' + esc(a.key) + '" data-open="' + (open ? 0 : 1) + '">' + esc(open ? t.close : t.open) + "</button></div></div>";
     if (!open) return h + "</div>";
     h += '<div class="rvbody"><div class="rvjourney"><div class="rvjt">' + esc(t.journey) + "</div>";
+    /* every milestone listed here is due in the audited week; earlier ones are not shown or scored */
     if (a.source && a.source.indexOf("sheet") === 0 && (a.missing || a.remark) && !Object.keys(a.marks || {}).length) h += '<div class="rvlegacy">' + (a.missing ? "<div>" + esc(a.missing) + "</div>" : "") + "</div>";
     j.forEach(function (m) {
-      var bits = marks[m.stage], marked = bits !== undefined && bits !== "", db = daBits(ctx, c, m.stage), inWeek = m.due >= a.week && m.due <= Z.addDays(a.week, 6), ob = (a.marks || {})[m.stage];
+      var bits = marks[m.stage], marked = bits !== undefined && bits !== "", db = daBits(ctx, c, m.stage), ob = (a.marks || {})[m.stage];
       var p = marked ? bitsPts(bits, m.items.length) : null, ds = daState(ctx, c, m);
-      h += '<div class="rvms' + (inWeek ? " now" : "") + (marked ? (p === 1 ? " full" : p === 0 ? " none" : " part") : "") + '"><div class="rvmh"><b>' + esc(m.stage) + '</b><span class="d">' + esc(Z.fmtDM(m.due)) + "</span>"
-        + (inWeek ? '<span class="pill p-accent">' + esc(t.thisWeekChip) + "</span>" : "") + (m.before ? '<span class="pill p-inert">' + esc(t.beforeLive) + "</span>" : "")
+      h += '<div class="rvms now' + (marked ? (p === 1 ? " full" : p === 0 ? " none" : " part") : "") + '"><div class="rvmh"><b>' + esc(m.stage) + '</b><span class="d">' + esc(Z.fmtDM(m.due)) + "</span>"
+        + (m.before ? '<span class="pill p-inert">' + esc(t.beforeLive) + "</span>" : "")
         + '<span class="pill ' + (db ? (ds === "sent" ? "p-ok" : "p-warn") : "p-inert") + '">' + esc(db ? t.daTicked + (ds === "partial" ? " ½" : "") : t.daNone) + "</span>"
         + (locked ? "" : '<span class="rvmq"><button type="button" class="btn sm" data-act="rv-all" data-key="' + esc(a.key) + '" data-stage="' + esc(m.stage) + '" data-v="1">' + esc(t.allSent) + '</button><button type="button" class="btn sm" data-act="rv-all" data-key="' + esc(a.key) + '" data-stage="' + esc(m.stage) + '" data-v="0">' + esc(t.noneSent) + "</button></span>") + "</div>";
       var cn = A.lang() === "zh" ? cnText(a.product, m.stage) : "";

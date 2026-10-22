@@ -1,6 +1,6 @@
 # DA Zalo Dashboard — design, operations and change log
 
-**Status:** v1.6.1, 22 Oct 2026 — new sign-ins (`NGT_DA`, `ChengYF`, `OptoHO`) on top of 1.6.0's head office review mode and Claude translations. Script 1.6.1 is pasted, the Claude key is in Script properties and `testTranslation` passed on 22 Oct; the tracker's tabs, columns and settings are prepared. Publishing the new script version switches it on (§2.10) · DA dashboard live since 16 Oct 2026 · **Go-live:** 16 Oct 2026 · **Clinic:** NGT · **Last updated:** 22 Oct 2026
+**Status:** v1.6.2, 22 Oct 2026 — cards show only the cadences due that week; new sign-ins (`NGT_DA`, `ChengYF`, `OptoHO`) on top of 1.6.0's head office review mode and Claude translations. Script 1.6.1 is pasted, the Claude key is in Script properties and `testTranslation` passed on 22 Oct; the tracker's tabs, columns and settings are prepared. Publishing the new script version switches it on (§2.10) · DA dashboard live since 16 Oct 2026 · **Go-live:** 16 Oct 2026 · **Clinic:** NGT · **Last updated:** 22 Oct 2026
 
 This file is the single source of truth for the DA Zalo Dashboard. Part 1 is the view at a
 glance, Part 2 the granular rules, Part 3 the change log. Every change to the dashboard updates
@@ -558,19 +558,21 @@ needs-attention list (not started, marked but not completed, submitted and waiti
    15 and toward each cadence's quota, and all its cadences score. **Draw** fills the quotas
    from shuffled, product-alternating pools and tops up from the biggest pools; chips show
    covered / quota per cadence. Any customer can be added from the search box. Each sampled
-   chat shows the **customer journey** — every milestone from the deposit up to the week, the
-   one due that week highlighted, each with the SOP items as tick boxes, "All sent" / "Nothing
-   sent", a "DA ticked" badge per milestone and item, and a red item wherever the DA ticked what
-   the reviewer did not find — plus a remark, screenshots, a data-issue flag and **Mark as
-   checked**.
+   chat shows **only the cadences due that week** (1.6.2; earlier milestones are neither shown
+   nor scored, so the DA later sees exactly what was audited), each with the SOP items as tick
+   boxes, "All sent" / "Nothing sent", a "DA ticked" badge per milestone and item, a
+   "before go-live" chip where the due date precedes go-live, and a red item wherever the DA
+   ticked what the reviewer did not find — plus a remark, screenshots, a data-issue flag and
+   **Mark as checked**.
 5. **Other chats due** — every remaining due chat with the DA's tick status per cadence and a
    **Mark** button. Marked ones open inline, count as **extra** (in the scores, not in the 15).
 6. **History** (folded) — the weeks table, every audited chat with filters, CSV export.
 
 **Rules.** Due dates are the dashboard's (deposit date for D1 / D6-7, collection date from CD
-on; §2.3). The journey keeps D1 and D6-7 after collection and flags milestones due before
-go-live. A milestone scores 1 when every item is ticked, 0.5 when some are, 0 when none; only
-milestones the reviewer marked count; a chat's verdict is pass / partial / fail / data issue,
+on; §2.3). A chat is audited on the cadences due in the week it was sampled for, D1 and D6-7
+included after collection; milestones due before go-live are shown with a chip. A milestone
+scores 1 when every item is ticked, 0.5 when some are, 0 when none; only milestones the reviewer
+marked count; a chat's verdict is pass / partial / fail / data issue,
 or "not checked" until something is marked. Marks copied from the old week sheets read "noted".
 Phone numbers sit behind **Show phone**. Every change saves itself; **Complete week** is the only
 submit: it sets the week to Submitted, locks every entry (the script refuses writes), and emails
@@ -766,6 +768,7 @@ Newest first. Each entry: date · version · what changed · why · files.
 
 | Date | Version | Change | Why | Files |
 |---|---|---|---|---|
+| 2026-10-22 | 1.6.2 | A sampled chat shows and scores **only the cadences due that week**; earlier milestones of the journey are no longer listed or counted, the tiles and notes no longer mention them, and the section is titled "Cadences due this week". | Asked after the first live look: the whole journey on every card was confusing, and the DA should later see exactly what was audited. | `zalo/review.js`, `zalo/app.js`, `zalo/index.html`, `zalo/version.json`, `zalo/README.md` |
 | 2026-10-22 | docs | Launch state recorded: script 1.6.1 pasted, Claude key set and verified with `testTranslation`, the live tracker widened with the HO columns and the three new settings rows (translation stays inside the script; no scheduled job outside it). | So the README says exactly where the launch stands. | `zalo/README.md` |
 | 2026-10-22 | docs | §2.16 added: the hand-over checklist for moving the script, workbooks, page and translation key under MSG's own accounts, and how translation keeps working without an Anthropic key. | Asked at launch: what changes when the dashboard moves from personal accounts to MSG. | `zalo/README.md` |
 | 2026-10-22 | 1.6.1 | New sign-ins: `NGT_DA` (DA), `ChengYF` (reviewer), `OptoHO` (one shared head-office login); the approver names offered at Publish now come from `HO_APPROVERS` (SL, Anh) rather than from the HO logins, and the shared login preselects nobody; HO display names served for the edit log. | Credentials agreed at launch; one HO login, the approver tick says who approved. | `zalo/tools/zalo-sop.gs`, `zalo/app.js`, `zalo/review.js`, `zalo/index.html`, `zalo/version.json`, `zalo/tools/test-gs.js`, `zalo/README.md`, `README.md` |
