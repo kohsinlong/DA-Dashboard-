@@ -61,9 +61,9 @@ window.ZALO_REVIEW = (function () {
       months: ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"],
       ho: {
         sub: "{c} · 总部 {r}", queue: "待审核", queueHint: "审核人已完成的周，以及等待您处理的事项", review: "审核", openWeek: "打开",
-        qSubmitted: "{r} 已完成 {t}", qReview: "{h} 审核中 · 自 {t}", qPublished: "已发布 {t} · 审批人 {a}", qMarking: "{r} 标记中 · 已检查 {c} / {n}", qMarkingC: "{r} 标记中 · 已检查 {c} / {n} 个抽样对话，可先审核", qNone: "目前没有等待审核的周。",
+        qSubmitted: "{r} 已完成 {t}", qReview: "{h} 审核中 · 自 {t}", qPublished: "已发布 {t} · 审批人 {a}", qMarking: "{r} 标记中 · 已检查 {c} / {n}", qMarkingC: "{r} 标记中 · 已检查 {c} / {n} 个抽样对话，可先审核 · 已批准 {p}", qNone: "目前没有等待审核的周。",
         qLine: "{n} 个对话 + {x} 额外 · 审核 {s} · 助理自报 {d} · 勾了但未见 {g} · 数据问题 {i}",
-        stripMarking: "{r} 标记中 · 已检查 {c} / {n} 个抽样对话 · 额外 {x}", stripMarkingX: "{r} 已检查的对话现在就可以审核；完成本周后才能发布。", notCheckedYet: "{r} 尚未检查这个对话。",
+        stripMarking: "{r} 标记中 · 已检查 {c} / {n} 个抽样对话 · 已批准 {p} · 额外 {x}", stripMarkingX: "{r} 已检查的对话现在就可以审核；完成本周后才能发布。", notCheckedYet: "{r} 尚未检查这个对话。",
         stripSubmitted: "{r} 已完成 {t} · {n} 个对话 · {c} 已检查", stripReview: "{h} 审核中 · 自 {t} · {e} 处修改", stripPublished: "已发布 {t} · 审批人 {a}", stripAck: "助理已确认 {t}",
         sentBack: "已退回给 {r} {t}：{note}", hoStatus: "HO 状态",
         start: "开始审核", sendBack: "退回给审核人", publish: "发布给助理", reopen: "重新审核", reopenAsk: "把这个已发布的周收回重新审核？在再次发布前助理将看不到它。",
@@ -77,7 +77,9 @@ window.ZALO_REVIEW = (function () {
         readOnly: "只读：{r} 仍在标记本周。", locked: "本周已发布；点“重新审核”后才能修改。", notYours: "此处不能修改。",
         chats: "对话", chatsHint: "审核人的勾选与备注 · 修正勾选、编辑越南语、隐藏对话", vBreak: "按助理 / 产品", thDa2: "助理", thProd: "产品", thDueC: "到期节点", thDaRep: "助理自报", thAudited: "审核", thInSample: "样本中", thGapS: "勾了但未见",
         ladder: "合规 · {c}", ladderHint: "助理自报 vs 审核样本 · 按节点", ladderNote: "两条之间的差距是要盯的数字：助理报告的 vs 审核人找到的。", noDue: "本周没有到期节点。",
-        approvedTag: "审批人 {a}", other2: "其他：{n}"
+        approvedTag: "审批人 {a}", other2: "其他：{n}",
+        approve: "批准 → 助理", approveAll: "批准全部已检查 ({n})", apTitle: "批准 {n} 个对话发布给助理", apLede: "当前的勾选和越南语将发给助理。本周可以继续标记；“完成本周”只用于总评和剩余对话。", apBtn: "批准", apDone: "已批准 {n} 个对话",
+        approvedPill: "审批人 {a} · {t} · 已发助理", withdraw: "撤回批准", withdrawn: "已撤回批准", withdrawnByChange: "{n} 个对话的 HO 批准已撤回：对话内容已更改", apUntranslated: "其中 {u} 条尚无越南语。", approvedN: "已批准 {p}"
       }
     },
     en: {
@@ -112,9 +114,9 @@ window.ZALO_REVIEW = (function () {
       months: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
       ho: {
         sub: "{c} · head office {r}", queue: "Review queue", queueHint: "what the reviewer has completed and what is waiting on you", review: "Review", openWeek: "Open",
-        qSubmitted: "completed by {r} {t}", qReview: "under review by {h} since {t}", qPublished: "published {t} · approved by {a}", qMarking: "{r} is marking · {c} of {n} checked", qMarkingC: "{r} is marking · {c} of {n} sampled chats checked, ready to review", qNone: "Nothing is waiting for review.",
+        qSubmitted: "completed by {r} {t}", qReview: "under review by {h} since {t}", qPublished: "published {t} · approved by {a}", qMarking: "{r} is marking · {c} of {n} checked", qMarkingC: "{r} is marking · {c} of {n} sampled chats checked, ready to review · {p} approved", qNone: "Nothing is waiting for review.",
         qLine: "{n} chats + {x} extra · audited {s} · DA-reported {d} · {g} ticked, not found · {i} data issues",
-        stripMarking: "{r} is marking · {c} of {n} sampled chats checked · {x} extra", stripMarkingX: "Chats {r} has checked can be reviewed now; Publish once the week is completed.", notCheckedYet: "{r} has not checked this chat yet.",
+        stripMarking: "{r} is marking · {c} of {n} sampled chats checked · {p} approved · {x} extra", stripMarkingX: "Chats {r} has checked can be reviewed now; Publish once the week is completed.", notCheckedYet: "{r} has not checked this chat yet.",
         stripSubmitted: "completed by {r} {t} · {n} chats · {c} checked", stripReview: "under review by {h} since {t} · {e} edits", stripPublished: "published {t} · approved by {a}", stripAck: "acknowledged by the DA {t}",
         sentBack: "sent back to {r} {t}: {note}", hoStatus: "HO status",
         start: "Start review", sendBack: "Send back to reviewer", publish: "Publish to DA", reopen: "Reopen review", reopenAsk: "Take this published week back into review? The DA stops seeing it until it is published again.",
@@ -128,7 +130,9 @@ window.ZALO_REVIEW = (function () {
         readOnly: "Read only: {r} is still marking this week.", locked: "This week is published; press Reopen review to change it.", notYours: "You cannot change this here.",
         chats: "Chats", chatsHint: "the reviewer's marks and remarks · correct a tick, edit the Vietnamese, hide a chat", vBreak: "By DA / product", thDa2: "DA", thProd: "Product", thDueC: "Due cadences", thDaRep: "DA-reported", thAudited: "Audited", thInSample: "In sample", thGapS: "Ticked, not found",
         ladder: "Compliance · {c}", ladderHint: "DA-reported ticks against the audited sample · per cadence", ladderNote: "The gap between the two bars is the number to watch: what the DA reports against what the reviewer found.", noDue: "No cadence falls due this week.",
-        approvedTag: "approved by {a}", other2: "Other: {n}"
+        approvedTag: "approved by {a}", other2: "Other: {n}",
+        approve: "Approve → DA", approveAll: "Approve all checked ({n})", apTitle: "Approve {n} chat(s) for the DA", apLede: "The ticks and the Vietnamese as they stand go to the DA. The week can stay open; Complete week is only for the overall feedback and whatever is left.", apBtn: "Approve", apDone: "{n} approved for the DA",
+        approvedPill: "Approved by {a} · {t} · to the DA", withdraw: "Withdraw approval", withdrawn: "Approval withdrawn", withdrawnByChange: "HO approval withdrawn on {n} chat(s): the chat changed", apUntranslated: "{u} of these have no Vietnamese yet.", approvedN: "{p} approved"
       }
     },
     vi: {
@@ -163,9 +167,9 @@ window.ZALO_REVIEW = (function () {
       months: ["Th1", "Th2", "Th3", "Th4", "Th5", "Th6", "Th7", "Th8", "Th9", "Th10", "Th11", "Th12"],
       ho: {
         sub: "{c} · văn phòng {r}", queue: "Chờ duyệt", queueHint: "những tuần người kiểm đã hoàn tất và việc đang chờ bạn", review: "Duyệt", openWeek: "Mở",
-        qSubmitted: "{r} hoàn tất {t}", qReview: "{h} đang duyệt · từ {t}", qPublished: "đã gửi {t} · duyệt bởi {a}", qMarking: "{r} đang chấm · {c} / {n} đã kiểm", qMarkingC: "{r} đang chấm · {c} / {n} hội thoại trong mẫu đã kiểm, duyệt được ngay", qNone: "Không có tuần nào chờ duyệt.",
+        qSubmitted: "{r} hoàn tất {t}", qReview: "{h} đang duyệt · từ {t}", qPublished: "đã gửi {t} · duyệt bởi {a}", qMarking: "{r} đang chấm · {c} / {n} đã kiểm", qMarkingC: "{r} đang chấm · {c} / {n} hội thoại trong mẫu đã kiểm, duyệt được ngay · {p} đã duyệt", qNone: "Không có tuần nào chờ duyệt.",
         qLine: "{n} hội thoại + {x} thêm · kiểm {s} · trợ lý báo {d} · {g} tick không thấy · {i} lỗi dữ liệu",
-        stripMarking: "{r} đang chấm · {c} / {n} hội thoại trong mẫu đã kiểm · {x} thêm", stripMarkingX: "Hội thoại {r} đã kiểm có thể duyệt ngay; Gửi cho trợ lý sau khi tuần hoàn tất.", notCheckedYet: "{r} chưa kiểm hội thoại này.",
+        stripMarking: "{r} đang chấm · {c} / {n} hội thoại trong mẫu đã kiểm · {p} đã duyệt · {x} thêm", stripMarkingX: "Hội thoại {r} đã kiểm có thể duyệt ngay; Gửi cho trợ lý sau khi tuần hoàn tất.", notCheckedYet: "{r} chưa kiểm hội thoại này.",
         stripSubmitted: "{r} hoàn tất {t} · {n} hội thoại · {c} đã kiểm", stripReview: "{h} đang duyệt · từ {t} · {e} chỉnh sửa", stripPublished: "đã gửi {t} · duyệt bởi {a}", stripAck: "trợ lý đã xác nhận {t}",
         sentBack: "đã trả lại {r} {t}: {note}", hoStatus: "Trạng thái HO",
         start: "Bắt đầu duyệt", sendBack: "Trả lại người kiểm", publish: "Gửi cho trợ lý", reopen: "Duyệt lại", reopenAsk: "Thu hồi tuần đã gửi để duyệt lại? Trợ lý sẽ không thấy cho đến khi gửi lại.",
@@ -179,7 +183,9 @@ window.ZALO_REVIEW = (function () {
         readOnly: "Chỉ đọc: {r} vẫn đang chấm tuần này.", locked: "Tuần đã gửi; bấm Duyệt lại để sửa.", notYours: "Không sửa được ở đây.",
         chats: "Hội thoại", chatsHint: "tick và nhận xét của người kiểm · sửa tick, sửa tiếng Việt, ẩn hội thoại", vBreak: "Theo trợ lý / sản phẩm", thDa2: "Trợ lý", thProd: "Sản phẩm", thDueC: "Cadence đến hạn", thDaRep: "Trợ lý báo", thAudited: "Kiểm", thInSample: "Trong mẫu", thGapS: "Tick không thấy",
         ladder: "Tuân thủ · {c}", ladderHint: "trợ lý báo so với mẫu kiểm · theo cadence", ladderNote: "Khoảng cách giữa hai thanh là con số cần theo dõi: trợ lý báo so với người kiểm thấy.", noDue: "Tuần này không có cadence đến hạn.",
-        approvedTag: "duyệt bởi {a}", other2: "Khác: {n}"
+        approvedTag: "duyệt bởi {a}", other2: "Khác: {n}",
+        approve: "Duyệt → trợ lý", approveAll: "Duyệt tất cả đã kiểm ({n})", apTitle: "Duyệt {n} hội thoại gửi trợ lý", apLede: "Các tick và bản tiếng Việt hiện tại sẽ gửi cho trợ lý. Tuần vẫn mở; Hoàn tất tuần chỉ dành cho nhận xét chung và phần còn lại.", apBtn: "Duyệt", apDone: "Đã duyệt {n} hội thoại",
+        approvedPill: "Duyệt bởi {a} · {t} · đã gửi trợ lý", withdraw: "Thu hồi duyệt", withdrawn: "Đã thu hồi duyệt", withdrawnByChange: "Đã thu hồi duyệt HO trên {n} hội thoại: nội dung đã thay đổi", apUntranslated: "{u} trong số này chưa có tiếng Việt.", approvedN: "{p} đã duyệt"
       }
     }
   };
@@ -218,7 +224,8 @@ window.ZALO_REVIEW = (function () {
   function marksOf(a){ return a.hoMarks || a.marks || {}; }
   function hoActs(week, clinic){ var s = weekStatus(week, clinic); return isHo() && (s === "submitted" || s === "review"); }   /* Start review, Send back, Publish */
   function hoCanWeek(week, clinic){ var s = weekStatus(week, clinic); return isHo() && (s === "marking" || s === "submitted" || s === "review"); }
-  function hoCanCard(a){ return hoCanWeek(a.week, a.clinic) && (weekStatus(a.week, a.clinic) !== "marking" || a.status === "checked"); }   /* while marking: checked chats only */
+  function hoCanCard(a){ return hoCanWeek(a.week, a.clinic) && !a.publishedAt && (weekStatus(a.week, a.clinic) !== "marking" || a.status === "checked"); }   /* while marking: checked chats only; approved chats are locked until withdrawn */
+  function approvable(week, clinic){ return recsOf(week, clinic).filter(function (a) { return a.status === "checked" && a.visible !== 0 && !a.publishedAt; }); }
   function hoCan(week, clinic){ return hoActs(week, clinic); }
   function canEdit(week, clinic){ return isHo() ? hoCanWeek(week, clinic) : !isLocked(week, clinic); }
   function hasHoEdits(a){ return !!(a.hoMarks || (a.hoEdits || []).length); }
@@ -326,7 +333,7 @@ window.ZALO_REVIEW = (function () {
   function weekStats(week, clinic){
     clinic = clinic || st.clinic;
     var ctx = ctxOf(clinic), recs = recsOf(week, clinic), target = sampleSize(clinic);
-    var s = { week: week, clinic: clinic, target: target, dueCustomers: 0, dueCadences: 0, sampled: recs.length, drawn: 0, extra: 0, checked: 0, pass: 0, partial: 0, fail: 0, data: 0, noted: 0, open: 0,
+    var s = { week: week, clinic: clinic, target: target, dueCustomers: 0, dueCadences: 0, sampled: recs.length, drawn: 0, extra: 0, checked: 0, approved: 0, pass: 0, partial: 0, fail: 0, data: 0, noted: 0, open: 0,
               score: null, weekScore: null, notFound: 0, itemsOn: 0, itemsN: 0, itemsPct: null, allOn: 0, allN: 0, earlier: 0, cadences: 0, daSent: null, daN: 0, daItemsOn: 0, daItemsN: 0,
               byStage: {}, items: {}, daItems: {}, status: weekStatus(week, clinic) };
     function stageRow(stage){ return s.byStage[stage] = s.byStage[stage] || { stage: stage, due: 0, daFull: 0, daPartial: 0, daNone: 0, daOn: 0, daN: 0, inSample: 0, on: 0, n: 0, full: 0, partial: 0, missed: 0, pts: 0 }; }
@@ -346,6 +353,7 @@ window.ZALO_REVIEW = (function () {
       var e = evalRec(a); s[e.verdict] = (s[e.verdict] || 0) + 1;
       if (isExtra(a)) s.extra++; else s.drawn++;
       if (a.status === "checked") s.checked++;
+      if (a.publishedAt) s.approved++;
       if (e.score !== null) ptsAll.push(e.score); if (e.weekScore !== null) ptsWk.push(e.weekScore);
       s.notFound += e.notFound; s.allOn += e.items.on; s.allN += e.items.n; s.cadences += e.n;
       e.stages.forEach(function (x) {
@@ -376,7 +384,11 @@ window.ZALO_REVIEW = (function () {
     clearTimeout(st.timers[a.key]); setStatus(a.key, "saving");
     st.timers[a.key] = setTimeout(function () {
       A.post({ action: "auditSave", audits: [toSheet(a)], stats: [statsLine(weekStats(a.week, a.clinic))] })
-        .then(function (r) { if (r && r.translated) applyTranslations(r.translated, a.week, a.clinic); setStatus(a.key, r && r.local ? "local" : "saved"); })
+        .then(function (r) {
+          if (r && r.translated) applyTranslations(r.translated, a.week, a.clinic);
+          if (r && r.withdrawn && r.withdrawn.length) { r.withdrawn.forEach(function (k) { var x = st.audits[k]; if (x) { x.approvedBy = ""; x.publishedAt = ""; } }); A.toast(fill(TH().withdrawnByChange, { n: r.withdrawn.length })); R.render(); }
+          setStatus(a.key, r && r.local ? "local" : "saved");
+        })
         .catch(function (e) { setStatus(a.key, "failed " + e.message); });
     }, 700);
   }
@@ -549,7 +561,7 @@ window.ZALO_REVIEW = (function () {
       + '<div class="rvjt">' + esc(th.approvedBy) + '</div><div class="aprow">' + aps.map(function (a) { return '<label class="' + (st.ui.ap === a ? "on" : "") + '"><input type="radio" name="rvAp" value="' + esc(a) + '"' + (st.ui.ap === a ? " checked" : "") + "> " + esc(a) + "</label>"; }).join("")
       + '<label class="' + (st.ui.ap === "other" ? "on" : "") + '"><input type="radio" name="rvAp" value="other"' + (st.ui.ap === "other" ? " checked" : "") + "> " + esc(th.other) + '</label><input type="text" id="rvApName" placeholder="' + esc(th.otherName) + '" value="' + esc(st.ui.apName) + '"' + (st.ui.ap === "other" ? "" : " hidden") + "></div>"
       + '<div class="gbtns"><button type="button" class="btn" data-act="rv-cancel">' + esc(th.cancel) + '</button><button type="button" class="btn good" data-act="rv-publish-go">' + esc(th.pubBtn) + "</button></div></div>";
-    A.openSheet(h, "rv-publish");
+    st.ui.sheetMode = "publish"; A.openSheet(h, "rv-publish");
     document.querySelectorAll('input[name="rvAp"]').forEach(function (r) { r.onchange = function () { st.ui.ap = r.value; openPublish(week); var nm = $("rvApName"); if (nm && !nm.hidden) nm.focus(); }; });
     var nm = $("rvApName"); if (nm) nm.oninput = function () { st.ui.apName = nm.value; };
   }
@@ -557,6 +569,35 @@ window.ZALO_REVIEW = (function () {
     var th = TH(), ap = st.ui.ap === "other" ? st.ui.apName.trim() : st.ui.ap;
     if (!ap) { A.toast(th.needApprover, true); return; }
     A.closeSheet(); setWeekStatus(week, "published", { approvedBy: ap });
+  }
+  function openApprove(keys){
+    var th = TH(), aps = ((st.data && st.data.approvers) || []).slice(), un = keys.filter(function (k) { var a = st.audits[k]; return a && needsVi(a); }).length;
+    st.ui.apKeys = keys; if (!st.ui.ap) st.ui.ap = (st.data && st.data.approver) || "";
+    var h = '<div class="modal"><h2>' + esc(fill(th.apTitle, { n: keys.length })) + '</h2><p class="lede">' + esc(th.apLede) + (un ? " " + esc(fill(th.apUntranslated, { u: un })) : "") + "</p>"
+      + '<div class="rvjt">' + esc(th.approvedBy) + '</div><div class="aprow">' + aps.map(function (a) { return '<label class="' + (st.ui.ap === a ? "on" : "") + '"><input type="radio" name="rvAp" value="' + esc(a) + '"' + (st.ui.ap === a ? " checked" : "") + "> " + esc(a) + "</label>"; }).join("")
+      + '<label class="' + (st.ui.ap === "other" ? "on" : "") + '"><input type="radio" name="rvAp" value="other"' + (st.ui.ap === "other" ? " checked" : "") + "> " + esc(th.other) + '</label><input type="text" id="rvApName" placeholder="' + esc(th.otherName) + '" value="' + esc(st.ui.apName) + '"' + (st.ui.ap === "other" ? "" : " hidden") + "></div>"
+      + '<div class="gbtns"><button type="button" class="btn" data-act="rv-cancel">' + esc(th.cancel) + '</button><button type="button" class="btn good" data-act="rv-approve-go">' + esc(th.apBtn) + "</button></div></div>";
+    st.ui.sheetMode = "approve"; A.openSheet(h, "rv-approve");
+    document.querySelectorAll('input[name="rvAp"]').forEach(function (r) { r.onchange = function () { st.ui.ap = r.value; openApprove(keys); var nm = $("rvApName"); if (nm && !nm.hidden) nm.focus(); }; });
+    var nm = $("rvApName"); if (nm) nm.oninput = function () { st.ui.apName = nm.value; };
+  }
+  function approveGo(){
+    var th = TH(), keys = st.ui.apKeys || [], ap = st.ui.ap === "other" ? st.ui.apName.trim() : st.ui.ap;
+    if (!ap) { A.toast(th.needApprover, true); return; }
+    if (!keys.length) { A.closeSheet(); return; }
+    A.closeSheet();
+    flushAll().then(function () { return A.post({ action: "hoApprove", clinic: st.clinic, week: st.week, keys: keys, approvedBy: ap }); })
+      .then(function (r) {
+        (r.keys || keys).forEach(function (k) { var a = st.audits[k]; if (!a) return; a.approvedBy = r.approvedBy || ap; a.publishedAt = r.at || nowIso(); a.hoEdits = a.hoEdits || []; a.hoEdits.push(logEntry("approval", { old: "", "new": a.approvedBy, what: "approved for the DA" })); });
+        A.toast(fill(th.apDone, { n: (r.keys || keys).length })); R.render();
+      })
+      .catch(function (e) { A.toast(fill(T().failed, { e: e.message }), true); });
+  }
+  function unapprove(key){
+    var th = TH(), a = st.audits[key]; if (!a) return;
+    A.post({ action: "hoApprove", clinic: a.clinic, week: a.week, keys: [key], undo: 1 })
+      .then(function () { a.hoEdits = a.hoEdits || []; a.hoEdits.push(logEntry("approval", { old: a.approvedBy, "new": "", what: "approval withdrawn" })); a.approvedBy = ""; a.publishedAt = ""; A.toast(th.withdrawn); R.render(); })
+      .catch(function (e) { A.toast(fill(T().failed, { e: e.message }), true); });
   }
   function openSendBack(week){
     var th = TH(), h = '<div class="modal"><h2>' + esc(fill(th.sbTitle, { c: st.clinic, w: wTag(week), r: rvName() })) + '</h2><p class="lede">' + esc(th.sbLede) + '</p><textarea id="rvSbNote" placeholder="' + esc(th.sbPh) + '"></textarea>'
@@ -716,7 +757,7 @@ window.ZALO_REVIEW = (function () {
     });
     marking.forEach(function (m) {
       var s = m.s, c = m.c;
-      h += '<a class="lrow" href="#/clinic-' + c.toLowerCase() + '" data-act="rv-goto" data-w="' + esc(m.week) + '"><div><div class="nm">' + esc(c) + " · " + esc(wTag(m.week)) + " " + statusPill("marking") + '</div><div class="meta">' + esc(s.checked ? fill(th.qMarkingC, { r: rvName(c), c: s.checked, n: s.drawn }) : fill(th.qMarking, { r: rvName(c), c: s.checked, n: s.drawn })) + '</div></div><div class="right"><span class="btn ' + (s.checked ? "primary " : "") + 'sm">' + esc(s.checked ? th.review : th.openWeek) + "</span></div></a>";
+      h += '<a class="lrow" href="#/clinic-' + c.toLowerCase() + '" data-act="rv-goto" data-w="' + esc(m.week) + '"><div><div class="nm">' + esc(c) + " · " + esc(wTag(m.week)) + " " + statusPill("marking") + '</div><div class="meta">' + esc(s.checked ? fill(th.qMarkingC, { r: rvName(c), c: s.checked, n: s.drawn, p: s.approved }) : fill(th.qMarking, { r: rvName(c), c: s.checked, n: s.drawn })) + '</div></div><div class="right"><span class="btn ' + (s.checked ? "primary " : "") + 'sm">' + esc(s.checked ? th.review : th.openWeek) + "</span></div></a>";
     });
     return h + "</div>";
   }
@@ -758,10 +799,12 @@ window.ZALO_REVIEW = (function () {
     var hoText = status === "review" ? fill(th.stripReview, { h: hoLabel(wk.hoBy), t: fmtWhen(wk.takenAt), e: hoEditCount(week) }) : status === "published" ? fill(th.stripPublished, { t: fmtWhen(wk.publishedAt), a: wk.approvedBy || "" }) : status === "acknowledged" ? fill(th.stripAck, { t: fmtWhen(wk.updated) }) : "";
     if (isHo()) {
       var can = hoActs(week), un = untranslated(week);
-      h += "<span>" + esc(status === "marking" ? fill(th.stripMarking, { r: rvName(), n: s.drawn, t: s.target, x: s.extra, c: s.checked }) : status === "submitted" ? fill(th.stripSubmitted, { r: rvName(), t: fmtWhen(wk.submittedAt), n: s.sampled, c: s.checked }) : hoText) + "</span>";
+      h += "<span>" + esc(status === "marking" ? fill(th.stripMarking, { r: rvName(), n: s.drawn, t: s.target, x: s.extra, c: s.checked, p: s.approved }) : status === "submitted" ? fill(th.stripSubmitted, { r: rvName(), t: fmtWhen(wk.submittedAt), n: s.sampled, c: s.checked }) + " · " + fill(th.approvedN, { p: s.approved }) : hoText) + "</span>";
       h += '<span class="right">';
       if (status === "marking") h += '<span class="hint">' + esc(fill(th.stripMarkingX, { r: rvName() })) + "</span>";
       if (hoCanWeek(week) && un) h += '<button type="button" class="btn sm" data-act="rv-translate"' + (trBusy(week) ? " disabled" : "") + ">" + esc(trBusy(week) ? th.translating : fill(th.translateAll, { n: un })) + "</button>";
+      var apn = hoCanWeek(week) ? approvable(week).length : 0;
+      if (apn) h += '<button type="button" class="btn sm good" data-act="rv-approve-all">' + esc(fill(th.approveAll, { n: apn })) + "</button>";
       if (can) {
         if (status === "submitted") h += '<button type="button" class="btn sm" data-act="rv-start">' + esc(th.start) + "</button>";
         h += '<button type="button" class="btn sm" data-act="rv-sendback">' + esc(th.sendBack) + '</button><button type="button" class="btn good" data-act="rv-publish">' + esc(th.publish) + "</button>";
@@ -948,6 +991,7 @@ window.ZALO_REVIEW = (function () {
       + (ho ? ' · <label class="rvflag inl"><input type="checkbox" data-hovis="' + esc(a.key) + '"' + (a.visible === 0 ? "" : " checked") + dis + "> " + esc(th.visible) + "</label>" : a.visible === 0 ? ' · <span class="pill p-inert">' + esc(th.hidden) + "</span>" : "") + "</div></div>"
       + '<div class="rvverdict">' + verdictPill(e.verdict) + (e.score !== null ? ' <b style="color:' + scoreColour(e.score) + '">' + e.score + "%</b>" : "") + (e.notFound ? ' <span class="pill p-bad">' + e.notFound + " " + esc(t.notFound) + "</span>" : "")
       + (a.hoMarks ? ' <span class="corr">' + esc(fill(th.corrected, { h: corrBy() })) + "</span>" : "") + (!ho && a.status === "checked" ? ' <span class="pill p-ok">' + esc(t.checked) + "</span>" : "")
+      + (a.publishedAt ? ' <span class="pill p-ok">' + esc(fill(th.approvedPill, { a: a.approvedBy, t: fmtWhen(a.publishedAt) })) + "</span>" : "")
       + ' <button type="button" class="btn sm" data-act="rv-toggle" data-key="' + esc(a.key) + '" data-open="' + (open ? 0 : 1) + '">' + esc(open ? t.close : t.open) + "</button></div></div>";
     if (!open) return h + "</div>";
     h += '<div class="rvbody"><div class="rvjourney"><div class="rvjt">' + esc(t.journey) + "</div>";
@@ -971,7 +1015,9 @@ window.ZALO_REVIEW = (function () {
     if (!j.length) h += '<div class="empty">' + esc(t.notChecked) + "</div>";
     h += "</div>";
     if (ho) {
-      h += '<div class="rvside hoside">' + trio(a, a.key, !locked, a.key) + (a.data ? '<span class="pill p-inert">' + esc(t.dataIssue) + "</span>" : "")
+      var apBtn = a.publishedAt ? (hoCanWeek(a.week, a.clinic) ? '<button type="button" class="btn sm" data-act="rv-unapprove" data-key="' + esc(a.key) + '">' + esc(th.withdraw) + "</button>" : "")
+                : (!locked && a.status === "checked" && a.visible !== 0 ? '<button type="button" class="btn good" data-act="rv-approve" data-key="' + esc(a.key) + '">' + esc(th.approve) + "</button>" : "");
+      h += '<div class="rvside hoside">' + trio(a, a.key, !locked, a.key) + (apBtn ? '<div class="rvrow">' + apBtn + "</div>" : "") + (a.data ? '<span class="pill p-inert">' + esc(t.dataIssue) + "</span>" : "")
         + (shotsOf(a).length ? '<div class="rvjt">' + esc(t.shots) + "</div>" + shotsHtml(a, false) : "") + "</div></div></div>";
       return h;
     }
@@ -1127,10 +1173,14 @@ window.ZALO_REVIEW = (function () {
       case "rv-sendback": if (hoCan(st.week)) openSendBack(st.week); return true;
       case "rv-publish": if (hoCan(st.week)) openPublish(st.week); return true;
       case "rv-publish-go": publishGo(st.week); return true;
+      case "rv-approve": if (hoCanWeek(st.week)) openApprove([el.dataset.key]); return true;
+      case "rv-approve-all": if (hoCanWeek(st.week)) openApprove(approvable(st.week).map(function (a) { return a.key; })); return true;
+      case "rv-approve-go": approveGo(); return true;
+      case "rv-unapprove": if (hoCanWeek(st.week)) unapprove(el.dataset.key); return true;
       case "rv-sendback-go": sendBackGo(st.week); return true;
       case "rv-cancel": A.closeSheet(); return true;
       case "rv-reopen-review": if (isHo() && weekStatus(st.week) === "published" && window.confirm(TH().reopenAsk)) setWeekStatus(st.week, "review"); return true;
-      case "rv-translate": { var inModal = !!$("rvApName"), wk0 = st.week; translateWeek(wk0, st.clinic).then(function () { if (inModal && $("rvApName")) openPublish(wk0); }); return true; }
+      case "rv-translate": { var sheetEl = $("sheet"), inModal = !!(sheetEl && !sheetEl.classList.contains("gone") && $("rvApName")), mode = st.ui.sheetMode, wk0 = st.week; translateWeek(wk0, st.clinic).then(function () { if (!inModal) return; if (mode === "approve") openApprove(st.ui.apKeys || []); else openPublish(wk0); }); return true; }
       case "rv-translate-one": { var k1 = el.dataset.key; translateWeek(st.week, st.clinic, k1 ? [k1] : [], !k1, true); return true; }
       case "rv-log": st.ui.logs[el.dataset.key] = !st.ui.logs[el.dataset.key]; R.render(); return true;
       case "rv-check": if (guard()) return true; a = st.audits[el.dataset.key]; if (a) { a.status = a.status === "checked" ? "sampled" : "checked"; a.checkedAt = a.status === "checked" ? nowIso() : ""; st.ui.open[a.key] = a.status !== "checked"; save(a); R.render(); } return true;
@@ -1202,9 +1252,11 @@ window.ZALO_REVIEW = (function () {
     get: function (p) { if (p && p.action === "shot") return { ok: 1, id: p.id, mime: "image/png", data: (st.blobs[p.id] || "").split(",")[1] || "" }; R.demo.save(); return st.data; },
     post: function (b) {
       switch (b.action) {
-        case "auditSave": case "auditRemove": case "feedbackSave": case "shotRemove": R.demo.save(); return { ok: 1, local: true };
+        case "auditSave": { var wd = []; (b.audits || []).forEach(function (x) { var a = st.audits[x.key]; if (a && a.publishedAt) { a.approvedBy = ""; a.publishedAt = ""; wd.push(x.key); } }); R.demo.save(); return { ok: 1, local: true, withdrawn: wd }; }
+        case "auditRemove": case "feedbackSave": case "shotRemove": R.demo.save(); return { ok: 1, local: true };
         case "weekStatus": R.demo.save(); return { ok: 1, local: true, status: b.status, emailed: 0, translated: null };
         case "hoEdit": case "hoFeedback": { var w = st.weekly[wKey(b.week, b.clinic)]; R.demo.save(); return { ok: 1, local: true, status: w && w.status === "submitted" ? "review" : (w ? w.status : "review") }; }
+        case "hoApprove": R.demo.save(); return { ok: 1, local: true, keys: b.keys || [], approvedBy: b.undo ? "" : b.approvedBy, at: b.undo ? "" : nowIso() };
         case "hoTranslate": {
           var res = { ok: 1, local: true, by: "demo", rows: {}, weekly: null, errors: [] }, at = nowIso();
           var keys = b.keys ? b.keys : recsOf(b.week, b.clinic).filter(needsVi).map(function (a) { return a.key; });

@@ -478,7 +478,9 @@ var RV_HEADERS = {
           "本周到期 Due this week", "状态 Status", "结论 Verdict", "得分 Score", "已发送 Found", "缺失 Missing", "助理已勾未见 DA ticked, not found",
           "备注 Remark", "数据问题 Data issue", "截图 Screenshots", "检查时间 Checked at", "审核人 By", "更新时间 Updated", "评分明细 Marks", "来源 Source", "抽样时间 Added",
           /* 1.6.0, head office: the reviewer's columns above are never changed by HO */
-          "HO 备注 HO note", "备注 EN Remark EN", "备注 VI Remark VI", "备注 ZH Remark ZH", "对助理可见 Visible to DA", "HO 修改记录 HO edits", "HO 评分明细 HO marks", "翻译时间 Translated at", "翻译来源 Translated by"],
+          "HO 备注 HO note", "备注 EN Remark EN", "备注 VI Remark VI", "备注 ZH Remark ZH", "对助理可见 Visible to DA", "HO 修改记录 HO edits", "HO 评分明细 HO marks", "翻译时间 Translated at", "翻译来源 Translated by",
+          /* 1.6.5: head office approves chats one by one for the DA */
+          "审批人 Approved by", "发布时间 Published at"],
   weekly: ["键 Key", "周 Week", "诊所 Clinic", "到期客户 Customers due", "到期节点 Cadences due", "抽样 Sampled", "已检查 Checked", "合规 Pass", "部分 Partial",
            "未合规 Fail", "数据问题 Data issues", "得分 Score %", "本周节点得分 This week's cadences %", "助理已勾未见 DA ticked, not found", "助理自报已发 DA reported sent %",
            "本周总评 Overall remark", "审核人 By", "更新时间 Updated", "状态 Status", "提交时间 Submitted at", "审批人 Approved by", "发布时间 Published at",
@@ -598,7 +600,8 @@ function readAudits(ss) {
              shots: Number(v[17]) || 0, checkedAt: rvStamp(v[18]), by: cellText(v[19]), updated: rvStamp(v[20]), marks: marks, source: cellText(v[22]), added: rvStamp(v[23]),
              /* head office */
              hoNote: cellText(v[24]), remarkEn: cellText(v[25]), remarkVi: cellText(v[26]), remarkZh: cellText(v[27]), visible: cellText(v[28]) === "N" ? 0 : 1,
-             hoEdits: parseJson(cellText(v[29]), []), hoMarks: hoMarks, translatedAt: rvStamp(v[31]), translatedBy: cellText(v[32]) };
+             hoEdits: parseJson(cellText(v[29]), []), hoMarks: hoMarks, translatedAt: rvStamp(v[31]), translatedBy: cellText(v[32]),
+             approvedBy: cellText(v[33]), publishedAt: rvStamp(v[34]) };
   });
 }
 function readWeekly(ss) {
@@ -713,6 +716,7 @@ function reviewerPost(rv, body) {
   if (rv.role === "ho") {
     switch (a) {
       case "hoEdit":       return hoEdit(rv, body);
+      case "hoApprove":    return hoApprove(rv, body);
       case "hoFeedback":   return hoFeedback(rv, body);
       case "hoTranslate":  return hoTranslate(rv, body);
       case "weekStatus":   return weekStatus(rv, body);
@@ -752,15 +756,20 @@ function assertOpen(ss, week, clinic) {
   if (RV_LOCKED[s]) throw new Error("week " + week + " is " + s + "; reopen it first");
 }
 function auditSave(rv, audits, stats) {
-  var saved = 0, at = now(), translated = { by: "none", rows: {}, weekly: null, errors: [] };
+  var saved = 0, at = now(), translated = { by: "none", rows: {}, weekly: null, errors: [] }, withdrawn = [];
   audits.forEach(function (a) {
     var ss = rvTracker(rv, a.clinic); assertOpen(ss, a.week, a.clinic);
     var sh = ss.getSheetByName(RV_TABS.audit), line = auditLine(rv, a), r = rvFindRow(sh, line[0]);
     if (r) {
-      /* head office's tick corrections survive a re-save unless the reviewer's own marks changed (the log keeps them either way) */
-      var oldMarks = cellText(sh.getRange(r, 22).getValue());
+      var cur = sh.getRange(r, 1, 1, RV_AUDIT_COLS).getValues()[0], oldMarks = cellText(cur[21]);
       sh.getRange(r, 1, 1, RV_AUDIT_RV_COLS).setValues([line]);
-      if (oldMarks !== line[21] && cellText(sh.getRange(r, 31).getValue())) sh.getRange(r, 31).setValue("");
+      /* head office's tick corrections survive a re-save unless the reviewer's own marks changed (the log keeps them either way) */
+      if (oldMarks !== line[21] && cellText(cur[30])) sh.getRange(r, 31).setValue("");
+      /* a chat already approved for the DA loses the approval when its marks, remark, status or data flag change */
+      if (cellText(cur[33]) && (oldMarks !== line[21] || cellText(cur[15]) !== line[15] || line[9] !== "checked" || cellText(cur[16]) !== line[16])) {
+        var lg = parseJson(cellText(cur[29]), []); lg.push({ at: at, by: rv.id, f: "approval", old: cellText(cur[33]), "new": "", what: "approval withdrawn: the reviewer changed the chat" });
+        sh.getRange(r, 30).setValue(appendLog(lg, [])); sh.getRange(r, 34, 1, 2).setValues([["", ""]]); withdrawn.push(line[0]);
+      }
     } else sh.getRange(sh.getLastRow() + 1, 1, 1, RV_AUDIT_RV_COLS).setValues([line]);
     saved++;
     /* a checked chat is ready for head office: translate its remark now (nothing happens when it was translated already) */
@@ -773,7 +782,7 @@ function auditSave(rv, audits, stats) {
     }
   });
   stats.forEach(function (s) { upsertWeekly(rvTracker(rv, s.clinic), rv, s); });
-  return { ok: 1, saved: saved, at: at, translated: translated };
+  return { ok: 1, saved: saved, at: at, translated: translated, withdrawn: withdrawn };
 }
 function auditRemove(rv, keys, clinic, stats) {
   var ss = rvTracker(rv, clinic), sh = ss.getSheetByName(RV_TABS.audit), removed = 0;
@@ -830,6 +839,7 @@ function weekStatus(rv, b) {
       var ap = cellText(b.approvedBy).trim(); if (!ap) throw new Error("approvedBy is required: who approved this week");
       s.approvedBy = ap; s.publishedAt = at; if (!wk.takenAt) { s.takenAt = at; s.hoBy = rv.id; }
       translated = safeTranslate(ss, rv, b.clinic, b.week, { force: false });
+      s.approvedChats = stampApprovals(ss, b.week, b.clinic, ap, at);
       logIt("published", { approvedBy: ap });
     } else if (next === "marking") {
       if (!HO_OPEN[cur]) throw new Error("only a submitted week or one under review can be sent back; it is " + cur);
@@ -840,7 +850,7 @@ function weekStatus(rv, b) {
     upsertWeekly(ss, rv, s);
     if (next === "published") emailed = notifyCz(ss, rv, b.clinic, b.week, "published", { approvedBy: s.approvedBy, stats: b.stats || {} });
     if (next === "marking") emailed = notifyCz(ss, rv, b.clinic, b.week, "sent back", { note: s.sendBack, stats: b.stats || {} });
-    return { ok: 1, status: next, at: at, emailed: emailed, translated: translated, takenAt: s.takenAt || wk.takenAt || "", hoBy: s.hoBy || wk.hoBy || "" };
+    return { ok: 1, status: next, at: at, emailed: emailed, translated: translated, takenAt: s.takenAt || wk.takenAt || "", hoBy: s.hoBy || wk.hoBy || "", approvedChats: s.approvedChats || [] };
   }
   if (next === "submitted") { if (cur !== "marking") throw new Error("week is already " + cur); s.submittedAt = at; s.sendBack = ""; }
   else if (next === "marking") { if (cur !== "submitted") throw new Error("only a submitted week can be reopened; it is " + cur); s.submittedAt = ""; }
@@ -910,6 +920,7 @@ function hoEdit(rv, b) {
   var ss = rvTracker(rv, b.clinic), status = assertHoOpen(ss, b.week, b.clinic);
   var sh = ss.getSheetByName(RV_TABS.audit), r = rvFindRow(sh, String(b.key || "")); if (!r) throw new Error("audit row not found: " + b.key);
   if (status === "marking" && cellText(sh.getRange(r, 10).getValue()) !== "checked") throw new Error("the reviewer has not checked this chat yet");
+  if (cellText(sh.getRange(r, 34).getValue())) throw new Error("this chat is approved for the DA; withdraw the approval first");
   takeWeek(ss, rv, b.week, b.clinic, status);
   var h = b.ho || {}, d = b.derived || {}, cur = sh.getRange(r, 25, 1, 7).getValues()[0];
   function text(i, v, max) { return v === undefined ? cellText(cur[i]) : cellText(v).slice(0, max || 5000); }
@@ -921,6 +932,32 @@ function hoEdit(rv, b) {
   if (d.verdict !== undefined) sh.getRange(r, 11, 1, 5).setValues([[cellText(d.verdict), d.score === "" || d.score === null || d.score === undefined ? "" : Number(d.score), cellText(d.found).slice(0, 500), cellText(d.missing).slice(0, 2000), Number(d.notFound) || 0]]);
   if (b.stats) upsertWeekly(ss, rv, Object.assign({}, b.stats, { week: b.week, clinic: b.clinic }));
   return { ok: 1, key: String(b.key), at: now(), status: status === "submitted" ? "review" : status };
+}
+/* b: {clinic, week, keys, approvedBy, undo?} — head office approves checked chats for the DA one by one (or several at once),
+   without waiting for the week to be completed; undo withdraws. Every approval is logged on the chat. */
+function hoApprove(rv, b) {
+  var ss = rvTracker(rv, b.clinic), status = assertHoOpen(ss, b.week, b.clinic), sh = ss.getSheetByName(RV_TABS.audit), at = now(), done = [], ap = cellText(b.approvedBy).trim();
+  if (!b.undo && !ap) throw new Error("approvedBy is required: who approved");
+  (b.keys || []).forEach(function (k) {
+    var r = rvFindRow(sh, String(k)); if (!r) throw new Error("audit row not found: " + k);
+    if (!b.undo && cellText(sh.getRange(r, 10).getValue()) !== "checked") throw new Error("the reviewer has not checked this chat yet: " + k);
+    var lg = parseJson(cellText(sh.getRange(r, 30).getValue()), []);
+    lg.push({ at: at, by: rv.id, f: "approval", old: cellText(sh.getRange(r, 34).getValue()), "new": b.undo ? "" : ap, what: b.undo ? "approval withdrawn" : "approved for the DA" });
+    sh.getRange(r, 30).setValue(appendLog(lg, []));
+    sh.getRange(r, 34, 1, 2).setValues([[b.undo ? "" : ap, b.undo ? "" : at]]);
+    done.push(String(k));
+  });
+  return { ok: 1, keys: done, approvedBy: b.undo ? "" : ap, at: b.undo ? "" : at, status: status };
+}
+/* publishing the week approves every checked, visible chat that has no approval yet */
+function stampApprovals(ss, week, clinic, ap, at) {
+  var sh = ss.getSheetByName(RV_TABS.audit), keys = [];
+  rvRows(ss, "audit").forEach(function (r) {
+    var v = r.v; if (rvDay(v[1]) !== week || cellText(v[2]) !== clinic) return;
+    if (cellText(v[9]) !== "checked" || cellText(v[28]) === "N" || cellText(v[33])) return;
+    sh.getRange(r.row, 34, 1, 2).setValues([[ap, at]]); keys.push(cellText(v[0]));
+  });
+  return keys;
 }
 /* b: {clinic, week, remarkVi?, hoNote?, log?: [new edit entries], stats?} — HO's wording of the week's overall feedback */
 function hoFeedback(rv, b) {

@@ -357,6 +357,23 @@ eq([sv3.saved, Object.keys(sv3.translated.rows).length], [1, 0], "a chat not yet
 eq(hpost({ action: "hoEdit", clinic: "NGT", week: "2026-10-19", key: h3.key, ho: { visible: 0 } }).error, "the reviewer has not checked this chat yet", "HO cannot touch a chat the reviewer has not checked");
 var early = hpost({ action: "hoEdit", clinic: "NGT", week: "2026-10-19", key: h1.key, ho: { hoNote: "seen early" } });
 eq([early.ok, early.status, wk.rows.filter(function (r) { return r[0] === "2026-10-19|NGT"; })[0][18]], [1, "marking", "marking"], "HO can work on a checked chat while the week is still marking; the week stays marking");
+/* per-chat approval while the week is still marking */
+eq(hpost({ action: "hoApprove", clinic: "NGT", week: "2026-10-19", keys: [h3.key], approvedBy: "SL" }).error, "the reviewer has not checked this chat yet: " + h3.key, "an unchecked chat cannot be approved");
+eq(hpost({ action: "hoApprove", clinic: "NGT", week: "2026-10-19", keys: [h1.key] }).error, "approvedBy is required: who approved", "an approval needs a name");
+var apr = hpost({ action: "hoApprove", clinic: "NGT", week: "2026-10-19", keys: [h1.key], approvedBy: "SL" });
+hr = au.rows.filter(function (r) { return r[0] === h1.key; })[0];
+eq([apr.ok, apr.keys, hr[33], !!hr[34], JSON.parse(hr[29]).pop().what], [1, [h1.key], "SL", true, "approved for the DA"], "a checked chat is approved for the DA while the week is still marking");
+eq(hpost({ action: "hoEdit", clinic: "NGT", week: "2026-10-19", key: h1.key, ho: { hoNote: "x" } }).error, "this chat is approved for the DA; withdraw the approval first", "an approved chat is locked for HO edits");
+eq(hget({}).audits.filter(function (a) { return a.key === h1.key; })[0].approvedBy, "SL", "approval served on bootstrap");
+eq(hpost({ action: "hoApprove", clinic: "NGT", week: "2026-10-19", keys: [h1.key], undo: 1 }).ok, 1, "HO withdraws the approval");
+hr = au.rows.filter(function (r) { return r[0] === h1.key; })[0];
+eq([hr[33], hr[34], JSON.parse(hr[29]).pop().what], ["", "", "approval withdrawn"], "approval cleared and logged");
+eq(hpost({ action: "hoApprove", clinic: "NGT", week: "2026-10-19", keys: [h1.key], approvedBy: "Anh" }).approvedBy, "Anh", "approved again");
+eq(rpost({ action: "auditSave", audits: [h1], stats: [stats] }).withdrawn, [], "the reviewer re-saving an unchanged chat keeps the approval");
+var chg = rpost({ action: "auditSave", audits: [Object.assign({}, h1, { remark: h1.remark + " 补充" })], stats: [stats] });
+hr = au.rows.filter(function (r) { return r[0] === h1.key; })[0];
+eq([chg.withdrawn, hr[33], hr[34], JSON.parse(hr[29]).pop().what], [[h1.key], "", "", "approval withdrawn: the reviewer changed the chat"], "a changed remark withdraws the approval and logs it");
+eq(rpost({ action: "auditSave", audits: [h1], stats: [stats] }).saved, 1, "remark put back");
 eq(rpost({ action: "auditRemove", keys: [h3.key], clinic: "NGT" }).removed, 1, "cleanup of the unchecked chat");
 eq(hpost({ action: "weekStatus", week: "2026-10-19", clinic: "NGT", status: "published", approvedBy: "SL" }).error, "only a submitted week or one under review can be published; it is marking", "HO cannot publish a week that was not completed");
 eq(hpost({ action: "auditSave", audits: [h1] }).error, "unknown action: auditSave", "HO cannot run the reviewer's writes");
@@ -374,7 +391,7 @@ var he = hpost({ action: "hoEdit", clinic: "NGT", week: "2026-10-19", key: h1.ke
                 derived: { verdict: "partial", score: 75, found: "CD+90 ½", missing: "CD+90: 转介绍邀请", notFound: 0 }, stats: Object.assign({}, stats, { score: 75 }) });
 eq([he.ok, he.status], [1, "review"], "HO's first edit takes the week into review");
 hr = au.rows.filter(function (r) { return r[0] === h1.key; })[0];
-eq([hr[30], hr[26], hr[24], hr[28], JSON.parse(hr[29]).length], ['{"CD+90":"1110"}', "Đã gửi quyền lợi hội viên; có hỏi thăm 14/10 nhưng chưa mời giới thiệu.", "screenshot 2 shows the check-in", "Y", 2], "HO marks, Vietnamese, note, visibility and the edit log written");
+eq([hr[30], hr[26], hr[24], hr[28], JSON.parse(hr[29]).length], ['{"CD+90":"1110"}', "Đã gửi quyền lợi hội viên; có hỏi thăm 14/10 nhưng chưa mời giới thiệu.", "screenshot 2 shows the check-in", "Y", 6], "HO marks, Vietnamese, note, visibility and the edit log written (4 approval entries already there)");
 eq([hr[21], hr[15], hr[19]], ['{"CD+90":"1100"}', "会员权益已发，但 CD3-5 没有回访。", "CZ"], "the reviewer's marks, remark and name are untouched");
 eq([hr[10], hr[11], hr[14]], ["partial", 75, 0], "the derived verdict columns follow the corrected marks");
 wr = wk.rows.filter(function (r) { return r[0] === "2026-10-19|NGT"; })[0];
@@ -414,6 +431,9 @@ eq(hpost({ action: "weekStatus", week: "2026-10-19", clinic: "NGT", status: "mar
 var mails = sandbox.MailApp.sent.length;
 var pub = hpost({ action: "weekStatus", week: "2026-10-19", clinic: "NGT", status: "published", approvedBy: "Other: Minh", stats: Object.assign({}, stats, { score: 75 }) });
 eq([pub.ok, pub.status, pub.emailed, sandbox.MailApp.sent.length], [1, "published", 0, mails], "published; no reviewer address yet, so no email");
+eq(pub.approvedChats, [h2.key], "publishing the week approves the checked, visible chats that had no approval (h1 is hidden)");
+hr2 = au.rows.filter(function (r) { return r[0] === h2.key; })[0];
+eq([hr2[33], !!hr2[34]], ["Other: Minh", true], "stamped with the week's approver");
 wr = wk.rows.filter(function (r) { return r[0] === "2026-10-19|NGT"; })[0];
 var wlog = JSON.parse(wr[27]);
 eq([wr[18], wr[20], !!wr[21], wlog[wlog.length - 1].what, wlog[wlog.length - 1].approvedBy], ["published", "Other: Minh", true, "published", "Other: Minh"], "approver and time written, logged");
@@ -434,10 +454,10 @@ eq(hget({}).weekly.filter(function (w) { return w.week === "2026-10-19"; })[0].s
 /* the reviewer takes it back: a re-save clears HO's tick corrections, the log stays; re-completing keeps HO's Vietnamese when the remark did not change */
 eq(rpost({ action: "auditSave", audits: [h1], stats: [stats] }).saved, 1, "the reviewer can write again");
 hr = au.rows.filter(function (r) { return r[0] === h1.key; })[0];
-eq([hr[30], JSON.parse(hr[29]).length, hr[26]], ['{"CD+90":"1110"}', 2, "Đã gửi quyền lợi hội viên; có hỏi thăm 14/10 nhưng chưa mời giới thiệu."], "HO marks survive a re-save that leaves the reviewer's marks unchanged");
+eq([hr[30], JSON.parse(hr[29]).length, hr[26]], ['{"CD+90":"1110"}', 6, "Đã gửi quyền lợi hội viên; có hỏi thăm 14/10 nhưng chưa mời giới thiệu."], "HO marks survive a re-save that leaves the reviewer's marks unchanged");
 eq(rpost({ action: "auditSave", audits: [Object.assign({}, h1, { marks: { "CD+90": "1000" } })], stats: [stats] }).saved, 1, "the reviewer changes a tick");
 hr = au.rows.filter(function (r) { return r[0] === h1.key; })[0];
-eq([hr[30], hr[21], JSON.parse(hr[29]).length], ["", '{"CD+90":"1000"}', 2], "HO marks cleared once the reviewer's own marks change; the log stays");
+eq([hr[30], hr[21], JSON.parse(hr[29]).length], ["", '{"CD+90":"1000"}', 6], "HO marks cleared once the reviewer's own marks change; the log stays");
 eq(rpost({ action: "auditSave", audits: [h1], stats: [stats] }).saved, 1, "marks put back");
 var done3 = rpost({ action: "weekStatus", week: "2026-10-19", clinic: "NGT", status: "submitted", stats: stats });
 eq([done3.status, done3.translated.by, Object.keys(done3.translated.rows).length, !!done3.translated.weekly], ["submitted", "none", 0, false], "re-completing an unchanged week translates nothing");

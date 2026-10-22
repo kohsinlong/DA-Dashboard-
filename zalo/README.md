@@ -1,6 +1,6 @@
 # DA Zalo Dashboard — design, operations and change log
 
-**Status:** v1.6.4, 22 Oct 2026 — D6-7 is one either/or item (waiting-time update, or glasses arrived with a pickup date); a checked chat reaches head office at once (translated), no emails, "sampled" and "checked" told apart everywhere; cards show only the cadences due that week; new sign-ins (`NGT_DA`, `ChengYF`, `OptoHO`) on top of 1.6.0's head office review mode and Claude translations. Script 1.6.1 is pasted, the Claude key is in Script properties and `testTranslation` passed on 22 Oct; the tracker's tabs, columns and settings are prepared. Publishing the new script version switches it on (§2.10) · DA dashboard live since 16 Oct 2026 · **Go-live:** 16 Oct 2026 · **Clinic:** NGT · **Last updated:** 22 Oct 2026
+**Status:** v1.6.5, 22 Oct 2026 — head office approves chats for the DA one by one, the week need not be completed; D6-7 is one either/or item (waiting-time update, or glasses arrived with a pickup date); a checked chat reaches head office at once (translated), no emails, "sampled" and "checked" told apart everywhere; cards show only the cadences due that week; new sign-ins (`NGT_DA`, `ChengYF`, `OptoHO`) on top of 1.6.0's head office review mode and Claude translations. Script 1.6.1 is pasted, the Claude key is in Script properties and `testTranslation` passed on 22 Oct; the tracker's tabs, columns and settings are prepared. Publishing the new script version switches it on (§2.10) · DA dashboard live since 16 Oct 2026 · **Go-live:** 16 Oct 2026 · **Clinic:** NGT · **Last updated:** 22 Oct 2026
 
 This file is the single source of truth for the DA Zalo Dashboard. Part 1 is the view at a
 glance, Part 2 the granular rules, Part 3 the change log. Every change to the dashboard updates
@@ -639,11 +639,20 @@ carries who and when.
   from **Edit log** on the chat or the week, and the strip counts the edits. The scoreboard
   gains a **By DA / product** view (both roles): due cadences, DA-reported, in sample, audited
   and ticked-not-found per DA and per product.
-- **Publish to DA** asks who approved — a tick for **SL** or **Anh** (nothing is preselected on the
-  shared login) or **Other** with a typed name — and refuses without one. It writes the approver
-  and the time to the Weekly tab, translates any Vietnamese HO edited (so CZ can read it back in
-  Chinese), emails CZ once (`email_cz`), and shows "published · approved by …" on the strip, the
-  overview card and the queue. **Send back to reviewer** needs a note: the week returns to
+- **Approve → DA, chat by chat (1.6.5).** Every chat CZ has marked as checked carries an
+  **Approve → DA** button (and the strip an **Approve all checked (n)**); the dialog asks who
+  approved — a tick for **SL** or **Anh** (nothing is preselected on the shared login) or
+  **Other** with a typed name — and warns when the Vietnamese is still missing. The approver
+  and the time are written on the chat's row (`approved by`, `published at`), logged, and the
+  chat shows "Approved by SL · time · to the DA". An approved chat is locked for HO edits until
+  **Withdraw approval**; if CZ changes the chat afterwards (marks, remark, data flag, or
+  un-checks it), the approval is withdrawn automatically, logged, and CZ sees a notice. The week
+  can stay open the whole time.
+- **Publish to DA** (the week) is for the overall feedback and whatever is left: it asks who
+  approved the same way, writes the approver and the time to the Weekly tab, approves every
+  checked, visible chat that has no approval yet with that name, translates any Vietnamese HO
+  edited (so CZ can read it back in Chinese), emails CZ once (`email_cz`), and shows
+  "published · approved by …" on the strip, the overview card and the queue. **Send back to reviewer** needs a note: the week returns to
   Marking, the note shows on CZ's strip and in the email to CZ; CZ's next save of a chat clears
   HO's tick corrections on it (the log keeps them), and HO's Vietnamese stays unless CZ changes
   that remark. **Reopen review** takes a published week back (the DA stops seeing it until it is
@@ -675,7 +684,7 @@ the first sign-in; older rows read as visible, untranslated, unedited):
 
 | Tab | Head-office columns |
 |---|---|
-| `审核 Audit` | HO note · remark EN · remark VI · remark ZH · visible to DA (Y / N) · HO edits (JSON log) · HO marks (JSON, the corrected ticks; empty = none) · translated at · translated by (provider, source language and fingerprint) |
+| `审核 Audit` | HO note · remark EN · remark VI · remark ZH · visible to DA (Y / N) · HO edits (JSON log) · HO marks (JSON, the corrected ticks; empty = none) · translated at · translated by (provider, source language and fingerprint) · **approved by** · **published at** (per chat, 1.6.5) |
 | `周总评 Weekly` | remark EN · remark VI · remark ZH · HO note · send-back note · HO edits · translated at · translated by · taken at · HO reviewer |
 | `设置 Settings` | `email_cz` (empty until filled) · `translate` (claude / google / off) · `translate_model` |
 
@@ -689,6 +698,7 @@ Script API for head office (same `u` / `h` scheme; `hoOf` routes after `reviewer
 |---|---|
 | `GET` (bootstrap) | as the reviewer's, with `role: "ho"`, the approver names and each clinic's reviewer |
 | `POST hoEdit {clinic, week, key, ho: {hoMarks, remarkVi, hoNote, visible}, log, derived, stats}` | HO's columns of one chat (fields left out keep their cell), the new log entries appended, the derived verdict columns; takes a Submitted week into review; allowed while Marking on chats the reviewer has checked; refused once Published |
+| `POST hoApprove {clinic, week, keys, approvedBy, undo?}` | approve checked chats for the DA (or withdraw with `undo`); logged on each chat; allowed while Marking |
 | `POST hoFeedback {clinic, week, remarkVi, hoNote, log, stats}` | HO's wording of the overall feedback |
 | `POST hoTranslate {clinic, week, keys?, weekly?, force?}` | translate the week's remarks on demand (both roles may call it) |
 | `POST weekStatus {week, clinic, status, approvedBy?, note?, stats}` | HO: `review`, `published` (approver required, emails CZ), `marking` (note required, emails CZ) |
@@ -777,6 +787,7 @@ Newest first. Each entry: date · version · what changed · why · files.
 
 | Date | Version | Change | Why | Files |
 |---|---|---|---|---|
+| 2026-10-22 | 1.6.5 | **Approve → DA per chat**: head office approves each checked chat (or all checked at once) with the SL / Anh / Other tick while the week is still being marked; the approver and time sit on the chat's row and in its log; an approved chat is locked until the approval is withdrawn, and a change by the reviewer withdraws it automatically with a notice; the week-level Publish approves whatever is left and the overall feedback; the strip and queue count approvals. New Audit columns `approved by`, `published at`; script action `hoApprove`; the reviewer's save returns `withdrawn`. | Asked at launch: HO should be able to send a chat to the DA as soon as CZ has checked it, not after the whole week. | `zalo/tools/zalo-sop.gs`, `zalo/review.js`, `zalo/app.js`, `zalo/index.html`, `zalo/version.json`, `zalo/tools/test-gs.js`, `zalo/README.md` |
 | 2026-10-22 | 1.6.4 | **D6-7** for MC, glasses and Ortho-K is a single either/or item: a waiting-time update, or the glasses-arrived notice with the pickup date (was two items, "glasses arrived (<4h)" and "pickup appointment"); the `Cadence (VN)` text and CZ's `Cadence (CN)` wording changed to match. Atropine's D6-7 (medication arrived, pickup date) is unchanged. Earlier D6-7 ticks keep counting: the first bit is the item. | The two items did not describe the SOP: at day 6–7 the DA either updates the waiting time or announces the arrival. | `zalo/core.js`, `zalo/app.js`, `zalo/index.html`, `zalo/version.json`, `zalo/README.md`, the `Cadence (VN)` and `Cadence (CN)` tabs |
 | 2026-10-22 | 1.6.3 | A chat marked as checked is translated on that save and can be reviewed by head office at once, while the week is still being marked; the HO queue lists weeks in progress with the checked count; Complete week no longer needs to notify anyone (`email_ho` emptied; the strip's hint and the guide say so) and warns when sampled chats are unchecked; "sampled" and "checked" are told apart on the strip, tiles, cards, queue and prompts (the strip used to say "15 of 15 marked" for the sample); HO's tick corrections survive a reviewer re-save unless his marks changed. | Asked after the first live sign-in: the week lock and the email were in the way, and "marked" read as "audited". | `zalo/tools/zalo-sop.gs`, `zalo/review.js`, `zalo/app.js`, `zalo/index.html`, `zalo/version.json`, `zalo/tools/test-gs.js`, `zalo/README.md` |
 | 2026-10-22 | 1.6.2 | A sampled chat shows and scores **only the cadences due that week**; earlier milestones of the journey are no longer listed or counted, the tiles and notes no longer mention them, and the section is titled "Cadences due this week". | Asked after the first live look: the whole journey on every card was confusing, and the DA should later see exactly what was audited. | `zalo/review.js`, `zalo/app.js`, `zalo/index.html`, `zalo/version.json`, `zalo/README.md` |
