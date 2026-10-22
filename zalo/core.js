@@ -126,17 +126,17 @@
   Z.OFFSETS = [[0, 0], [0, 7], [1, 0], [1, 0], [1, 1], [1, 5], [1, 7], [1, 14], [1, 30], [1, 90], [1, 180], [1, 270], [1, 365]];
   Z.WINDOW_START = { "D6-7": 6, "CD+3-5": 3 };
   Z.CAD = {
-    "MC": { "D1": [["intro", ""], ["eta", ""]], "D6-7": [["arrived", ""], ["pickup", ""]], "CD": [["guide", ""], ["vipben", "vip"], ["referral", "ref"]],
+    "MC": { "D1": [["intro", ""], ["eta", ""]], "D6-7": [["waitpick", ""]], "CD": [["guide", ""], ["vipben", "vip"], ["referral", "ref"]],
       "CD+3-5": [["checkin", ""], ["referral", "ref"]], "CD+14": [["checkin", ""], ["wear12", ""], ["vipben", "vip"], ["referral", "ref"]],
       "CD+30": [["checkin", ""], ["edu", "edu"], ["vipben", "vip"], ["referral", "ref"]], "CD+90": [["checkin", ""], ["edu", "edu"], ["vipben", "vip"], ["referral", "ref"]],
       "CD+180": [["recall", ""], ["vipben", "vip"], ["referral", "ref"]], "CD+270": [["checkin", ""], ["edu", "edu"], ["vipben", "vip"], ["referral", "ref"]],
       "CD+365": [["recall", ""], ["vipben", "vip"], ["referral", "ref"]] },
-    "Kính": { "D1": [["intro", ""], ["eta", ""]], "D6-7": [["arrived", ""], ["pickup", ""]], "CD": [["guide", ""], ["vipben", "vip"], ["referral", "ref"]],
+    "Kính": { "D1": [["intro", ""], ["eta", ""]], "D6-7": [["waitpick", ""]], "CD": [["guide", ""], ["vipben", "vip"], ["referral", "ref"]],
       "CD+3-5": [["checkin", ""], ["referral", "ref"]], "CD+7": [["checkin", ""], ["frameadj", ""], ["vipben", "vip"], ["referral", "ref"]],
       "CD+30": [["checkin", ""], ["vipben", "vip"], ["referral", "ref"]], "CD+90": [["checkin", ""], ["edu", "edu"], ["vipben", "vip"], ["referral", "ref"]],
       "CD+180": [["recallbook", ""], ["vipben", "vip"], ["referral", "ref"]], "CD+270": [["checkin", ""], ["vipben", "vip"], ["referral", "ref"]],
       "CD+365": [["recall", ""], ["vipbuy", "vip"], ["framelife", ""]] },
-    "OK": { "D1": [["intro", ""], ["eta", ""]], "D6-7": [["arrived", ""], ["pickup", ""]], "CD": [["guide", ""], ["vipben", "vip"], ["referral", "ref"]],
+    "OK": { "D1": [["intro", ""], ["eta", ""]], "D6-7": [["waitpick", ""]], "CD": [["guide", ""], ["vipben", "vip"], ["referral", "ref"]],
       "CDN": [["firstwear", ""], ["support", ""]], "CD+1": [["checkin", ""], ["referral", "ref"]], "CD+3-5": [["checkin", ""], ["referral", "ref"]],
       "CD+7": [["recallbook", ""], ["vipben", "vip"], ["referral", "ref"]], "CD+30": [["recallbook", ""], ["wear6", ""], ["vipben", "vip"], ["referral", "ref"]],
       "CD+90": [["recallbook", ""], ["wear6", ""], ["vipben", "vip"], ["referral", "ref"]], "CD+180": [["recallbook", ""], ["wear6", ""], ["vipben", "vip"], ["referral", "ref"]],
@@ -179,19 +179,19 @@
   };
   /* The content items, in three languages. */
   Z.CP = {
-    en: { intro: "Intro message", eta: "Production ETA", arrived: "Glasses arrived (<4h)", pickup: "Pickup appointment", medsarrived: "Medication arrived",
+    en: { intro: "Intro message", eta: "Production ETA", waitpick: "Waiting-time update, or glasses arrived + pickup date", arrived: "Glasses arrived (<4h)", pickup: "Pickup appointment", medsarrived: "Medication arrived",
       guide: "Usage guide", vipben: "Member benefits", referral: "Referral request", checkin: "Check-in", wear12: "Remind 12h/day", edu: "Educational content",
       recall: "Recall invite", frameadj: "Free frame adjustment", recallbook: "Book recall", vipbuy: "Repurchase benefits", framelife: "Lifetime frame adjustment",
       firstwear: "First-night wear check", support: "Discomfort support", wear6: "Remind >6 nights/week", dropguide: "Drop instructions", activate: "Activate membership",
       compliancecall: "Compliance call (≥6 days/wk)", glare: "Anti-glare glasses reminder", recall1: "Recall 1 (3 mo)", prescribe: "Next prescription",
       recall2: "Recall 2 (6 mo)", upgrade: "Ortho-K / MC upsell", recall3: "Recall 3 (9 mo)", recall4: "Recall 4 (12 mo)", summary: "Year summary", combo: "Combined treatment advice" },
-    vi: { intro: "Tin nhắn giới thiệu", eta: "Thời gian dự kiến làm kính", arrived: "Báo kính về (<4 giờ)", pickup: "Hẹn ngày lấy kính", medsarrived: "Báo có thuốc",
+    vi: { intro: "Tin nhắn giới thiệu", eta: "Thời gian dự kiến làm kính", waitpick: "Cập nhật thời gian chờ kính, hoặc báo kính về + hẹn ngày lấy", arrived: "Báo kính về (<4 giờ)", pickup: "Hẹn ngày lấy kính", medsarrived: "Báo có thuốc",
       guide: "Hướng dẫn sử dụng", vipben: "Quyền lợi hội viên", referral: "Mời giới thiệu", checkin: "Kiểm tra tình trạng", wear12: "Nhắc đeo 12 giờ/ngày", edu: "Nội dung giáo dục",
       recall: "Mời tái khám", frameadj: "Chỉnh gọng miễn phí", recallbook: "Mời đặt lịch tái khám", vipbuy: "Quyền lợi mua lại", framelife: "Chỉnh gọng trọn đời",
       firstwear: "Kiểm tra lần đeo đầu", support: "Hỗ trợ nếu khó chịu", wear6: "Nhắc đeo >6 lần/tuần", dropguide: "Hướng dẫn nhỏ thuốc", activate: "Kích hoạt hội viên",
       compliancecall: "Gọi kiểm tra tuân thủ (≥6 ngày/tuần)", glare: "Nhắc kính chống lóa", recall1: "Tái khám 1 (3 tháng)", prescribe: "Kê đơn tiếp theo",
       recall2: "Tái khám 2 (6 tháng)", upgrade: "Tư vấn nâng cấp Ortho-K / MC", recall3: "Tái khám 3 (9 tháng)", recall4: "Tái khám 4 (12 tháng)", summary: "Tổng kết", combo: "Tư vấn phối hợp điều trị" },
-    zh: { intro: "介绍消息", eta: "预计制镜时间", arrived: "镜片到货通知 (<4小时)", pickup: "取镜预约", medsarrived: "药品到货通知",
+    zh: { intro: "介绍消息", eta: "预计制镜时间", waitpick: "更新等待时间，或镜片到货通知 + 约取镜日期", arrived: "镜片到货通知 (<4小时)", pickup: "取镜预约", medsarrived: "药品到货通知",
       guide: "使用指南", vipben: "会员权益", referral: "转介绍邀请", checkin: "状况询问", wear12: "提醒每天佩戴12小时", edu: "教育内容",
       recall: "复诊邀请", frameadj: "免费调整镜架", recallbook: "预约复诊", vipbuy: "复购权益", framelife: "终身镜架调整",
       firstwear: "首夜佩戴检查", support: "不适支持", wear6: "提醒每周佩戴>6次", dropguide: "滴药指导", activate: "激活会员",
