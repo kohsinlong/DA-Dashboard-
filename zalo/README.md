@@ -1,6 +1,6 @@
 # DA Zalo Dashboard — design, operations and change log
 
-**Status:** v1.6.1, 22 Oct 2026 — new sign-ins (`NGT_DA`, `ChengYF`, `OptoHO`) on top of 1.6.0's head office review mode and Claude translations; the script needs a new version and the API key (§2.10) · DA dashboard live since 16 Oct 2026 · **Go-live:** 16 Oct 2026 · **Clinic:** NGT · **Last updated:** 22 Oct 2026
+**Status:** v1.6.1, 22 Oct 2026 — new sign-ins (`NGT_DA`, `ChengYF`, `OptoHO`) on top of 1.6.0's head office review mode and Claude translations. Script 1.6.1 is pasted, the Claude key is in Script properties and `testTranslation` passed on 22 Oct; the tracker's tabs, columns and settings are prepared. Publishing the new script version switches it on (§2.10) · DA dashboard live since 16 Oct 2026 · **Go-live:** 16 Oct 2026 · **Clinic:** NGT · **Last updated:** 22 Oct 2026
 
 This file is the single source of truth for the DA Zalo Dashboard. Part 1 is the view at a
 glance, Part 2 the granular rules, Part 3 the change log. Every change to the dashboard updates
@@ -441,7 +441,9 @@ already created on 16 Oct 2026, and `setup()` is safe to run again):
    `ANTHROPIC_API_KEY` (or paste it into `setAnthropicKey()`, run it once, and put the placeholder
    back); run `testTranslation` once from the editor — it asks for the external-request
    permission and logs a sample translation — then publish the new version. Without a key the
-   script translates with Google Translate and the page's translation toast says so. `email_cz`
+   script translates with Google Translate and the page's translation toast says so. Done on
+   22 Oct 2026: the key is in Script properties, `testTranslation` returned a Claude translation
+   (`by: "claude:claude-opus-5-5"`), and the tracker's `translate` setting is `claude`. `email_cz`
    in the tracker's `设置 Settings` stays empty while CZ has no email address: no email is sent,
    and CZ sees send-backs and the HO status on his Overview and the week's strip.
 4. Either paste that URL into `API.url` at the top of `zalo/app.js` and commit (the permanent
@@ -659,8 +661,9 @@ carries who and when.
   Reopen review). The script enforces every edge: CZ cannot write from Submitted on; HO cannot
   edit while Marking or once Published; publishing needs an approver; sending back needs a note.
 
-Columns added in 1.6.0 (created by `ensureTracker` on the first sign-in; older rows read as
-visible, untranslated, unedited):
+Columns added in 1.6.0 (already in the live tracker since 22 Oct 2026, with `email_cz`,
+`translate` and `translate_model` in its settings; `ensureTracker` adds them to any new tracker on
+the first sign-in; older rows read as visible, untranslated, unedited):
 
 | Tab | Head-office columns |
 |---|---|
@@ -763,6 +766,7 @@ Newest first. Each entry: date · version · what changed · why · files.
 
 | Date | Version | Change | Why | Files |
 |---|---|---|---|---|
+| 2026-10-22 | docs | Launch state recorded: script 1.6.1 pasted, Claude key set and verified with `testTranslation`, the live tracker widened with the HO columns and the three new settings rows (translation stays inside the script; no scheduled job outside it). | So the README says exactly where the launch stands. | `zalo/README.md` |
 | 2026-10-22 | docs | §2.16 added: the hand-over checklist for moving the script, workbooks, page and translation key under MSG's own accounts, and how translation keeps working without an Anthropic key. | Asked at launch: what changes when the dashboard moves from personal accounts to MSG. | `zalo/README.md` |
 | 2026-10-22 | 1.6.1 | New sign-ins: `NGT_DA` (DA), `ChengYF` (reviewer), `OptoHO` (one shared head-office login); the approver names offered at Publish now come from `HO_APPROVERS` (SL, Anh) rather than from the HO logins, and the shared login preselects nobody; HO display names served for the edit log. | Credentials agreed at launch; one HO login, the approver tick says who approved. | `zalo/tools/zalo-sop.gs`, `zalo/app.js`, `zalo/review.js`, `zalo/index.html`, `zalo/version.json`, `zalo/tools/test-gs.js`, `zalo/README.md`, `README.md` |
 | 2026-10-22 | 1.6.0 | **Head office review mode** on the Zalo SOP Compliance Tracker: usernames `SL` and `ANH`; Overview with a review queue, waiting badges and a per-clinic compliance ladder; the clinic tab in review mode — the reviewer's marks correctable with every change logged, each remark as original · English · editable Vietnamese plus an HO note, a visible-to-DA switch per chat, **Start review**, **Send back to reviewer** (note required, emails CZ), **Publish to DA** with the approver (SL / Anh / Other with a name) recorded, **Reopen review**; a **By DA / product** scoreboard view for both roles; the reviewer sees HO's edits read only and the send-back note. Remarks are translated zh / en / vi through the Claude API when a week is completed (Google Translate fallback, fingerprinted so nothing is translated twice), HO's Vietnamese re-translated at publish. Audit and Weekly tabs gain the HO columns; settings gain `email_cz`, `translate`, `translate_model`; the script gains `hoEdit`, `hoFeedback`, `hoTranslate` and the HO status edges; a brand-new tab is widened before its header is written; `?demo=ho`. | HO reviews, corrects and approves what CZ completed before the DA sees it, in each person's language. | `zalo/review.js`, `zalo/app.js`, `zalo/zalo.css`, `zalo/index.html`, `zalo/version.json`, `zalo/tools/zalo-sop.gs`, `zalo/tools/test-gs.js`, `zalo/README.md`, `README.md` |
