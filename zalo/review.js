@@ -225,7 +225,9 @@ window.ZALO_REVIEW = (function () {
   function hoActs(week, clinic){ var s = weekStatus(week, clinic); return isHo() && (s === "submitted" || s === "review"); }   /* Start review, Send back, Publish */
   function hoCanWeek(week, clinic){ var s = weekStatus(week, clinic); return isHo() && (s === "marking" || s === "submitted" || s === "review"); }
   function hoCanCard(a){ return hoCanWeek(a.week, a.clinic) && !a.publishedAt && (weekStatus(a.week, a.clinic) !== "marking" || a.status === "checked"); }   /* while marking: checked chats only; approved chats are locked until withdrawn */
-  function approvable(week, clinic){ return recsOf(week, clinic).filter(function (a) { return a.status === "checked" && a.visible !== 0 && !a.publishedAt; }); }
+  /* a chat can go to the DA once CZ has checked it, or, after he completed the week, whenever it is visible */
+  function canApprove(a){ return a.visible !== 0 && !a.publishedAt && (a.status === "checked" || weekStatus(a.week, a.clinic) !== "marking"); }
+  function approvable(week, clinic){ return recsOf(week, clinic).filter(canApprove); }
   function hoCan(week, clinic){ return hoActs(week, clinic); }
   function canEdit(week, clinic){ return isHo() ? hoCanWeek(week, clinic) : !isLocked(week, clinic); }
   function hasHoEdits(a){ return !!(a.hoMarks || (a.hoEdits || []).length); }
@@ -1016,7 +1018,7 @@ window.ZALO_REVIEW = (function () {
     h += "</div>";
     if (ho) {
       var apBtn = a.publishedAt ? (hoCanWeek(a.week, a.clinic) ? '<button type="button" class="btn sm" data-act="rv-unapprove" data-key="' + esc(a.key) + '">' + esc(th.withdraw) + "</button>" : "")
-                : (!locked && a.status === "checked" && a.visible !== 0 ? '<button type="button" class="btn good" data-act="rv-approve" data-key="' + esc(a.key) + '">' + esc(th.approve) + "</button>" : "");
+                : (!locked && canApprove(a) ? '<button type="button" class="btn good" data-act="rv-approve" data-key="' + esc(a.key) + '">' + esc(th.approve) + "</button>" : "");
       h += '<div class="rvside hoside">' + trio(a, a.key, !locked, a.key) + (apBtn ? '<div class="rvrow">' + apBtn + "</div>" : "") + (a.data ? '<span class="pill p-inert">' + esc(t.dataIssue) + "</span>" : "")
         + (shotsOf(a).length ? '<div class="rvjt">' + esc(t.shots) + "</div>" + shotsHtml(a, false) : "") + "</div></div></div>";
       return h;

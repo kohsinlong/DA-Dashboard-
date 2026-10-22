@@ -227,7 +227,7 @@ ok(rb.clinics.NGT && rb.clinics.NGT.customers.length === get({ u: "NGT_DA", h: H
 ok(rb.clinics.NGT.tasks.length >= 1 && rb.clinics.NGT.settings.go_live === "2026-10-16", "the DA's ticks and settings come along");
 eq(JSON.stringify(mem.rows), memBefore, "the CRM form is untouched by the reviewer path");
 eq(ss.order, crmTabsBefore, "no tab is added to the CRM workbook by the reviewer path");
-eq(tracker.order.slice(-4), ["设置 Settings", "审核 Audit", "周总评 Weekly", "截图 Screenshots"], "tracker tabs created");
+eq(tracker.order.slice(-6), ["设置 Settings", "审核 Audit", "周总评 Weekly", "截图 Screenshots", "问题 Questions", "资源 Resources"], "tracker tabs created");
 eq(tracker.getSheetByName("审核 Audit").rows[0][0], "键 Key", "audit header");
 eq(rb.settings.NGT.sample_size, "15", "tracker settings seeded and served");
 eq(rb.settings.NGT.start_week, "2026-10-12", "start week seeded");

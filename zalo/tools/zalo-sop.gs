@@ -83,6 +83,7 @@ function doGet(e) {
     if (rv) return out(reviewerGet(rv, p));
     var clinic = auth(p.u, p.h);
     if (p.action === "ping") return out({ ok: 1, clinic: clinic, at: now() });
+    if (p.action === "shot") return out(daShot(clinic, p.id));
     return out(bootstrap(clinic, p));
   } catch (err) { return out({ error: String(err && err.message || err) }); }
 }
@@ -117,6 +118,8 @@ function dispatch(clinic, by, body) {
     case "saveDetails":     return saveDetails(ss, clinic, by, body.key, body.details || {});
     case "removeCustomer":  return removeCustomer(ss, clinic, by, body.ref || {});
     case "removeImport":    return removeImport(ss, clinic, by, body.code);
+    case "daSeen":          return daSeen(clinic, body.keys || [], body.weeks || []);
+    case "askQuestion":     return askQuestion(clinic, by, body);
     default: throw new Error("unknown action: " + body.action);
   }
 }
@@ -231,8 +234,67 @@ function bootstrap(clinic, p) {
   return {
     ok: 1, clinic: clinic, generated: now(), today: Utilities.formatDate(new Date(), TZ, "yyyy-MM-dd"),
     settings: readSettings(ss), cadence: readCadence(ss), das: das, customers: customers,
-    tasks: readTab(ss, TABS.tasks, clinic), imports: readTab(ss, TABS.imports, clinic), details: readTab(ss, TABS.details, clinic)
+    tasks: readTab(ss, TABS.tasks, clinic), imports: readTab(ss, TABS.imports, clinic), details: readTab(ss, TABS.details, clinic),
+    feedback: daFeedbackSafe(clinic)
   };
+}
+/* ---------------------------------------------------------------- the DA's side of the audit (1.7.0)
+   What head office approved for her, the published weekly feedback, her questions and the answers, and
+   the resources, all read from the clinic's tracker workbook. A tracker problem never blocks her page. */
+function daTracker(clinic) {
+  var id = hoClinics()[clinic]; if (!id) return null;
+  var ss = SpreadsheetApp.openById(id); ensureTracker(ss); return ss;
+}
+function daFeedbackSafe(clinic) {
+  try { return daFeedback(clinic); } catch (err) { return { audits: [], weekly: [], questions: [], resources: [], error: String(err && err.message || err) }; }
+}
+function daFeedback(clinic) {
+  var ss = daTracker(clinic); if (!ss) return { audits: [], weekly: [], questions: [], resources: [] };
+  var byCust = {};
+  readShots(ss).forEach(function (x) { if (x.clinic && x.clinic !== clinic) return; (byCust[x.week + "|" + x.custKey] = byCust[x.week + "|" + x.custKey] || []).push({ id: x.id, file: x.file }); });
+  var audits = readAudits(ss).filter(function (a) { return a.clinic === clinic && a.publishedAt && a.visible; }).map(function (a) {
+    return { key: a.key, week: a.week, custKey: a.custKey, tag: a.tag, name: a.name, product: a.product, da: a.da, due: a.due, verdict: a.verdict, score: a.score, notFound: Number(a.notFound) || 0,
+             remark: a.remark, remarkVi: a.remarkVi, remarkEn: a.remarkEn, remarkZh: a.remarkZh, marks: a.hoMarks || a.marks || {}, data: a.data,
+             approvedBy: a.approvedBy, publishedAt: a.publishedAt, seenAt: a.seenAt, shots: byCust[a.week + "|" + a.custKey] || [] };
+  });
+  var weekly = readWeekly(ss).filter(function (w) { return w.clinic === clinic && (w.status === "published" || w.status === "acknowledged"); }).map(function (w) {
+    return { week: w.week, status: w.status, remark: w.remark, remarkVi: w.remarkVi, remarkEn: w.remarkEn, remarkZh: w.remarkZh, approvedBy: w.approvedBy, publishedAt: w.publishedAt, seenAt: w.seenAt };
+  });
+  return { audits: audits, weekly: weekly, questions: readQuestions(ss).filter(function (q) { return q.clinic === clinic; }),
+           resources: readResources(ss).filter(function (r) { return r.visible && (!r.clinic || r.clinic === clinic); }) };
+}
+function daShot(clinic, id) {
+  var ss = daTracker(clinic); if (!ss) throw new Error("no tracker for " + clinic);
+  var sh = ss.getSheetByName(RV_TABS.shots), r = rvFindRow(sh, String(id || "")); if (!r) throw new Error("screenshot not found");
+  var v = sh.getRange(r, 1, 1, RV_HEADERS.shots.length).getValues()[0];
+  if ((cellText(v[2]) && cellText(v[2]) !== clinic) || cellText(v[10])) throw new Error("screenshot not found");
+  var blob = DriveApp.getFileById(cellText(v[7])).getBlob();
+  return { ok: 1, id: String(id), mime: blob.getContentType(), data: Utilities.base64Encode(blob.getBytes()) };
+}
+/* the DA pressed "seen" on chats and on weeks: the first time is kept */
+function daSeen(clinic, keys, weeks) {
+  var ss = daTracker(clinic); if (!ss) throw new Error("no tracker for " + clinic);
+  var at = now(), n = 0, sh = ss.getSheetByName(RV_TABS.audit), wk = ss.getSheetByName(RV_TABS.weekly);
+  keys.forEach(function (k) { var r = rvFindRow(sh, String(k)); if (r && !cellText(sh.getRange(r, 36).getValue())) { sh.getRange(r, 36).setValue(at); n++; } });
+  weeks.forEach(function (w) { var r = rvFindRow(wk, String(w) + "|" + clinic); if (r && !cellText(wk.getRange(r, 33).getValue())) { wk.getRange(r, 33).setValue(at); n++; } });
+  return { ok: 1, seen: n, at: at };
+}
+/* b: {week, custKey?, tag?, text} — the DA asks about a chat or a week; translated for head office and the reviewer */
+function askQuestion(clinic, by, b) {
+  var ss = daTracker(clinic); if (!ss) throw new Error("no tracker for " + clinic);
+  var text = cellText(b.text).trim(); if (!text) throw new Error("the question is empty");
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(b.week || ""))) throw new Error("week needed");
+  var id = "q" + new Date().getTime().toString(36), at = now(), tr = trText(ss, text, "vi"), sh = ss.getSheetByName(RV_TABS.questions);
+  sh.getRange(sh.getLastRow() + 1, 1, 1, RV_HEADERS.questions.length).setValues([[id, "'" + b.week, clinic, cellText(b.custKey), cellText(b.tag).slice(0, 300), cellText(by).slice(0, 80), text.slice(0, 4000), tr.en || "", tr.zh || "", at, "open", "", "", "", "", "", "", ""]]);
+  return { ok: 1, id: id, askedAt: at, qEn: tr.en || "", qZh: tr.zh || "" };
+}
+/* one text into the two other languages, through the same translator as the remarks; never throws */
+function trText(ss, text, from) {
+  try {
+    var set = rvSettings(ss), mode = String(set.translate || "claude").toLowerCase(); if (mode === "off") return {};
+    var res = { errors: [] }, out = translateBatch([{ id: "t", text: text, from: from || detectLang(text) }], mode, set.translate_model, res), o = out.map.t || {};
+    o[from || detectLang(text)] = text; return o;
+  } catch (err) { return {}; }
 }
 
 /* ---------------------------------------------------------------- setup */
@@ -472,21 +534,25 @@ function removeImport(ss, clinic, by, code) {
    clinic in REVIEWERS: tabs Audit, Weekly, Screenshots, Settings. Screenshots are Drive files in a
    folder next to the tracker; the page fetches them through this script, so they need no sharing.
    ================================================================ */
-var RV_TABS = { audit: "审核 Audit", weekly: "周总评 Weekly", shots: "截图 Screenshots", settings: "设置 Settings" };
+var RV_TABS = { audit: "审核 Audit", weekly: "周总评 Weekly", shots: "截图 Screenshots", settings: "设置 Settings", questions: "问题 Questions", resources: "资源 Resources" };
 var RV_HEADERS = {
   audit: ["键 Key", "周 Week", "诊所 Clinic", "客户键 Customer key", "Zalo 标签 Zalo tag", "客户 Customer", "产品 Product", "助理 DA",
           "本周到期 Due this week", "状态 Status", "结论 Verdict", "得分 Score", "已发送 Found", "缺失 Missing", "助理已勾未见 DA ticked, not found",
           "备注 Remark", "数据问题 Data issue", "截图 Screenshots", "检查时间 Checked at", "审核人 By", "更新时间 Updated", "评分明细 Marks", "来源 Source", "抽样时间 Added",
           /* 1.6.0, head office: the reviewer's columns above are never changed by HO */
           "HO 备注 HO note", "备注 EN Remark EN", "备注 VI Remark VI", "备注 ZH Remark ZH", "对助理可见 Visible to DA", "HO 修改记录 HO edits", "HO 评分明细 HO marks", "翻译时间 Translated at", "翻译来源 Translated by",
-          /* 1.6.5: head office approves chats one by one for the DA */
-          "审批人 Approved by", "发布时间 Published at"],
+          /* 1.6.5: head office approves chats one by one for the DA; 1.7.0: the DA has seen it */
+          "审批人 Approved by", "发布时间 Published at", "助理已读 DA seen at"],
   weekly: ["键 Key", "周 Week", "诊所 Clinic", "到期客户 Customers due", "到期节点 Cadences due", "抽样 Sampled", "已检查 Checked", "合规 Pass", "部分 Partial",
            "未合规 Fail", "数据问题 Data issues", "得分 Score %", "本周节点得分 This week's cadences %", "助理已勾未见 DA ticked, not found", "助理自报已发 DA reported sent %",
            "本周总评 Overall remark", "审核人 By", "更新时间 Updated", "状态 Status", "提交时间 Submitted at", "审批人 Approved by", "发布时间 Published at",
-           "总评 EN Remark EN", "总评 VI Remark VI", "总评 ZH Remark ZH", "HO 备注 HO note", "退回说明 Send-back note", "HO 修改记录 HO edits", "翻译时间 Translated at", "翻译来源 Translated by", "审核开始 Taken at", "HO 审核人 HO reviewer"],
+           "总评 EN Remark EN", "总评 VI Remark VI", "总评 ZH Remark ZH", "HO 备注 HO note", "退回说明 Send-back note", "HO 修改记录 HO edits", "翻译时间 Translated at", "翻译来源 Translated by", "审核开始 Taken at", "HO 审核人 HO reviewer", "助理已读 DA seen at"],
   shots: ["编号 ID", "周 Week", "诊所 Clinic", "客户键 Customer key", "Zalo 标签 Zalo tag", "文件 File", "链接 Link", "Drive ID", "上传时间 Uploaded", "审核人 By", "已删除 Removed"],
-  settings: ["键 Key", "值 Value", "说明 Note"]
+  settings: ["键 Key", "值 Value", "说明 Note"],
+  /* 1.7.0: the DA's questions and the answers; the training decks, photos and template scripts head office uploads */
+  questions: ["编号 ID", "周 Week", "诊所 Clinic", "客户键 Customer key", "Zalo 标签 Zalo tag", "提问人 From", "问题 Question", "问题 EN Question EN", "问题 ZH Question ZH", "提问时间 Asked at",
+              "状态 Status", "回复 Answer", "回复 VI Answer VI", "回复 EN Answer EN", "回复 ZH Answer ZH", "回复人 Answered by", "回复时间 Answered at", "助理已读 DA seen at"],
+  resources: ["编号 ID", "类型 Kind", "诊所 Clinic", "标题 Title", "日期 Date", "语言 Lang", "文件 File", "类型 Mime", "Drive ID", "链接 Link", "文本 Text", "顺序 Order", "可见 Visible", "上传时间 Uploaded", "上传人 By", "更新时间 Updated", "已删除 Removed"]
 };
 var RV_SETTINGS_DEFAULT = [
   ["sample_size", "15", "每周每个诊所抽样数 / Chats to sample per clinic per week"],
@@ -497,7 +563,9 @@ var RV_SETTINGS_DEFAULT = [
   ["app_url", "https://kohsinlong.github.io/DA-Dashboard-/zalo/", "邮件中的链接 / Link used in the emails"],
   ["email_cz", "", "HO 发布或退回时通知的审核人邮箱 / Reviewer address emailed when HO publishes or sends a week back"],
   ["translate", "claude", "翻译方式：claude（需在脚本属性中设置 ANTHROPIC_API_KEY，否则自动退回 google）、google、off / Translation: claude (needs ANTHROPIC_API_KEY in Script properties, falls back to google), google, or off"],
-  ["translate_model", "claude-opus-5-5", "Claude 模型 / Claude model used for translations"]
+  ["translate_model", "claude-opus-5-5", "Claude 模型 / Claude model used for translations"],
+  ["resources_folder", "", "资料文件夹 ID（首次上传时自动创建）/ Drive folder for the training decks, photos and posters, created on the first upload"],
+  ["resources_public", "Y", "上传的资料设为“知道链接的人可查看”，助理页面才能直接打开 / Uploaded resources viewable by anyone with the link, so the DA's page can show them (Y / N)"]
 ];
 var RV_LOCKED = { submitted: 1, review: 1, published: 1, acknowledged: 1 };   /* the reviewer cannot write */
 var HO_OPEN = { submitted: 1, review: 1 };                                       /* HO can edit */
@@ -543,7 +611,7 @@ function rvStamp(v) { return v instanceof Date && !isNaN(v) ? v.toISOString() : 
 
 /* ---------------------------------------------------------------- tracker tabs */
 function ensureTracker(ss) {
-  ["settings", "audit", "weekly", "shots"].forEach(function (k) {
+  ["settings", "audit", "weekly", "shots", "questions", "resources"].forEach(function (k) {
     var name = RV_TABS[k], hdr = RV_HEADERS[k], sh = ss.getSheetByName(name);
     if (!sh) { sh = ss.insertSheet(name); if (sh.getMaxColumns() < hdr.length) sh.insertColumnsAfter(sh.getMaxColumns(), hdr.length - sh.getMaxColumns()); sh.getRange(1, 1, 1, hdr.length).setValues([hdr]); sh.setFrozenRows(1); }
     else {
@@ -601,7 +669,7 @@ function readAudits(ss) {
              /* head office */
              hoNote: cellText(v[24]), remarkEn: cellText(v[25]), remarkVi: cellText(v[26]), remarkZh: cellText(v[27]), visible: cellText(v[28]) === "N" ? 0 : 1,
              hoEdits: parseJson(cellText(v[29]), []), hoMarks: hoMarks, translatedAt: rvStamp(v[31]), translatedBy: cellText(v[32]),
-             approvedBy: cellText(v[33]), publishedAt: rvStamp(v[34]) };
+             approvedBy: cellText(v[33]), publishedAt: rvStamp(v[34]), seenAt: rvStamp(v[35]) };
   });
 }
 function readWeekly(ss) {
@@ -610,13 +678,27 @@ function readWeekly(ss) {
     return { key: cellText(v[0]), week: rvDay(v[1]), clinic: cellText(v[2]), remark: cellText(v[15]), by: cellText(v[16]), updated: rvStamp(v[17]),
              status: cellText(v[18]) || "marking", submittedAt: rvStamp(v[19]), approvedBy: cellText(v[20]), publishedAt: rvStamp(v[21]),
              remarkEn: cellText(v[22]), remarkVi: cellText(v[23]), remarkZh: cellText(v[24]), hoNote: cellText(v[25]), sendBack: cellText(v[26]),
-             hoEdits: parseJson(cellText(v[27]), []), translatedAt: rvStamp(v[28]), translatedBy: cellText(v[29]), takenAt: rvStamp(v[30]), hoBy: cellText(v[31]) };
+             hoEdits: parseJson(cellText(v[27]), []), translatedAt: rvStamp(v[28]), translatedBy: cellText(v[29]), takenAt: rvStamp(v[30]), hoBy: cellText(v[31]), seenAt: rvStamp(v[32]) };
   });
 }
 function readShots(ss) {
   return rvRows(ss, "shots").filter(function (r) { return !cellText(r.v[10]); }).map(function (r) {
     var v = r.v;
     return { id: cellText(v[0]), week: rvDay(v[1]), clinic: cellText(v[2]), custKey: cellText(v[3]), tag: cellText(v[4]), file: cellText(v[5]), url: cellText(v[6]), uploaded: rvStamp(v[8]), by: cellText(v[9]) };
+  });
+}
+function readQuestions(ss) {
+  return rvRows(ss, "questions").map(function (r) {
+    var v = r.v;
+    return { id: cellText(v[0]), week: rvDay(v[1]), clinic: cellText(v[2]), custKey: cellText(v[3]), tag: cellText(v[4]), from: cellText(v[5]), q: cellText(v[6]), qEn: cellText(v[7]), qZh: cellText(v[8]),
+             askedAt: rvStamp(v[9]), status: cellText(v[10]) || "open", a: cellText(v[11]), aVi: cellText(v[12]), aEn: cellText(v[13]), aZh: cellText(v[14]), answeredBy: cellText(v[15]), answeredAt: rvStamp(v[16]), seenAt: rvStamp(v[17]) };
+  });
+}
+function readResources(ss) {
+  return rvRows(ss, "resources").filter(function (r) { return !cellText(r.v[16]); }).map(function (r) {
+    var v = r.v;
+    return { id: cellText(v[0]), kind: cellText(v[1]), clinic: cellText(v[2]), title: cellText(v[3]), date: rvDay(v[4]), lang: cellText(v[5]), file: cellText(v[6]), mime: cellText(v[7]), driveId: cellText(v[8]),
+             url: cellText(v[9]), text: cellText(v[10]), order: Number(v[11]) || 0, visible: cellText(v[12]) === "N" ? 0 : 1, uploaded: rvStamp(v[13]), by: cellText(v[14]), updated: rvStamp(v[15]) };
   });
 }
 /* Cadence (CN): the reviewer's own wording per product and milestone, shown in Chinese */
@@ -651,6 +733,8 @@ function reviewerBootstrap(rv) {
     res.audits = res.audits.concat(readAudits(ss).filter(mine));
     res.weekly = res.weekly.concat(readWeekly(ss).filter(mine));
     res.shots = res.shots.concat(readShots(ss).filter(mine));
+    res.questions = (res.questions || []).concat(readQuestions(ss).filter(mine));
+    res.resources = (res.resources || []).concat(readResources(ss).filter(function (x) { return !x.clinic || x.clinic === code; }));
     if (!done[rv.clinics[code]]) { done[rv.clinics[code]] = 1; res.settings[code] = rvSettings(ss); if (!res.cadenceCN.length) res.cadenceCN = readCadenceCN(ss); }
     else res.settings[code] = rvSettings(ss);
   });
@@ -720,6 +804,10 @@ function reviewerPost(rv, body) {
       case "hoFeedback":   return hoFeedback(rv, body);
       case "hoTranslate":  return hoTranslate(rv, body);
       case "weekStatus":   return weekStatus(rv, body);
+      case "answerQuestion": return answerQuestion(rv, body);
+      case "resourceUpload": return resourceUpload(rv, body.resource || {});
+      case "resourceSave":   return resourceSave(rv, body);
+      case "resourceRemove": return resourceRemove(rv, body);
       case "shotUpload":   return shotUpload(rv, body.shot || {});
       case "shotRemove":   return shotSetRemoved(rv, body.clinic, body.id, true);
       case "shotRestore":  return shotSetRemoved(rv, body.clinic, body.id, false);
@@ -732,6 +820,7 @@ function reviewerPost(rv, body) {
     case "feedbackSave":  return feedbackSave(rv, body);
     case "weekStatus":    return weekStatus(rv, body);
     case "hoTranslate":   return hoTranslate(rv, body);
+    case "answerQuestion": return answerQuestion(rv, body);
     case "shotUpload":    return shotUpload(rv, body.shot || {});
     case "shotRemove":    return shotSetRemoved(rv, body.clinic, body.id, true);
     case "shotRestore":   return shotSetRemoved(rv, body.clinic, body.id, false);
@@ -940,7 +1029,7 @@ function hoApprove(rv, b) {
   if (!b.undo && !ap) throw new Error("approvedBy is required: who approved");
   (b.keys || []).forEach(function (k) {
     var r = rvFindRow(sh, String(k)); if (!r) throw new Error("audit row not found: " + k);
-    if (!b.undo && cellText(sh.getRange(r, 10).getValue()) !== "checked") throw new Error("the reviewer has not checked this chat yet: " + k);
+    if (!b.undo && status === "marking" && cellText(sh.getRange(r, 10).getValue()) !== "checked") throw new Error("the reviewer has not checked this chat yet: " + k);
     var lg = parseJson(cellText(sh.getRange(r, 30).getValue()), []);
     lg.push({ at: at, by: rv.id, f: "approval", old: cellText(sh.getRange(r, 34).getValue()), "new": b.undo ? "" : ap, what: b.undo ? "approval withdrawn" : "approved for the DA" });
     sh.getRange(r, 30).setValue(appendLog(lg, []));
@@ -1156,6 +1245,77 @@ function shotSetRemoved(rv, clinic, id, removed) {
   try { DriveApp.getFileById(cellText(f.v[7])).setTrashed(removed); } catch (e) {}
   f.sh.getRange(f.row, 11).setValue(removed ? "Y" : "");
   return { ok: 1, id: String(id), removed: removed ? 1 : 0 };
+}
+
+/* ---------------------------------------------------------------- questions (1.7.0): head office or the reviewer answers the DA */
+function answerQuestion(rv, b) {
+  var ss = rvTracker(rv, b.clinic), sh = ss.getSheetByName(RV_TABS.questions), r = rvFindRow(sh, String(b.id || "")); if (!r) throw new Error("question not found");
+  var text = cellText(b.text).trim(); if (!text) throw new Error("the answer is empty");
+  var from = detectLang(text), tr = trText(ss, text, from), at = now();
+  sh.getRange(r, 11, 1, 7).setValues([["answered", text.slice(0, 4000), tr.vi || "", tr.en || "", tr.zh || "", rv.id, at]]);
+  return { ok: 1, id: String(b.id), answeredAt: at, a: text, aVi: tr.vi || "", aEn: tr.en || "", aZh: tr.zh || "", answeredBy: rv.id };
+}
+
+/* ---------------------------------------------------------------- resources (1.7.0): head office uploads for the DA's Resources page
+   Decks and photos go to a Drive folder next to the tracker and, when resources_public is Y, become viewable by anyone
+   with the link so the DA's page can show them; template scripts are text only. Rows live in the Resources tab. */
+var RES_KINDS = { deck: 1, photo: 1, script: 1 };
+function resFolder(ss) {
+  var id = rvSettings(ss).resources_folder;
+  if (id) { try { return DriveApp.getFolderById(id); } catch (e) {} }
+  var parent = null;
+  try { var it = DriveApp.getFileById(ss.getId()).getParents(); if (it.hasNext()) parent = it.next(); } catch (e) {}
+  var f = null, title = "资料 Resources";
+  if (parent) { try { f = parent.createFolder(title); } catch (e) { f = null; } }
+  if (!f) f = DriveApp.createFolder(title);
+  setRvSetting(ss, "resources_folder", f.getId());
+  return f;
+}
+/* x: {kind, clinic?, title, date?, lang?, text?, name?, mime?, data? (base64 or data: URL)} */
+function resourceUpload(rv, x) {
+  if (rv.role !== "ho") throw new Error("only head office uploads resources");
+  var code = x.clinic || Object.keys(rv.clinics)[0], ss = rvTracker(rv, code), kind = String(x.kind || "");
+  if (!RES_KINDS[kind]) throw new Error("kind must be deck, photo or script");
+  var title = cellText(x.title).trim(); if (!title) throw new Error("title is required");
+  var date = iso(x.date) || "", id = "r" + new Date().getTime().toString(36), at = now(), file = null, fname = "", mime = "", url = "", driveId = "";
+  if (kind !== "script") {
+    var data = String(x.data || ""), m = /^data:([^;]+);base64,/.exec(data); mime = m ? m[1] : String(x.mime || "application/octet-stream");
+    if (m) data = data.slice(m[0].length);
+    if (!data) throw new Error("file is empty");
+    if (kind === "photo" && !/^image\//.test(mime)) throw new Error("photos and posters must be images");
+    var bytes = Utilities.base64Decode(data);
+    if (bytes.length > 25 * 1024 * 1024) throw new Error("file is larger than 25 MB; export the deck as PDF or split it");
+    fname = cellText(x.name).replace(/[\\/:*?"<>|]/g, "").slice(0, 120) || (title + (kind === "photo" ? ".jpg" : ".pdf"));
+    file = resFolder(ss).createFile(Utilities.newBlob(bytes, mime, fname));
+    if (String(rvSettings(ss).resources_public || "Y").toUpperCase() !== "N") { try { file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); } catch (e) {} }
+    url = file.getUrl(); driveId = file.getId();
+  }
+  var sh = ss.getSheetByName(RV_TABS.resources), order = sh.getLastRow();
+  sh.getRange(sh.getLastRow() + 1, 1, 1, RV_HEADERS.resources.length).setValues([[id, kind, x.clinic ? code : "", title.slice(0, 200), date ? "'" + date : "", cellText(x.lang).slice(0, 5), fname, mime, driveId, url,
+    cellText(x.text).slice(0, 20000), order, "Y", at, rv.id, at, ""]]);
+  return { ok: 1, id: id, kind: kind, title: title, date: date, lang: cellText(x.lang), file: fname, mime: mime, driveId: driveId, url: url, text: cellText(x.text), order: order, visible: 1, uploaded: at, by: rv.id };
+}
+/* b: {id, clinic?, fields: {title, date, lang, text, order, visible, clinic}} */
+function resourceSave(rv, b) {
+  if (rv.role !== "ho") throw new Error("only head office edits resources");
+  var ss = rvTracker(rv, b.clinic || Object.keys(rv.clinics)[0]), sh = ss.getSheetByName(RV_TABS.resources), r = rvFindRow(sh, String(b.id || "")); if (!r) throw new Error("resource not found");
+  var f = b.fields || {}, cols = { title: 4, date: 5, lang: 6, text: 11, order: 12, visible: 13, clinic: 3 };
+  Object.keys(f).forEach(function (k) {
+    if (!cols[k]) return;
+    var v = f[k];
+    if (k === "date") v = iso(v) ? "'" + iso(v) : ""; else if (k === "visible") v = v ? "Y" : "N"; else if (k === "order") v = Number(v) || 0; else v = cellText(v).slice(0, k === "text" ? 20000 : 200);
+    sh.getRange(r, cols[k]).setValue(v);
+  });
+  sh.getRange(r, 16).setValue(now());
+  return { ok: 1, id: String(b.id) };
+}
+function resourceRemove(rv, b) {
+  if (rv.role !== "ho") throw new Error("only head office removes resources");
+  var ss = rvTracker(rv, b.clinic || Object.keys(rv.clinics)[0]), sh = ss.getSheetByName(RV_TABS.resources), r = rvFindRow(sh, String(b.id || "")); if (!r) throw new Error("resource not found");
+  var driveId = cellText(sh.getRange(r, 9).getValue());
+  if (driveId) { try { DriveApp.getFileById(driveId).setTrashed(true); } catch (e) {} }
+  sh.getRange(r, 17).setValue("Y"); sh.getRange(r, 16).setValue(now());
+  return { ok: 1, id: String(b.id) };
 }
 
 /* Run once from the editor after adding the reviewer section: creates the tracker tabs and the
