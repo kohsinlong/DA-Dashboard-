@@ -22,7 +22,7 @@ window.ZALO_REVIEW = (function () {
   var Z = window.ZALO;
   var ALL = ["NGT", "LA", "CMTT", "SH", "D5", "D7"];   /* the tabs; a clinic is live once the script serves it */
   var QUOTA_MAX = 5;                                    /* chats per cadence, a guide scaled to the target */
-  var st = { data: null, clinic: "", week: "", live: [], ctx: {}, audits: {}, weekly: {}, shots: {}, blobs: {}, loading: {}, pending: {}, timers: {}, logq: {}, busy: {}, flush: {},
+  var st = { data: null, clinic: "", week: "", live: [], ctx: {}, audits: {}, weekly: {}, shots: {}, questions: {}, resources: {}, blobs: {}, loading: {}, pending: {}, timers: {}, logq: {}, busy: {}, flush: {},
              ui: { view: "cad", src: "audit", dueStage: "", dueProd: "", dueDa: "", dueQ: "", duePage: 0, showAllDue: false,
                    trWeek: "", trVerdict: "", trProd: "", trStage: "", trShots: false, trQ: "", phones: {}, open: {}, hist: false, logs: {}, ap: "", apName: "" } };
   R.st = st; R.ALL = ALL;
@@ -79,6 +79,8 @@ window.ZALO_REVIEW = (function () {
         ladder: "合规 · {c}", ladderHint: "助理自报 vs 审核样本 · 按节点", ladderNote: "两条之间的差距是要盯的数字：助理报告的 vs 审核人找到的。", noDue: "本周没有到期节点。",
         approvedTag: "审批人 {a}", other2: "其他：{n}",
         approve: "批准 → 助理", approveAll: "批准全部已检查 ({n})", apTitle: "批准 {n} 个对话发布给助理", apLede: "当前的勾选和越南语将发给助理。本周可以继续标记；“完成本周”只用于总评和剩余对话。", apBtn: "批准", apDone: "已批准 {n} 个对话",
+        qs: "助理的提问", qPill: "{n} 个提问", qOpen: "{n} 个助理提问等待回复", reply: "回复", replyPh: "回复（任何语言；助理看到的是越南语）…", answered: "已回复", waiting: "等待回复", replied: "已回复助理",
+        res: { nav: "资料", title: "给助理的资料", hint: "助理“资料”页上显示的内容：培训幻灯片、图片/海报、消息模板", decks: "每周培训幻灯片", photos: "图片 / 海报", scripts: "消息模板", titleL: "标题", dateL: "周 / 日期", langL: "语言", fileL: "文件（PDF 或 PPTX，最大 25 MB）", photoL: "图片（可多选）", textL: "助理复制粘贴的文字", upload: "上传", add: "添加", uploading: "上传中…", uploaded: "已上传", removed: "已删除", del: "删除", delAsk: "从助理页面删除这项？", visible: "对助理可见", none: "暂无", open: "打开", by: "{b} · {t}", tooBig: "文件超过 25 MB，请导出为 PDF。", needTitle: "请填写标题。", needFile: "请选择文件。", needText: "请输入文字。", anyLang: "不限" },
         approvedPill: "审批人 {a} · {t} · 已发助理", withdraw: "撤回批准", withdrawn: "已撤回批准", withdrawnByChange: "{n} 个对话的 HO 批准已撤回：对话内容已更改", apUntranslated: "其中 {u} 条尚无越南语。", approvedN: "已批准 {p}"
       }
     },
@@ -132,6 +134,8 @@ window.ZALO_REVIEW = (function () {
         ladder: "Compliance · {c}", ladderHint: "DA-reported ticks against the audited sample · per cadence", ladderNote: "The gap between the two bars is the number to watch: what the DA reports against what the reviewer found.", noDue: "No cadence falls due this week.",
         approvedTag: "approved by {a}", other2: "Other: {n}",
         approve: "Approve → DA", approveAll: "Approve all checked ({n})", apTitle: "Approve {n} chat(s) for the DA", apLede: "The ticks and the Vietnamese as they stand go to the DA. The week can stay open; Complete week is only for the overall feedback and whatever is left.", apBtn: "Approve", apDone: "{n} approved for the DA",
+        qs: "Questions from the DA", qPill: "{n} question(s)", qOpen: "{n} question(s) from the DA waiting", reply: "Reply", replyPh: "Your answer (any language; the DA reads it in Vietnamese)…", answered: "Answered", waiting: "waiting for an answer", replied: "Answer sent to the DA",
+        res: { nav: "Resources", title: "Resources for the DA", hint: "what the DA sees on her Resources tab: training decks, photos and posters, template scripts", decks: "Weekly training decks", photos: "Photos / Posters", scripts: "Template scripts", titleL: "Title", dateL: "Week / date", langL: "Language", fileL: "File (PDF or PPTX, up to 25 MB)", photoL: "Images (several at once)", textL: "The text the DA copies and pastes", upload: "Upload", add: "Add", uploading: "Uploading…", uploaded: "Uploaded", removed: "Removed", del: "Delete", delAsk: "Remove this item from the DA's page?", visible: "Visible to the DA", none: "Nothing yet", open: "Open", by: "{b} · {t}", tooBig: "The file is larger than 25 MB. Export the deck as PDF.", needTitle: "Give it a title.", needFile: "Choose a file.", needText: "Type the text.", anyLang: "Any" },
         approvedPill: "Approved by {a} · {t} · to the DA", withdraw: "Withdraw approval", withdrawn: "Approval withdrawn", withdrawnByChange: "HO approval withdrawn on {n} chat(s): the chat changed", apUntranslated: "{u} of these have no Vietnamese yet.", approvedN: "{p} approved"
       }
     },
@@ -185,6 +189,8 @@ window.ZALO_REVIEW = (function () {
         ladder: "Tuân thủ · {c}", ladderHint: "trợ lý báo so với mẫu kiểm · theo cadence", ladderNote: "Khoảng cách giữa hai thanh là con số cần theo dõi: trợ lý báo so với người kiểm thấy.", noDue: "Tuần này không có cadence đến hạn.",
         approvedTag: "duyệt bởi {a}", other2: "Khác: {n}",
         approve: "Duyệt → trợ lý", approveAll: "Duyệt tất cả đã kiểm ({n})", apTitle: "Duyệt {n} hội thoại gửi trợ lý", apLede: "Các tick và bản tiếng Việt hiện tại sẽ gửi cho trợ lý. Tuần vẫn mở; Hoàn tất tuần chỉ dành cho nhận xét chung và phần còn lại.", apBtn: "Duyệt", apDone: "Đã duyệt {n} hội thoại",
+        qs: "Câu hỏi của trợ lý", qPill: "{n} câu hỏi", qOpen: "{n} câu hỏi của trợ lý đang chờ", reply: "Trả lời", replyPh: "Câu trả lời (ngôn ngữ nào cũng được; trợ lý đọc bằng tiếng Việt)…", answered: "Đã trả lời", waiting: "chờ trả lời", replied: "Đã gửi câu trả lời cho trợ lý",
+        res: { nav: "Tài liệu", title: "Tài liệu cho trợ lý", hint: "những gì trợ lý thấy ở tab Tài liệu: slide đào tạo, hình ảnh / poster, mẫu tin nhắn", decks: "Slide đào tạo hàng tuần", photos: "Hình ảnh / Poster", scripts: "Mẫu tin nhắn", titleL: "Tiêu đề", dateL: "Tuần / ngày", langL: "Ngôn ngữ", fileL: "Tệp (PDF hoặc PPTX, tối đa 25 MB)", photoL: "Hình (chọn nhiều)", textL: "Văn bản trợ lý sao chép và dán", upload: "Tải lên", add: "Thêm", uploading: "Đang tải lên…", uploaded: "Đã tải lên", removed: "Đã xoá", del: "Xoá", delAsk: "Xoá mục này khỏi trang trợ lý?", visible: "Hiện cho trợ lý", none: "Chưa có", open: "Mở", by: "{b} · {t}", tooBig: "Tệp lớn hơn 25 MB. Xuất slide ra PDF.", needTitle: "Nhập tiêu đề.", needFile: "Chọn tệp.", needText: "Nhập văn bản.", anyLang: "Bất kỳ" },
         approvedPill: "Duyệt bởi {a} · {t} · đã gửi trợ lý", withdraw: "Thu hồi duyệt", withdrawn: "Đã thu hồi duyệt", withdrawnByChange: "Đã thu hồi duyệt HO trên {n} hội thoại: nội dung đã thay đổi", apUntranslated: "{u} trong số này chưa có tiếng Việt.", approvedN: "{p} đã duyệt"
       }
     }
@@ -262,6 +268,8 @@ window.ZALO_REVIEW = (function () {
     st.audits = {}; (data.audits || []).forEach(function (a) { st.audits[a.key] = a; });
     st.weekly = {}; (data.weekly || []).forEach(function (w) { st.weekly[wKey(w.week, w.clinic)] = w; });
     st.shots = {}; (data.shots || []).forEach(function (s) { st.shots[s.id] = s; });
+    st.questions = {}; (data.questions || []).forEach(function (q) { st.questions[q.id] = q; });
+    st.resources = {}; (data.resources || []).forEach(function (r) { st.resources[r.id] = r; });
     R.selectClinic(st.clinic);
     if (!st.week) st.week = lastWeek() < startWeek() ? startWeek() : lastWeek();
   };
@@ -335,7 +343,7 @@ window.ZALO_REVIEW = (function () {
   function weekStats(week, clinic){
     clinic = clinic || st.clinic;
     var ctx = ctxOf(clinic), recs = recsOf(week, clinic), target = sampleSize(clinic);
-    var s = { week: week, clinic: clinic, target: target, dueCustomers: 0, dueCadences: 0, sampled: recs.length, drawn: 0, extra: 0, checked: 0, approved: 0, pass: 0, partial: 0, fail: 0, data: 0, noted: 0, open: 0,
+    var s = { week: week, clinic: clinic, target: target, dueCustomers: 0, dueCadences: 0, sampled: recs.length, drawn: 0, extra: 0, checked: 0, checkedIn: 0, checkedExtra: 0, approved: 0, pass: 0, partial: 0, fail: 0, data: 0, noted: 0, open: 0,
               score: null, weekScore: null, notFound: 0, itemsOn: 0, itemsN: 0, itemsPct: null, allOn: 0, allN: 0, earlier: 0, cadences: 0, daSent: null, daN: 0, daItemsOn: 0, daItemsN: 0,
               byStage: {}, items: {}, daItems: {}, status: weekStatus(week, clinic) };
     function stageRow(stage){ return s.byStage[stage] = s.byStage[stage] || { stage: stage, due: 0, daFull: 0, daPartial: 0, daNone: 0, daOn: 0, daN: 0, inSample: 0, on: 0, n: 0, full: 0, partial: 0, missed: 0, pts: 0 }; }
@@ -354,7 +362,7 @@ window.ZALO_REVIEW = (function () {
     recs.forEach(function (a) {
       var e = evalRec(a); s[e.verdict] = (s[e.verdict] || 0) + 1;
       if (isExtra(a)) s.extra++; else s.drawn++;
-      if (a.status === "checked") s.checked++;
+      if (a.status === "checked") { s.checked++; if (isExtra(a)) s.checkedExtra++; else s.checkedIn++; }
       if (a.publishedAt) s.approved++;
       if (e.score !== null) ptsAll.push(e.score); if (e.weekScore !== null) ptsWk.push(e.weekScore);
       s.notFound += e.notFound; s.allOn += e.items.on; s.allN += e.items.n; s.cadences += e.n;
@@ -554,6 +562,25 @@ window.ZALO_REVIEW = (function () {
     Object.keys(r.rows || {}).forEach(function (key) { var a = st.audits[key], x = r.rows[key]; if (!a || !x) return; a.remarkEn = x.en; a.remarkVi = x.vi; a.remarkZh = x.zh; a.translatedAt = x.translatedAt; a.translatedBy = x.translatedBy; });
     if (r.weekly) { var w = st.weekly[wKey(week, clinic)]; if (w) { w.remarkEn = r.weekly.en; w.remarkVi = r.weekly.vi; w.remarkZh = r.weekly.zh; w.translatedAt = r.weekly.translatedAt; w.translatedBy = r.weekly.translatedBy; } }
   }
+  /* ------------------------------------------------------------------ questions from the DA (1.7.0) */
+  function questionsFor(week, clinic, custKey){ return Object.keys(st.questions).map(function (k) { return st.questions[k]; }).filter(function (q) { return q.week === week && q.clinic === clinic && (q.custKey || "") === (custKey || ""); }).sort(function (a, b) { return (a.askedAt || "") < (b.askedAt || "") ? -1 : 1; }); }
+  function openQuestions(clinic){ return Object.keys(st.questions).map(function (k) { return st.questions[k]; }).filter(function (q) { return q.status !== "answered" && (!clinic || q.clinic === clinic); }); }
+  function qText(q){ var l = A.lang(); return (l === "en" ? q.qEn : l === "zh" ? q.qZh : "") || q.q || ""; }
+  function aText(q){ var l = A.lang(); return (l === "vi" ? q.aVi : l === "en" ? q.aEn : q.aZh) || q.a || ""; }
+  function threadHtml(list){
+    var th = TH(); if (!list.length) return "";
+    return '<div class="rvjt" style="margin-top:8px">' + esc(th.qs) + '</div><div class="thread">' + list.map(function (q) {
+      return '<div class="msg me"><div class="mh"><span>' + esc(q.from || "DA") + "</span><span>" + esc(fmtWhen(q.askedAt)) + "</span></div>" + esc(qText(q)) + "</div>"
+        + (q.status === "answered" ? '<div class="msg"><div class="mh"><span>' + esc(hoLabel(q.answeredBy) || q.answeredBy) + "</span><span>" + esc(fmtWhen(q.answeredAt)) + "</span></div>" + esc(aText(q)) + "</div>"
+           : '<div class="askbox"><textarea data-rvans="' + esc(q.id) + '" placeholder="' + esc(th.replyPh) + '"></textarea><div class="rvrow"><button type="button" class="btn primary sm" data-act="rv-answer" data-id="' + esc(q.id) + '">' + esc(th.reply) + '</button><span class="hint">' + esc(th.waiting) + "</span></div></div>");
+    }).join("") + "</div>";
+  }
+  function answerQuestion(id){
+    var th = TH(), q = st.questions[id], ta = document.querySelector('textarea[data-rvans="' + CSS.escape(id) + '"]'), text = ta ? ta.value.trim() : ""; if (!q || !text) { if (ta) ta.focus(); return; }
+    A.post({ action: "answerQuestion", clinic: q.clinic, week: q.week, id: id, text: text })
+      .then(function (r) { q.status = "answered"; q.a = text; q.aVi = r.aVi || ""; q.aEn = r.aEn || ""; q.aZh = r.aZh || ""; q.answeredBy = r.answeredBy || me(); q.answeredAt = r.answeredAt || nowIso(); if (q.custKey) st.ui.open[q.week + "|" + q.clinic + "|" + q.custKey] = true; A.toast(th.replied); R.render(); })
+      .catch(function (e) { A.toast(fill(T().failed, { e: e.message }), true); });
+  }
   /* ------------------------------------------------------------------ publish / send back dialogs */
   function openPublish(week){
     var th = TH(), s = weekStats(week), recs = recsOf(week), hidden = recs.filter(function (a) { return a.visible === 0; }).length, un = untranslated(week), aps = ((st.data && st.data.approvers) || []).slice(), busy = trBusy(week);
@@ -672,6 +699,7 @@ window.ZALO_REVIEW = (function () {
     r = String(r || "").toLowerCase();
     if (r.indexOf("clinic-") === 0) { var code = ALL.filter(function (c) { return c.toLowerCase() === r.slice(7); })[0]; if (code && isLive(code)) { if (code !== st.clinic) R.selectClinic(code); return "clinic"; } return "overview"; }
     if (r === "crm") return "crm";
+    if (r === "resources" && isHo()) return "resources";
     return "overview";
   };
   R.navItems = function (route) {
@@ -679,12 +707,13 @@ window.ZALO_REVIEW = (function () {
     Object.keys(st.weekly).forEach(function (k) { var w = st.weekly[k]; if (w.status === "submitted" || w.status === "review") waiting[w.clinic] = (waiting[w.clinic] || 0) + 1; });
     var items = [{ route: "overview", label: t.nav.overview, current: route === "overview" }];
     ALL.forEach(function (c) { items.push({ route: "clinic-" + c.toLowerCase(), label: c, off: !isLive(c), offLabel: t.notLive, current: route === "clinic" && st.clinic === c, count: isHo() ? (waiting[c] || 0) : (route === "clinic" && st.clinic === c ? open : 0) }); });
+    if (isHo()) items.push({ route: "resources", label: TH().res.nav, current: route === "resources" });
     items.push({ route: "crm", label: t.nav.crm, current: route === "crm" });
     return items;
   };
   R.subText = function () { var n = st.data ? (st.data.name || st.data.reviewer) : ""; return isHo() ? fill(TH().sub, { c: st.clinic, r: n }) : fill(T().sub, { c: st.clinic, r: n }); };
   R.title = function () { return T().title; };
-  R.page = function (route) { return route === "clinic" ? pageClinic() : route === "crm" ? pageCrm() : pageOverview(); };
+  R.page = function (route) { return route === "clinic" ? pageClinic() : route === "crm" ? pageCrm() : route === "resources" ? pageResourcesHo() : pageOverview(); };
   R.guideHtml = function () { var t = T(); return '<div class="guide"><h2>' + esc(t.g.title) + "</h2><ol>" + t.g.lines.map(function (l) { return "<li>" + esc(l) + "</li>"; }).join("") + '</ol><div class="gbtns"><button type="button" class="btn primary" data-act="guide-close">OK</button></div></div>'; };
 
   function weekBar(){
@@ -752,14 +781,16 @@ window.ZALO_REVIEW = (function () {
     st.live.forEach(function (c) { if (weekStatus(st.week, c) !== "marking" || marking.some(function (m) { return m.c === c && m.week === st.week; })) return; var s = weekStats(st.week, c); if (s.dueCadences) marking.push({ c: c, week: st.week, s: s }); });
     marking.sort(function (a, b) { return a.week < b.week ? 1 : a.week > b.week ? -1 : a.c.localeCompare(b.c); });
     var h = '<div class="panel"><h3>' + esc(th.queue) + ' <span class="hint">' + esc(th.queueHint) + "</span></h3>";
-    if (!rows.length && !marking.length) h += '<div class="empty">' + esc(th.qNone) + "</div>";
+    var oq = {}; openQuestions().forEach(function (q) { if (isLive(q.clinic)) oq[q.week + "|" + q.clinic] = (oq[q.week + "|" + q.clinic] || 0) + 1; });
+    Object.keys(oq).sort().reverse().forEach(function (k) { var p = k.split("|"); h += '<a class="lrow" href="#/clinic-' + p[1].toLowerCase() + '" data-act="rv-goto" data-w="' + esc(p[0]) + '"><div><div class="nm">' + esc(p[1]) + " · " + esc(wTag(p[0])) + ' <span class="pill p-warn">' + esc(th.qs) + '</span></div><div class="meta">' + esc(fill(th.qOpen, { n: oq[k] })) + '</div></div><div class="right"><span class="btn primary sm">' + esc(th.reply) + "</span></div></a>"; });
+    if (!rows.length && !marking.length && !Object.keys(oq).length) h += '<div class="empty">' + esc(th.qNone) + "</div>";
     rows.forEach(function (w) {
       var s = weekStats(w.week, w.clinic), when = w.status === "review" ? fill(th.qReview, { h: hoLabel(w.hoBy), t: fmtWhen(w.takenAt) }) : fill(th.qSubmitted, { r: rvName(w.clinic), t: fmtWhen(w.submittedAt) });
       h += '<a class="lrow" href="#/clinic-' + w.clinic.toLowerCase() + '" data-act="rv-goto" data-w="' + esc(w.week) + '"><div><div class="nm">' + esc(w.clinic) + " · " + esc(wTag(w.week)) + " " + statusPill(w.status) + '</div><div class="meta">' + esc(when) + " · " + esc(fill(th.qLine, { n: s.drawn, x: s.extra, s: s.itemsPct === null ? "—" : s.itemsPct + "%", d: s.daSent === null ? "—" : s.daSent + "%", g: s.notFound, i: s.data })) + '</div></div><div class="right"><span class="btn primary sm">' + esc(th.review) + "</span></div></a>";
     });
     marking.forEach(function (m) {
       var s = m.s, c = m.c;
-      h += '<a class="lrow" href="#/clinic-' + c.toLowerCase() + '" data-act="rv-goto" data-w="' + esc(m.week) + '"><div><div class="nm">' + esc(c) + " · " + esc(wTag(m.week)) + " " + statusPill("marking") + '</div><div class="meta">' + esc(s.checked ? fill(th.qMarkingC, { r: rvName(c), c: s.checked, n: s.drawn, p: s.approved }) : fill(th.qMarking, { r: rvName(c), c: s.checked, n: s.drawn })) + '</div></div><div class="right"><span class="btn ' + (s.checked ? "primary " : "") + 'sm">' + esc(s.checked ? th.review : th.openWeek) + "</span></div></a>";
+      h += '<a class="lrow" href="#/clinic-' + c.toLowerCase() + '" data-act="rv-goto" data-w="' + esc(m.week) + '"><div><div class="nm">' + esc(c) + " · " + esc(wTag(m.week)) + " " + statusPill("marking") + '</div><div class="meta">' + esc(s.checked ? fill(th.qMarkingC, { r: rvName(c), c: s.checkedIn, n: s.drawn, p: s.approved }) : fill(th.qMarking, { r: rvName(c), c: s.checkedIn, n: s.drawn })) + '</div></div><div class="right"><span class="btn ' + (s.checked ? "primary " : "") + 'sm">' + esc(s.checked ? th.review : th.openWeek) + "</span></div></a>";
     });
     return h + "</div>";
   }
@@ -801,7 +832,7 @@ window.ZALO_REVIEW = (function () {
     var hoText = status === "review" ? fill(th.stripReview, { h: hoLabel(wk.hoBy), t: fmtWhen(wk.takenAt), e: hoEditCount(week) }) : status === "published" ? fill(th.stripPublished, { t: fmtWhen(wk.publishedAt), a: wk.approvedBy || "" }) : status === "acknowledged" ? fill(th.stripAck, { t: fmtWhen(wk.updated) }) : "";
     if (isHo()) {
       var can = hoActs(week), un = untranslated(week);
-      h += "<span>" + esc(status === "marking" ? fill(th.stripMarking, { r: rvName(), n: s.drawn, t: s.target, x: s.extra, c: s.checked, p: s.approved }) : status === "submitted" ? fill(th.stripSubmitted, { r: rvName(), t: fmtWhen(wk.submittedAt), n: s.sampled, c: s.checked }) + " · " + fill(th.approvedN, { p: s.approved }) : hoText) + "</span>";
+      h += "<span>" + esc(status === "marking" ? fill(th.stripMarking, { r: rvName(), n: s.drawn, t: s.target, x: s.extra, c: s.checkedIn, p: s.approved }) : status === "submitted" ? fill(th.stripSubmitted, { r: rvName(), t: fmtWhen(wk.submittedAt), n: s.sampled, c: s.checked }) + " · " + fill(th.approvedN, { p: s.approved }) : hoText) + "</span>";
       h += '<span class="right">';
       if (status === "marking") h += '<span class="hint">' + esc(fill(th.stripMarkingX, { r: rvName() })) + "</span>";
       if (hoCanWeek(week) && un) h += '<button type="button" class="btn sm" data-act="rv-translate"' + (trBusy(week) ? " disabled" : "") + ">" + esc(trBusy(week) ? th.translating : fill(th.translateAll, { n: un })) + "</button>";
@@ -815,7 +846,7 @@ window.ZALO_REVIEW = (function () {
       h += "</span>";
     } else {
       var locked = status !== "marking";
-      h += "<span>" + esc(!locked ? fill(t.stripMarking, { n: s.drawn, t: s.target, x: s.extra, c: s.checked }) : status === "submitted" ? fill(t.stripLocked, { t: fmtWhen(wk.submittedAt || wk.updated) }) : hoText) + "</span>";
+      h += "<span>" + esc(!locked ? fill(t.stripMarking, { n: s.drawn, t: s.target, x: s.extra, c: s.checkedIn }) : status === "submitted" ? fill(t.stripLocked, { t: fmtWhen(wk.submittedAt || wk.updated) }) : hoText) + "</span>";
       h += '<span class="right">' + (locked ? (status === "submitted" ? '<button type="button" class="btn sm" data-act="rv-reopen">' + esc(t.reopen) + "</button>" : "") : '<span class="hint">' + esc(settingsOf().email_ho ? t.stripHint : t.stripHintNoMail) + '</span><button type="button" class="btn primary" data-act="rv-complete">' + esc(t.complete) + "</button>") + "</span>";
     }
     if (status === "marking" && wk.sendBack) h += '<span class="sbnote">↩ ' + esc(fill(th.sentBack, { r: rvName(), t: fmtWhen(sentBackAt(wk)), note: wk.sendBack })) + "</span>";
@@ -837,6 +868,7 @@ window.ZALO_REVIEW = (function () {
     var ve = viEdited(wk);
     if (ve) h += '<div class="trb" style="margin-top:10px"><div class="tl2"><span>' + esc(fill(th.hoVersion, { l: hoText(wk) === langText(wk) ? A.lang().toUpperCase() : "VI" })) + "</span><span>" + esc(fill(th.trEdited, { h: hoLabel(ve.by), t: fmtWhen(ve.at) })) + "</span></div>" + esc(hoText(wk)) + "</div>";
     if (wk.hoNote) h += '<div class="trb" style="margin-top:8px"><div class="tl2"><span>' + esc(th.note) + "</span></div>" + esc(wk.hoNote) + "</div>";
+    h += threadHtml(questionsFor(week, st.clinic, ""));
     return h + "</div></div>";
   }
   /* the text in the page's language: the DA's Vietnamese, HO's English, the reviewer's Chinese (or the original) */
@@ -852,7 +884,7 @@ window.ZALO_REVIEW = (function () {
       + tile("", s.score === null ? "—" : String(s.score), t.tSop, t.tSopX)
       + tile("", s.daSent === null ? "—" : s.daSent + "<small>%</small>", t.tDa, fill(t.tDaX, { n: s.dueCadences }))
       + tile(s.notFound ? "bad" : "", String(s.notFound), t.tGap, t.tGapX)
-      + tile(s.drawn >= s.target ? "ok" : "", s.drawn + "<small>/" + s.target + "</small>", t.tMarked, fill(t.tMarkedX, { x: s.extra, c: s.checked, n: s.drawn })) + "</div>";
+      + tile(s.drawn >= s.target ? "ok" : "", s.drawn + "<small>/" + s.target + "</small>", t.tMarked, fill(t.tMarkedX, { x: s.extra, c: s.checkedIn, n: s.drawn })) + "</div>";
     var stages = Object.keys(s.byStage).sort(stageOrder);
     if (u.view === "cad") {
       h += '<div class="tblwrap"><table class="rvtbl"><thead><tr><th>' + esc(t.thCad) + '</th><th class="n">' + esc(t.thDue) + "</th>";
@@ -926,8 +958,8 @@ window.ZALO_REVIEW = (function () {
   function hoFeedbackPanel(week, wk){
     var t = T(), th = TH(), fk = wKey(week, st.clinic), can = hoCanWeek(week);
     var h = '<div class="panel rvfb"><h3>' + esc(t.fbTitle) + ' <span class="hint">' + esc(t.fbHint) + '</span></h3><div class="pad">';
-    if (!wk.remark && !wk.remarkVi) return h + '<div class="empty" style="padding:8px">' + esc(th.noFeedback) + "</div></div></div>";
-    return h + trio(wk, fk, can, "") + "</div></div>";
+    if (!wk.remark && !wk.remarkVi) return h + '<div class="empty" style="padding:8px">' + esc(th.noFeedback) + "</div>" + threadHtml(questionsFor(week, st.clinic, "")) + "</div></div>";
+    return h + trio(wk, fk, can, "") + threadHtml(questionsFor(week, st.clinic, "")) + "</div></div>";
   }
   /* original · English · Vietnamese (editable for HO) · HO note, for a chat (key = audit key) or the week (key = week key, trKey "") */
   function trio(x, key, can, trKey){
@@ -982,7 +1014,8 @@ window.ZALO_REVIEW = (function () {
      review (every change logged), the remark in three languages, the visible-to-DA switch. */
   function auditCard(a, n, locked){
     var t = T(), th = TH(), ho = isHo(), ctx = ctxOf(a.clinic), c = ctx.byKey[a.custKey], e = evalRec(a), marks = marksOf(a);
-    var open = st.ui.open[a.key] === true || (st.ui.open[a.key] !== false && !ho && a.status !== "checked" && !locked);
+    var qs = questionsFor(a.week, a.clinic, a.custKey), openQ = qs.some(function (q) { return q.status !== "answered"; });
+    var open = st.ui.open[a.key] === true || (st.ui.open[a.key] !== false && (openQ || (!ho && a.status !== "checked" && !locked)));
     var end = Z.addDays(a.week, 6), j = c ? journey(c, ctx).filter(function (m) { return m.due >= a.week && m.due <= end; }) : [], dis = locked ? " disabled" : "";
     var corrBy = function () { var e2 = (a.hoEdits || []).filter(function (x) { return x.f === "tick" || x.f === "stage"; }).pop(); return e2 ? hoLabel(e2.by) : ""; };
     var h = '<div class="rvcard' + (a.status === "checked" ? " checked" : "") + (a.visible === 0 ? " hiddenda" : "") + '" data-key="' + esc(a.key) + '">';
@@ -994,6 +1027,7 @@ window.ZALO_REVIEW = (function () {
       + '<div class="rvverdict">' + verdictPill(e.verdict) + (e.score !== null ? ' <b style="color:' + scoreColour(e.score) + '">' + e.score + "%</b>" : "") + (e.notFound ? ' <span class="pill p-bad">' + e.notFound + " " + esc(t.notFound) + "</span>" : "")
       + (a.hoMarks ? ' <span class="corr">' + esc(fill(th.corrected, { h: corrBy() })) + "</span>" : "") + (!ho && a.status === "checked" ? ' <span class="pill p-ok">' + esc(t.checked) + "</span>" : "")
       + (a.publishedAt ? ' <span class="pill p-ok">' + esc(fill(th.approvedPill, { a: a.approvedBy, t: fmtWhen(a.publishedAt) })) + "</span>" : "")
+      + (qs.length ? ' <span class="pill ' + (openQ ? "p-warn" : "p-inert") + '">' + esc(fill(th.qPill, { n: openQ ? qs.filter(function (q) { return q.status !== "answered"; }).length : qs.length })) + "</span>" : "")
       + ' <button type="button" class="btn sm" data-act="rv-toggle" data-key="' + esc(a.key) + '" data-open="' + (open ? 0 : 1) + '">' + esc(open ? t.close : t.open) + "</button></div></div>";
     if (!open) return h + "</div>";
     h += '<div class="rvbody"><div class="rvjourney"><div class="rvjt">' + esc(t.journey) + "</div>";
@@ -1020,7 +1054,7 @@ window.ZALO_REVIEW = (function () {
       var apBtn = a.publishedAt ? (hoCanWeek(a.week, a.clinic) ? '<button type="button" class="btn sm" data-act="rv-unapprove" data-key="' + esc(a.key) + '">' + esc(th.withdraw) + "</button>" : "")
                 : (!locked && canApprove(a) ? '<button type="button" class="btn good" data-act="rv-approve" data-key="' + esc(a.key) + '">' + esc(th.approve) + "</button>" : "");
       h += '<div class="rvside hoside">' + trio(a, a.key, !locked, a.key) + (apBtn ? '<div class="rvrow">' + apBtn + "</div>" : "") + (a.data ? '<span class="pill p-inert">' + esc(t.dataIssue) + "</span>" : "")
-        + (shotsOf(a).length ? '<div class="rvjt">' + esc(t.shots) + "</div>" + shotsHtml(a, false) : "") + "</div></div></div>";
+        + (shotsOf(a).length ? '<div class="rvjt">' + esc(t.shots) + "</div>" + shotsHtml(a, false) : "") + threadHtml(qs) + "</div></div></div>";
       return h;
     }
     h += '<div class="rvside"><textarea data-rvrem="' + esc(a.key) + '" placeholder="' + esc(t.remarkPh) + '"' + dis + ">" + esc(a.remark || "") + "</textarea>"
@@ -1034,6 +1068,7 @@ window.ZALO_REVIEW = (function () {
     if (ve) h += '<div class="trb"><div class="tl2"><span>' + esc(fill(th.hoVersion, { l: hoText(a) === langText(a) ? A.lang().toUpperCase() : "VI" })) + "</span><span>" + esc(fill(th.trEdited, { h: hoLabel(ve.by), t: fmtWhen(ve.at) })) + "</span></div>" + esc(hoText(a)) + "</div>";
     if (a.hoNote) h += '<div class="trb"><div class="tl2"><span>' + esc(th.note) + "</span></div>" + esc(a.hoNote) + "</div>";
     if (hasHoEdits(a)) h += '<div class="rvrow">' + logFold(a, a.key) + "</div>";
+    h += threadHtml(qs);
     return h + "</div></div></div>";
   }
 
@@ -1132,6 +1167,49 @@ window.ZALO_REVIEW = (function () {
     a.href = URL.createObjectURL(blob); a.download = "zalo-sop-audit-" + st.clinic + "-" + A.today() + ".csv"; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
   }
   function pageCrm(){ return '<div class="note"><p>' + esc(T().crmHint) + "</p></div>" + A.pageMembers(); }
+  /* ------------------------------------------------------------------ head office: resources for the DA (1.7.0) */
+  function resList(kind){ return Object.keys(st.resources).map(function (k) { return st.resources[k]; }).filter(function (x) { return x.kind === kind; }).sort(function (a, b) { return kind === "script" ? (a.order || 0) - (b.order || 0) : ((a.date || a.uploaded || "") < (b.date || b.uploaded || "") ? 1 : -1); }); }
+  function pageResourcesHo(){
+    var r = TH().res, h = '<p class="hint" style="margin:0 0 10px">' + esc(r.hint) + "</p>", busy = st.busy.res;
+    function row(x){
+      return '<div class="rvdue"><div><div class="tag">' + esc(x.title) + (x.date ? ' <span class="hint">' + esc(Z.fmtDM(x.date)) + "</span>" : "") + (x.lang ? ' <span class="pill p-inert">' + esc(x.lang.toUpperCase()) + "</span>" : "") + '</div><div class="meta">' + esc(x.file || "") + (x.file ? " · " : "") + esc(fill(r.by, { b: x.by, t: fmtWhen(x.uploaded) })) + "</div>"
+        + (x.kind === "script" ? '<textarea class="tpledit" data-rvres="' + esc(x.id) + '">' + esc(x.text || "") + "</textarea>" : "") + "</div>"
+        + '<div class="rvrow" style="margin:0"><label class="rvflag inl"><input type="checkbox" data-rvresvis="' + esc(x.id) + '"' + (x.visible !== 0 ? " checked" : "") + "> " + esc(r.visible) + "</label>"
+        + (x.url ? '<a class="btn sm" href="' + esc(x.url) + '" target="_blank" rel="noopener">' + esc(r.open) + "</a>" : "") + '<button type="button" class="btn sm danger" data-act="rv-res-del" data-id="' + esc(x.id) + '">' + esc(r.del) + "</button></div></div>";
+    }
+    h += '<div class="panel"><h3>' + esc(r.decks) + '</h3><div class="pad resfrm"><input type="text" id="resDeckTitle" placeholder="' + esc(r.titleL) + '"><input type="date" id="resDeckDate" title="' + esc(r.dateL) + '"><select id="resDeckLang"><option value="">' + esc(r.anyLang) + '</option><option value="vi">VI</option><option value="en">EN</option><option value="zh">中文</option></select>'
+      + '<label class="btn sm rvupl">' + esc(r.fileL) + '<input type="file" id="resDeckFile" accept=".pdf,.pptx,.ppt,application/pdf,application/vnd.openxmlformats-officedocument.presentationml.presentation"></label><span id="resDeckName" class="hint"></span><button type="button" class="btn primary sm" data-act="rv-res-upload" data-kind="deck"' + (busy ? " disabled" : "") + ">" + esc(busy ? r.uploading : r.upload) + "</button></div>";
+    var decks = resList("deck"); h += decks.length ? decks.map(row).join("") : '<div class="empty">' + esc(r.none) + "</div>"; h += "</div>";
+    h += '<div class="panel"><h3>' + esc(r.photos) + '</h3><div class="pad resfrm"><input type="text" id="resPhotoTitle" placeholder="' + esc(r.titleL) + '"><label class="btn sm rvupl">' + esc(r.photoL) + '<input type="file" id="resPhotoFile" accept="image/*" multiple></label><span id="resPhotoName" class="hint"></span><button type="button" class="btn primary sm" data-act="rv-res-upload" data-kind="photo"' + (busy ? " disabled" : "") + ">" + esc(busy ? r.uploading : r.upload) + "</button></div>";
+    var photos = resList("photo"); h += photos.length ? '<div class="pad resgrid">' + photos.map(function (x) { return '<div class="resph"><img src="https://drive.google.com/thumbnail?id=' + esc(x.driveId) + '&sz=w400" alt="" loading="lazy"><span>' + esc(x.title) + '</span><div class="rvrow" style="margin:4px 0 0"><label class="rvflag inl"><input type="checkbox" data-rvresvis="' + esc(x.id) + '"' + (x.visible !== 0 ? " checked" : "") + "> " + esc(r.visible) + '</label><button type="button" class="btn sm danger" data-act="rv-res-del" data-id="' + esc(x.id) + '">' + esc(r.del) + "</button></div></div>"; }).join("") + "</div>" : '<div class="empty">' + esc(r.none) + "</div>"; h += "</div>";
+    h += '<div class="panel"><h3>' + esc(r.scripts) + '</h3><div class="pad resfrm col"><input type="text" id="resScriptTitle" placeholder="' + esc(r.titleL) + '"><textarea id="resScriptText" placeholder="' + esc(r.textL) + '"></textarea><div><button type="button" class="btn primary sm" data-act="rv-res-upload" data-kind="script">' + esc(r.add) + "</button></div></div>";
+    var scripts = resList("script"); h += scripts.length ? scripts.map(row).join("") : '<div class="empty">' + esc(r.none) + "</div>"; h += "</div>";
+    return h;
+  }
+  function resUpload(kind){
+    var r = TH().res, title = ($("res" + (kind === "deck" ? "Deck" : kind === "photo" ? "Photo" : "Script") + "Title") || {}).value || "";
+    title = title.trim(); if (!title) { A.toast(r.needTitle, true); return; }
+    var clinic = st.clinic;
+    if (kind === "script") {
+      var text = ($("resScriptText") || {}).value || ""; if (!text.trim()) { A.toast(r.needText, true); return; }
+      return A.post({ action: "resourceUpload", resource: { kind: "script", clinic: clinic, title: title, text: text } }).then(function (x) { st.resources[x.id] = x; A.toast(r.uploaded); R.render(); }).catch(function (e) { A.toast(fill(T().failed, { e: e.message }), true); });
+    }
+    var inp = $(kind === "deck" ? "resDeckFile" : "resPhotoFile"), files = Array.prototype.slice.call((inp && inp.files) || []);
+    if (!files.length) { A.toast(r.needFile, true); return; }
+    if (files.some(function (f) { return f.size > 25 * 1024 * 1024; })) { A.toast(r.tooBig, true); return; }
+    var date = ($("resDeckDate") || {}).value || "", lang = ($("resDeckLang") || {}).value || "";
+    st.busy.res = true; R.render();
+    var chain = Promise.resolve(), n = 0;
+    files.forEach(function (f, i) {
+      chain = chain.then(function () { return readFile(f); }).then(function (d) { return kind === "photo" ? shrink(d, 1600) : d; }).then(function (d) {
+        return A.post({ action: "resourceUpload", resource: { kind: kind, clinic: clinic, title: files.length > 1 ? title + " " + (i + 1) : title, date: date, lang: lang, name: f.name, mime: d.slice(5, d.indexOf(";")), data: d } })
+          .then(function (x) { st.resources[x.id] = x; n++; });
+      });
+    });
+    chain.then(function () { delete st.busy.res; A.toast(r.uploaded + " · " + n); R.render(); }).catch(function (e) { delete st.busy.res; A.toast(fill(T().failed, { e: e.message }), true); R.render(); });
+  }
+  function resSave(id, fields){ var x = st.resources[id]; if (!x) return; Object.keys(fields).forEach(function (k) { x[k] = fields[k]; }); A.post({ action: "resourceSave", clinic: x.clinic || st.clinic, id: id, fields: fields }).catch(function (e) { A.toast(fill(T().failed, { e: e.message }), true); }); }
+  function resRemove(id){ var x = st.resources[id]; if (!x || !window.confirm(TH().res.delAsk)) return; delete st.resources[id]; R.render(); A.post({ action: "resourceRemove", clinic: x.clinic || st.clinic, id: id }).then(function () { A.toast(TH().res.removed); }).catch(function (e) { A.toast(fill(T().failed, { e: e.message }), true); }); }
 
   /* ------------------------------------------------------------------ events */
   R.after = function () {
@@ -1185,6 +1263,9 @@ window.ZALO_REVIEW = (function () {
       case "rv-translate": { var sheetEl = $("sheet"), inModal = !!(sheetEl && !sheetEl.classList.contains("gone") && $("rvApName")), mode = st.ui.sheetMode, wk0 = st.week; translateWeek(wk0, st.clinic).then(function () { if (!inModal) return; if (mode === "approve") openApprove(st.ui.apKeys || []); else openPublish(wk0); }); return true; }
       case "rv-translate-one": { var k1 = el.dataset.key; translateWeek(st.week, st.clinic, k1 ? [k1] : [], !k1, true); return true; }
       case "rv-log": st.ui.logs[el.dataset.key] = !st.ui.logs[el.dataset.key]; R.render(); return true;
+      case "rv-answer": answerQuestion(el.dataset.id); return true;
+      case "rv-res-upload": resUpload(el.dataset.kind); return true;
+      case "rv-res-del": resRemove(el.dataset.id); return true;
       case "rv-check": if (guard()) return true; a = st.audits[el.dataset.key]; if (a) { a.status = a.status === "checked" ? "sampled" : "checked"; a.checkedAt = a.status === "checked" ? nowIso() : ""; st.ui.open[a.key] = a.status !== "checked"; save(a); R.render(); } return true;
       case "rv-fb-save": { if (guard()) return true; var ta = $("rvFb"); if (ta) saveFeedback(st.week, ta.value); return true; }
       case "rv-complete": completeWeek(st.week); return true;
@@ -1202,6 +1283,9 @@ window.ZALO_REVIEW = (function () {
       a.marks = a.marks || {}; var bits = (a.marks[m.stage] || "").split(""); while (bits.length < m.items.length) bits.push("0"); bits[+el.dataset.i] = el.checked ? "1" : "0"; a.marks[m.stage] = bits.join(""); save(a); R.render(); return true; }
     if (el.dataset.hovis) { if (guard()) { R.render(); return true; } var v = st.audits[el.dataset.hovis]; if (v && !hoCanCard(v)) { A.toast(fill(TH().notCheckedYet, { r: rvName(v.clinic) }), true); R.render(); return true; } if (v) { var old = v.visible === 0 ? 0 : 1; v.visible = el.checked ? 1 : 0; pushLog(v, v.key, logEntry("visible", { old: old, "new": v.visible })); hoSave(v); R.render(); } return true; }
     if (el.dataset.rvdata) { if (guard()) { R.render(); return true; } var b = st.audits[el.dataset.rvdata]; if (b) { b.data = el.checked ? 1 : 0; save(b); R.render(); } return true; }
+    if (el.dataset.rvresvis) { resSave(el.dataset.rvresvis, { visible: el.checked ? 1 : 0 }); return true; }
+    if (el.dataset.rvres) { resSave(el.dataset.rvres, { text: el.value }); return true; }
+    if (el.id === "resDeckFile" || el.id === "resPhotoFile") { var nm = $(el.id === "resDeckFile" ? "resDeckName" : "resPhotoName"); if (nm) nm.textContent = Array.prototype.slice.call(el.files || []).map(function (f) { return f.name; }).join(", "); return true; }
     if (el.dataset.rvsel) { st.ui[el.dataset.rvsel] = el.value; st.ui.duePage = 0; R.render(); return true; }
     if (el.dataset.rvchk) { st.ui[el.dataset.rvchk] = el.checked; st.ui.duePage = 0; R.render(); return true; }
     return false;
@@ -1250,7 +1334,7 @@ window.ZALO_REVIEW = (function () {
       Object.keys(st.timers).forEach(function (k) { clearTimeout(st.timers[k]); }); st.timers = {}; st.flush = {}; st.pending = {}; st.logq = {}; st.ui.open = {};
       R.demo.save(); if (was && was !== "NGT") R.selectClinic(was);
     },
-    save: function () { var d = st.data; if (!d) return; d.audits = Object.keys(st.audits).map(function (k) { return st.audits[k]; }); d.weekly = Object.keys(st.weekly).map(function (k) { return st.weekly[k]; }); d.shots = Object.keys(st.shots).map(function (k) { return st.shots[k]; }); try { A.store("zalo_demo_rv", JSON.stringify(d)); } catch (e) {} },
+    save: function () { var d = st.data; if (!d) return; d.audits = Object.keys(st.audits).map(function (k) { return st.audits[k]; }); d.weekly = Object.keys(st.weekly).map(function (k) { return st.weekly[k]; }); d.shots = Object.keys(st.shots).map(function (k) { return st.shots[k]; }); d.questions = Object.keys(st.questions).map(function (k) { return st.questions[k]; }); d.resources = Object.keys(st.resources).map(function (k) { return st.resources[k]; }); try { A.store("zalo_demo_rv", JSON.stringify(d)); } catch (e) {} },
     get: function (p) { if (p && p.action === "shot") return { ok: 1, id: p.id, mime: "image/png", data: (st.blobs[p.id] || "").split(",")[1] || "" }; R.demo.save(); return st.data; },
     post: function (b) {
       switch (b.action) {
@@ -1259,6 +1343,9 @@ window.ZALO_REVIEW = (function () {
         case "weekStatus": R.demo.save(); return { ok: 1, local: true, status: b.status, emailed: 0, translated: null };
         case "hoEdit": case "hoFeedback": { var w = st.weekly[wKey(b.week, b.clinic)]; R.demo.save(); return { ok: 1, local: true, status: w && w.status === "submitted" ? "review" : (w ? w.status : "review") }; }
         case "hoApprove": R.demo.save(); return { ok: 1, local: true, keys: b.keys || [], approvedBy: b.undo ? "" : b.approvedBy, at: b.undo ? "" : nowIso() };
+        case "answerQuestion": { var qq = st.questions[b.id]; R.demo.save(); return { ok: 1, local: true, id: b.id, answeredAt: nowIso(), a: b.text, aVi: "[VI] " + b.text, aEn: "[EN] " + b.text, aZh: "[ZH] " + b.text, answeredBy: me() }; }
+        case "resourceUpload": { var rx = Object.assign({ id: "r" + Date.now().toString(36), visible: 1, uploaded: nowIso(), by: me(), url: "", driveId: "", file: b.resource.name || "", order: Object.keys(st.resources).length }, b.resource); delete rx.data; st.resources[rx.id] = rx; R.demo.save(); return Object.assign({ ok: 1, local: true }, rx); }
+        case "resourceSave": case "resourceRemove": R.demo.save(); return { ok: 1, local: true };
         case "hoTranslate": {
           var res = { ok: 1, local: true, by: "demo", rows: {}, weekly: null, errors: [] }, at = nowIso();
           var keys = b.keys ? b.keys : recsOf(b.week, b.clinic).filter(needsVi).map(function (a) { return a.key; });

@@ -389,3 +389,34 @@ a.lrow{text-decoration:none;color:inherit}
 .aprow label.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent);font-weight:600}
 .aprow input[type=radio]{width:16px;height:16px;accent-color:var(--accent);margin:0}
 .aprow input[type=text]{flex:1 1 160px;min-width:140px;font:inherit;font-size:.9rem;padding:7px 10px;border:1px solid var(--rule);border-radius:6px;background:var(--ground);color:var(--ink)}
+
+/* 1.7.0: the DA's weekly feedback, question threads, resources in three sections, HO uploads */
+.tiles.fb3{grid-template-columns:repeat(3,1fr);margin:0 0 10px}
+@media (max-width:560px){.tiles.fb3{grid-template-columns:1fr 1fr}.tiles.fb3 .stat:first-child{grid-column:auto}}
+.fbitems{display:flex;flex-direction:column;gap:6px;margin:10px 0}
+.fbms{border:1px solid var(--rule-2);border-left:4px solid var(--accent);border-radius:6px;padding:7px 10px;background:var(--ground);font-size:.84rem}
+.fbms b{font-family:"IBM Plex Mono",monospace} .fbms .d{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--muted);margin-left:6px}
+.fbms .ok{color:var(--ok);margin-top:3px} .fbms .bad{color:var(--bad);margin-top:3px}
+.trb .orig{margin-top:6px;padding-top:6px;border-top:1px dashed var(--rule-2);color:var(--ink-2)}
+.thread{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.msg{background:var(--surface-2);border-radius:8px;padding:7px 10px;font-size:.84rem;line-height:1.45;max-width:92%;white-space:pre-wrap}
+.msg.me{background:var(--accent-soft);align-self:flex-end}
+.msg.wait{background:none;color:var(--muted);font-size:.76rem;align-self:flex-start;padding:0 4px}
+.msg .mh{display:flex;justify-content:space-between;gap:10px;font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
+.askbox{margin-top:8px}
+.askbox textarea,.tpledit{width:100%;min-height:72px;resize:vertical;font-family:inherit;font-size:.88rem;line-height:1.5;padding:8px 10px;background:var(--ground);color:var(--ink);border:1px solid var(--rule);border-radius:6px}
+.tpledit{margin-top:6px;min-height:90px}
+h3.sec{font-family:"IBM Plex Serif",Georgia,serif;font-size:1.1rem;margin:18px 0 8px;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+h3.sec .hint{font-family:"IBM Plex Sans",sans-serif;font-weight:400;font-size:.8rem;color:var(--muted)}
+.resframe{width:100%;height:62vh;min-height:320px;border:1px solid var(--rule);border-radius:6px;background:var(--surface-2)}
+.resgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
+.resph{display:block;text-decoration:none;color:inherit;font-size:.8rem}
+.resph img{width:100%;aspect-ratio:1;object-fit:cover;border:1px solid var(--rule);border-radius:6px;background:var(--surface-2);display:block;margin-bottom:4px}
+.tplp .tplh{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:10px 16px;border-bottom:1px solid var(--rule-2)}
+.tpl{margin:0;padding:12px 16px;white-space:pre-wrap;font-family:inherit;font-size:.9rem;line-height:1.55}
+.resfrm{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.resfrm.col{flex-direction:column;align-items:stretch}
+.resfrm.col input[type=text]{flex:0 0 auto}
+.resfrm input[type=text],.resfrm input[type=date],.resfrm select{font:inherit;font-size:.88rem;padding:7px 10px;border:1px solid var(--rule);border-radius:6px;background:var(--ground);color:var(--ink);min-width:160px}
+.resfrm input[type=text]{flex:1 1 200px}
+.resfrm textarea{width:100%;min-height:110px;resize:vertical;font-family:inherit;font-size:.9rem;line-height:1.5;padding:8px 10px;background:var(--ground);color:var(--ink);border:1px solid var(--rule);border-radius:6px}

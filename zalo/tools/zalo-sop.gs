@@ -143,6 +143,7 @@ function membership(ss, clinic) {
   return sh;
 }
 function now() { return new Date().toISOString(); }
+function newId(prefix) { return prefix + new Date().getTime().toString(36) + Math.floor(Math.random() * 1679616).toString(36); }
 
 /* ---------------------------------------------------------------- dates */
 function iso(v, today) {
@@ -276,7 +277,7 @@ function daSeen(clinic, keys, weeks) {
   var ss = daTracker(clinic); if (!ss) throw new Error("no tracker for " + clinic);
   var at = now(), n = 0, sh = ss.getSheetByName(RV_TABS.audit), wk = ss.getSheetByName(RV_TABS.weekly);
   keys.forEach(function (k) { var r = rvFindRow(sh, String(k)); if (r && !cellText(sh.getRange(r, 36).getValue())) { sh.getRange(r, 36).setValue(at); n++; } });
-  weeks.forEach(function (w) { var r = rvFindRow(wk, String(w) + "|" + clinic); if (r && !cellText(wk.getRange(r, 33).getValue())) { wk.getRange(r, 33).setValue(at); n++; } });
+  weeks.forEach(function (w) { var r = rvFindRow(wk, String(w) + "|" + clinic); if (!r) return; var stt = cellText(wk.getRange(r, 19).getValue()); if ((stt === "published" || stt === "acknowledged") && !cellText(wk.getRange(r, 33).getValue())) { wk.getRange(r, 33).setValue(at); n++; } });
   return { ok: 1, seen: n, at: at };
 }
 /* b: {week, custKey?, tag?, text} — the DA asks about a chat or a week; translated for head office and the reviewer */
@@ -284,7 +285,7 @@ function askQuestion(clinic, by, b) {
   var ss = daTracker(clinic); if (!ss) throw new Error("no tracker for " + clinic);
   var text = cellText(b.text).trim(); if (!text) throw new Error("the question is empty");
   if (!/^\d{4}-\d{2}-\d{2}$/.test(String(b.week || ""))) throw new Error("week needed");
-  var id = "q" + new Date().getTime().toString(36), at = now(), tr = trText(ss, text, "vi"), sh = ss.getSheetByName(RV_TABS.questions);
+  var id = newId("q"), at = now(), tr = trText(ss, text, "vi"), sh = ss.getSheetByName(RV_TABS.questions);
   sh.getRange(sh.getLastRow() + 1, 1, 1, RV_HEADERS.questions.length).setValues([[id, "'" + b.week, clinic, cellText(b.custKey), cellText(b.tag).slice(0, 300), cellText(by).slice(0, 80), text.slice(0, 4000), tr.en || "", tr.zh || "", at, "open", "", "", "", "", "", "", ""]]);
   return { ok: 1, id: id, askedAt: at, qEn: tr.en || "", qZh: tr.zh || "" };
 }
@@ -1277,7 +1278,7 @@ function resourceUpload(rv, x) {
   var code = x.clinic || Object.keys(rv.clinics)[0], ss = rvTracker(rv, code), kind = String(x.kind || "");
   if (!RES_KINDS[kind]) throw new Error("kind must be deck, photo or script");
   var title = cellText(x.title).trim(); if (!title) throw new Error("title is required");
-  var date = iso(x.date) || "", id = "r" + new Date().getTime().toString(36), at = now(), file = null, fname = "", mime = "", url = "", driveId = "";
+  var date = iso(x.date) || "", id = newId("r"), at = now(), file = null, fname = "", mime = "", url = "", driveId = "";
   if (kind !== "script") {
     var data = String(x.data || ""), m = /^data:([^;]+);base64,/.exec(data); mime = m ? m[1] : String(x.mime || "application/octet-stream");
     if (m) data = data.slice(m[0].length);

@@ -1,6 +1,6 @@
 # DA Zalo Dashboard — design, operations and change log
 
-**Status:** v1.6.6, 22 Oct 2026 — head office approves chats for the DA one by one, the week need not be completed; D6-7 is one either/or item (waiting-time update, or glasses arrived with a pickup date); a checked chat reaches head office at once (translated), no emails, "sampled" and "checked" told apart everywhere; cards show only the cadences due that week; new sign-ins (`NGT_DA`, `ChengYF`, `OptoHO`) on top of 1.6.0's head office review mode and Claude translations. Script 1.6.1 is pasted, the Claude key is in Script properties and `testTranslation` passed on 22 Oct; the tracker's tabs, columns and settings are prepared. Publishing the new script version switches it on (§2.10) · DA dashboard live since 16 Oct 2026 · **Go-live:** 16 Oct 2026 · **Clinic:** NGT · **Last updated:** 22 Oct 2026
+**Status:** v1.7.0, 22 Oct 2026 — the DA's page gains **Weekly feedback** (the chats and the week's feedback head office approved, in Vietnamese with the original behind a link, Seen marks, questions to head office with the answers) and a **Resources** tab in three sections (weekly training decks, photos and posters, template scripts to copy and paste); head office uploads decks, photos and template scripts from its own Resources tab and answers the DA's questions on the chat; approvals go chat by chat, no emails. Script 1.7.0 must be pasted and published for the new tabs (`问题 Questions`, `资源 Resources`), the DA's feedback feed and the uploads (§2.10) · DA dashboard live since 16 Oct 2026 · **Go-live:** 16 Oct 2026 · **Clinic:** NGT · **Last updated:** 22 Oct 2026
 
 This file is the single source of truth for the DA Zalo Dashboard. Part 1 is the view at a
 glance, Part 2 the granular rules, Part 3 the change log. Every change to the dashboard updates
@@ -23,10 +23,10 @@ information store; the dashboard writes to it.
 
 | Person | Does |
 |---|---|
-| DA (Tiên) | signs in, works the task list, adds customers, records collections, uploads the QK report, confirms Zalo tag renames |
+| DA (Tiên) | signs in, works the task list, adds customers, records collections, uploads the QK report, confirms Zalo tag renames; reads the weekly feedback head office approved, marks it seen and asks questions; uses the Resources tab (training decks, photos and posters, template scripts) |
 | Manager (you) | edits the SOP content and the high/low split in the `Cadence (VN)` tab, changes settings in `DA_Settings`, reads `DA_Log` |
-| Reviewer (CZ, 程总) | signs in on the same page as `ChengYF`; audits a weekly sample of chats against the CRM and the DA's ticks, writes remarks, screenshots and the week's feedback, then completes the week — all into the Zalo SOP Compliance Tracker workbook (§2.14) |
-| HO (Sin Long, Anh) | sign in with the shared head-office username `OptoHO`; the approver tick at Publish (SL / Anh / Other) records who approved; review what CZ completed — corrects ticks, rewords the Vietnamese the DA will read, hides chats — records who approved and publishes to the DA, or sends the week back with a note (§2.14) |
+| Reviewer (CZ, 程总) | signs in on the same page as `ChengYF`; audits a weekly sample of chats against the CRM and the DA's ticks, writes remarks, screenshots and the week's feedback, then completes the week — all into the Zalo SOP Compliance Tracker workbook (§2.14); can answer the DA's questions too |
+| HO (Sin Long, Anh) | sign in with the shared head-office username `OptoHO`; the approver tick at Publish (SL / Anh / Other) records who approved; review what CZ completed — corrects ticks, rewords the Vietnamese the DA will read, hides chats — records who approved and publishes to the DA, or sends the week back with a note (§2.14); answer the DA's questions on the chat; upload the weekly training deck, photos / posters and template scripts to the DA's Resources tab |
 | Head office | unchanged: the head-office SOP page reads the same sheet through its own feed |
 
 ### Moving parts
@@ -105,7 +105,10 @@ Files in `zalo/`:
 | Change the audit sample size, the first audited week, or who gets the Complete-week email | `设置 Settings` tab in the tracker (`sample_size`, `start_week`, `email_ho`) |
 | Change the head-office password, or the names offered at Publish | `HO_USERS` in `zalo-sop.gs` (sha256 of the new password) and `HO_APPROVERS` (SL, Anh), then publish a new version |
 | Set or change the Claude API key for translations, or switch translation to Google / off | Apps Script → Project settings → Script properties → `ANTHROPIC_API_KEY` (or paste it into `setAnthropicKey()` and run it once); `translate` and `translate_model` in the tracker's `设置 Settings` |
-| Change who is emailed when HO publishes or sends a week back | `email_cz` in the tracker's `设置 Settings` tab |
+| Change who is emailed when HO publishes or sends a week back | `email_cz` in the tracker's `设置 Settings` tab (empty = no email) |
+| Give the DA a training deck, photos / posters or a template script | sign in as `OptoHO` → **Resources** tab: upload a PDF / PPTX with its date, upload images, or type a script; **Visible to the DA** per item, **Delete** to take one down |
+| Stop uploads being viewable by anyone with the link | `resources_public` = `N` in the tracker's `设置 Settings` (the DA's page can then show a file only to a Google account the folder is shared with); `resources_folder` holds the Drive folder's ID, created on the first upload |
+| Answer a question the DA asked | the chat (or the week) on the HO or reviewer page: the thread under the card, **Reply**; the DA reads the answer in Vietnamese |
 | Update the script after editing it | Apps Script editor → Deploy → Manage deployments → Edit → New version |
 
 ---
@@ -248,7 +251,7 @@ When Due today reaches zero a short confetti burst plays once per day.
 ### 2.5 Pages
 
 All pages are one HTML file with hash routes (`#/overview`, `#/add`, `#/collections`,
-`#/members`, `#/legacy`) so data loads once per session. Every list panel has a collapsible
+`#/members`, `#/legacy`, `#/resources`, `#/feedback`) so data loads once per session. Every list panel has a collapsible
 header (▾ / ▸); the fold state is remembered per device so the DA can keep only what she is
 working on open.
 
@@ -309,14 +312,29 @@ each, Back / Next / Exit, Escape to leave; steps whose element is not on the pag
 **Show me around** (starts the Overview tour) and **Later**; it never opens again on that device
 (`zalo_guide_seen` in local storage), the **?** button is always there. All three languages.
 
-**Resources** (route `#/resources`) — the weekly MSG training decks. One collapsible panel per
-week, newest on top and open, older weeks folded, numbered from the oldest ("Tuần 5 · 14/10/2026").
-The deck shown follows the page language (VI / EN / 中文); the tabs on a week switch it for that
-week until the language is toggled again, and a week without a deck in the page language falls
-back to one it has and says so. The viewer flips with the arrows, a tap on the slide, a swipe,
-the ←/→ keys or the dots, shows "3 / 10", has **Full screen** (Escape leaves) and **Download
-.pptx**, which hands over the original file under its original name. The list comes from
-`zalo/resources/manifest.json`; slides are JPEGs rendered from the decks (§2.14).
+**Resources** (route `#/resources`) — three sections. **Weekly training decks**: the decks head
+office uploads from its Resources tab (PDF or PPTX, shown in a Drive viewer with **Open** for the
+file; newest open, older folded) and, under them, the weeks rendered into the repository
+(`zalo/resources/manifest.json`, §2.15): one collapsible panel per week, the deck following the
+page language (VI / EN / 中文) with tabs to switch it, a viewer with arrows, swipe, ←/→ keys and
+dots, **Full screen** and **Download .pptx**. **Photos / Posters**: a grid of the images head
+office uploaded, each opening full size. **Template scripts**: texts head office typed for the DA
+to send, each with **Copy** (the text goes to the clipboard, ready to paste into Zalo). An item
+head office hides (Visible to the DA off) or deletes disappears; the list comes with the sign-in
+bootstrap and refreshes with **Reload**.
+
+**Weekly feedback** (route `#/feedback`; the nav badge counts what is not yet seen) — what head
+office approved for the DA, one panel per week, newest open: tiles (average audit score of the
+approved chats, chats approved, items ticked but not found in the chat), the week's overall
+feedback in Vietnamese with **view original** (CZ's wording) when it differs, **Seen** on the
+week, then every approved and visible chat: tag, name, product, the cadences due that week with
+✓ sent / ✗ not sent per content item as the reviewer marked them (head office's corrections
+included), the chat's remark in Vietnamese with the original behind a link, the reviewer's
+screenshots (opened on tap), **Seen**, and **Ask about this chat** — the question goes to head
+office and the reviewer (translated for them), the thread shows *waiting for a reply* until one of
+them answers, and the answer comes back in Vietnamese. **Ask about this week** sits under the
+overall feedback. A chat appears here the moment head office approves it (§2.14); nothing the DA
+does on this page writes to the CRM form.
 
 ### 2.6 Zalo tag rule
 
@@ -393,7 +411,7 @@ Every request carries `u` (username) and `h` (password hash). Posts are JSON sen
 
 | Call | Does | Writes |
 |---|---|---|
-| `GET ?action=bootstrap&da=` | returns settings, cadence content and touch, all customers, tasks, imports, details | — |
+| `GET ?action=bootstrap&da=` | returns settings, cadence content and touch, all customers, tasks, imports, details, and `feedback` (the approved chats, published weeks, questions and resources read from the tracker, §2.14) | — |
 | `POST addCustomer` | adds a row; returns its key and row number | Membership B C E F G H I J K L N V, DA_Details, DA_Log |
 | `POST updateCustomer` | edits cells of one row by key | the cells given, DA_Log |
 | `POST setCollected` | sets L and J; queues the tag update | L, J, DA_Log |
@@ -404,11 +422,15 @@ Every request carries `u` (username) and `h` (password hash). Posts are JSON sen
 | `POST saveDetails` | parent name, relation, gender, pending tag | DA_Details |
 | `POST removeCustomer` | undo of an add: clears the data cells of a row the dashboard added (checked against DA_Log) | Membership data cells, DA_Log |
 | `POST removeImport` | undo of a typed-in "Zalo not added" entry | DA_Imports |
+| `GET ?action=shot&id=` | one of the reviewer's screenshots of an approved chat (base64) | — |
+| `POST daSeen {keys, weeks}` | stamps `DA seen at` on approved chats and published weeks (1.7.0) | tracker `审核 Audit` AJ, `周总评 Weekly` AG |
+| `POST askQuestion {week, custKey?, tag?, text}` | the DA's question on a chat or a week, translated to English and Chinese for head office and the reviewer (1.7.0) | tracker `问题 Questions` |
 
 Every write takes a script lock, re-finds the row by key, checks name and phone, writes, and
 logs old and new values. Errors come back as `{error: "…"}` and the page shows them. The
 reviewer's and head office's calls (`auditSave`, `hoEdit`, `weekStatus`, `hoTranslate` …) are
-listed in §2.14; they never touch the CRM workbook.
+listed in §2.14; they never touch the CRM workbook, and the three tracker calls above never
+touch it either.
 
 ### 2.9 Settings (`DA_Settings`)
 
@@ -466,7 +488,7 @@ does not change. After editing the page: commit to `main`; GitHub Pages publishe
 - `node zalo/tools/test-core.js` — 118 checks on the rules: dates, names and phones, products,
   milestones, the task plan (overdue, due today, upcoming, mass groups, late, partial sends),
   tag suggestions and parsing, CSV, QK parsing in both formats, matching, duplicate handling.
-- `node zalo/tools/test-gs.js` — 201 checks on the script against a fake spreadsheet, Drive,
+- `node zalo/tools/test-gs.js` — 273 checks on the script against a fake spreadsheet, Drive,
   mail, script properties, Claude API and Google Translate: sign-in, setup, bootstrap, every DA
   write, row re-location after rows move, refusals (duplicates, bad dates, formula columns),
   import confirmation, details merge, growth past the formatted rows; the reviewer path (read-only
@@ -475,12 +497,18 @@ does not change. After editing the page: commit to `main`; GitHub Pages publishe
   edit taking the week, edits with the appended log, the reviewer locked out during review, the
   Claude call's shape and the Google fallback, nothing translated twice, publish with the approver
   and the email, no edits once published, reopen review, send back with the note and the email,
-  the reviewer's save clearing tick corrections, a changed remark translated afresh).
+  the reviewer's save clearing tick corrections, a changed remark translated afresh, approvals
+  per chat and their withdrawal); the DA's side of the tracker (the feedback feed holding only
+  approved, visible chats, screenshots, Seen stamps, questions and answers with their
+  translations) and the resources (uploads to the Drive folder with link sharing, edits, removal,
+  head office only).
 - The reviewer and head-office pages were walked in headless Chromium on `?demo=reviewer` and
-  `?demo=ho` (54 checks for the HO flow): queue, Start review, a tick corrected and undone, the
+  `?demo=ho` (84 checks for the HO flow): queue, Start review, a tick corrected and undone, the
   Vietnamese and the note edited with the log, a chat hidden, the By DA / product view, Translate
-  missing, Publish with SL / Anh / Other, locking, Reopen review, Send back with a note, three
-  languages, phone width, the reviewer's view of HO's edits, and the DA demo untouched.
+  missing, Approve → DA per chat and all at once, Publish with SL / Anh / Other, locking, Reopen
+  review, Send back with a note, three languages, phone width, the reviewer's view of HO's edits;
+  then the DA's Weekly feedback tab on `?demo=1` (the approved chats, Seen, a question), the reply
+  from the HO card, a template script added on HO's Resources tab and read on the DA's.
 - The QK export of 16 Oct 2026 was run through the parser and matcher and reproduced the
   independent Python analysis exactly (924 orders since July: 545 phone+name matches, 26
   name-only, 17 sibling, 336 new).
@@ -673,20 +701,24 @@ carries who and when.
   or the page.
 - **Week states.** Marking (CZ) → Submitted (CZ: Complete week, emails HO) → Under review (HO:
   first edit or Start review) → Published (HO: Publish, approver recorded, emails CZ) →
-  Acknowledged (DA, next release). Back edges: Submitted → Marking (CZ: Reopen; or HO: Send back
+  seen by the DA (her **Seen** stamps `DA seen at` on the week and on each chat; the status
+  word stays Published). Back edges: Submitted → Marking (CZ: Reopen; or HO: Send back
   with a note, emails CZ); Under review → Marking (HO: Send back); Published → Under review (HO:
   Reopen review). The script enforces every edge: CZ cannot write from Submitted on; HO cannot
   edit while Marking or once Published; publishing needs an approver; sending back needs a note.
 
 Columns added in 1.6.0 (already in the live tracker since 22 Oct 2026, with `email_cz`,
 `translate` and `translate_model` in its settings; `ensureTracker` adds them to any new tracker on
-the first sign-in; older rows read as visible, untranslated, unedited):
+the first sign-in; older rows read as visible, untranslated, unedited) and in 1.7.0 (added by
+`ensureTracker` on the first sign-in after script 1.7.0 is published):
 
 | Tab | Head-office columns |
 |---|---|
-| `审核 Audit` | HO note · remark EN · remark VI · remark ZH · visible to DA (Y / N) · HO edits (JSON log) · HO marks (JSON, the corrected ticks; empty = none) · translated at · translated by (provider, source language and fingerprint) · **approved by** · **published at** (per chat, 1.6.5) |
-| `周总评 Weekly` | remark EN · remark VI · remark ZH · HO note · send-back note · HO edits · translated at · translated by · taken at · HO reviewer |
-| `设置 Settings` | `email_cz` (empty until filled) · `translate` (claude / google / off) · `translate_model` |
+| `审核 Audit` | HO note · remark EN · remark VI · remark ZH · visible to DA (Y / N) · HO edits (JSON log) · HO marks (JSON, the corrected ticks; empty = none) · translated at · translated by (provider, source language and fingerprint) · **approved by** · **published at** (per chat, 1.6.5) · **DA seen at** (1.7.0) |
+| `周总评 Weekly` | remark EN · remark VI · remark ZH · HO note · send-back note · HO edits · translated at · translated by · taken at · HO reviewer · **DA seen at** (1.7.0) |
+| `设置 Settings` | `email_cz` (empty until filled) · `translate` (claude / google / off) · `translate_model` · `resources_folder` and `resources_public` (1.7.0) |
+| `问题 Questions` (1.7.0) | id · week · clinic · customer key (empty for a question about the week) · Zalo tag · from · question · question EN · question ZH · asked at · status (open / answered) · answer · answer VI · answer EN · answer ZH · answered by · answered at · DA seen at |
+| `资源 Resources` (1.7.0) | id · kind (deck / photo / script) · clinic · title · date · lang · file name · mime · Drive ID · link · text (scripts) · order · visible (Y / N) · uploaded · by · updated · removed |
 
 The reviewer's columns A–X of the Audit tab are written only by the reviewer; the verdict
 columns (verdict, score, found, missing, ticked-not-found) follow the corrected marks once HO
@@ -702,23 +734,38 @@ Script API for head office (same `u` / `h` scheme; `hoOf` routes after `reviewer
 | `POST hoFeedback {clinic, week, remarkVi, hoNote, log, stats}` | HO's wording of the overall feedback |
 | `POST hoTranslate {clinic, week, keys?, weekly?, force?}` | translate the week's remarks on demand (both roles may call it) |
 | `POST weekStatus {week, clinic, status, approvedBy?, note?, stats}` | HO: `review`, `published` (approver required, emails CZ), `marking` (note required, emails CZ) |
+| `POST answerQuestion {clinic, week, id, text}` | head office's or the reviewer's answer to the DA's question, translated to the other two languages; the DA reads the Vietnamese (1.7.0) |
+| `POST resourceUpload {resource: {kind, title, date?, lang?, name, mime, data (base64) or text}}` | HO only: a deck (PDF / PPTX, up to 25 MB) or a photo goes to the Drive folder next to the tracker (`resources_folder`, created on the first upload, shared *anyone with the link can view* unless `resources_public` is N); a template script is stored as text (1.7.0) |
+| `POST resourceSave {clinic, id, fields}` | HO only: title, text, visibility or order of one resource (1.7.0) |
+| `POST resourceRemove {clinic, id}` | HO only: takes a resource off both pages (the row is stamped removed, the Drive file goes to the trash) (1.7.0) |
 
 `?demo=ho` opens the head-office view on the demo data with last week already completed by the
 reviewer (marks, remarks and translations seeded); `?demo=reviewer` then shows the same week as
-CZ sees it, including HO's edits.
+CZ sees it, including HO's edits. `?demo=1` (the DA's demo) derives its Weekly feedback and its
+uploaded resources from the same browser's HO demo state, so a chat approved in `?demo=ho` shows
+up on the DA's demo and a question asked there reaches the HO demo.
 
 A chat the reviewer saves again keeps HO's tick corrections unless his own marks changed on it
 (the log keeps them either way).
 
-**Next (agreed, not built).** *DA page:* a "Weekly feedback" tab showing published weeks with the
-score, the feedback in Vietnamese with "view original", the visible chats with what was missing
-and the screenshots, Acknowledge, and questions per chat or week saved as drafts and submitted
-together; one thread per chat or week with pictures, where CZ answers in Chinese and HO releases
-it or answers directly; emails for the DA's questions (HO and CZ) and an in-app badge for
-replies. *Zalo API,* when it comes: messages are matched to customers by phone and to SOP items
+**DA page (1.7.0).** The DA's **Weekly feedback** tab (§2.5) shows every chat head office approved
+— the moment it is approved, the week need not be published — and the week's overall feedback
+once the week is published: Vietnamese first, the original behind *view original*, the
+reviewer's screenshots, **Seen** per chat and per week (stamped in `DA seen at`), and questions
+per chat or per week. A question lands in `问题 Questions`, translated to English and Chinese; the
+review queue lists weeks with open questions, the chat opens by itself on the HO and reviewer
+pages with a question pill and a reply box under its thread, and the answer is translated back to
+Vietnamese for the DA. Head office's **Resources** tab uploads the weekly training deck, photos /
+posters and template scripts to the DA's Resources tab (§2.5); the files go to a Drive folder next
+to the tracker (`resources_folder`) and are shared *anyone with the link can view* unless
+`resources_public` is N, so the DA's page can show them without a Google sign-in. Hidden chats
+stay hidden from the DA, and nothing on these pages writes to the CRM form.
+
+**Next.** *Zalo API,* when it comes: messages are matched to customers by phone and to SOP items
 by template or classification, written in the same shape as the DA's ticks with a Zalo source;
 her ticks become confirmation, "ticked, not found" becomes automatic across every chat, and the
-audit shifts to quality.
+audit shifts to quality. Pictures in the DA's questions and notifications for replies are not
+built.
 
 ### 2.15 Adding a training week
 
@@ -752,8 +799,10 @@ API key). Moving the dashboard under MSG's own accounts is done in this order; t
 moves, it is already in the sheets.
 
 1. **Workbooks and folder.** From the current Google account, transfer ownership of the CRM
-   workbook(s), the "Zalo SOP Compliance Tracker" and the screenshot folder (its ID is in the
-   tracker's `设置 Settings`, `screenshot_folder`) to an MSG Google Workspace account. Nothing in
+   workbook(s), the "Zalo SOP Compliance Tracker", the screenshot folder and the resources folder (their IDs
+   are in the tracker's `设置 Settings`, `screenshot_folder` and `resources_folder`; the uploaded
+   decks and photos stay shared by link, so the DA's page keeps showing them) to an MSG Google
+   Workspace account. Nothing in
    the sheets changes.
 2. **Script.** In that MSG account: script.google.com → New project → paste the current
    `zalo/tools/zalo-sop.gs` → Save. Project settings → Script properties → add
@@ -787,6 +836,8 @@ Newest first. Each entry: date · version · what changed · why · files.
 
 | Date | Version | Change | Why | Files |
 |---|---|---|---|---|
+| 2026-10-22 | 1.7.0 | **Weekly feedback for the DA**: a tab showing the chats head office approved (as soon as each is approved) and the published week's feedback — Vietnamese with the original behind a link, ✓ / ✗ per content item, screenshots, Seen per chat and per week, questions per chat or week and the answers from head office or the reviewer (translated both ways); the review queue lists open questions and the chat opens with a question pill and a reply box. **Resources in three sections** — weekly training decks, photos / posters, template scripts with Copy — and a **Resources tab for head office** that uploads decks (PDF / PPTX) and photos to a Drive folder next to the tracker (shared by link unless `resources_public` is N) and types template scripts, with Visible to the DA and Delete per item. New tracker tabs `问题 Questions` and `资源 Resources`, `DA seen at` on Audit and Weekly, settings `resources_folder` and `resources_public`. "Checked" counts leave the extra chats out ("15 of 15 sampled chats checked · 2 extra"). | The DA could not see what head office published, and the training material had no home but the repository. | `zalo/app.js`, `zalo/review.js`, `zalo/zalo.css`, `zalo/index.html`, `zalo/version.json`, `zalo/tools/zalo-sop.gs`, `zalo/tools/test-gs.js`, `zalo/README.md` |
+| 2026-10-22 | 1.6.7 | **Approve → DA** on every visible chat once the reviewer has completed the week; while he is still marking, only the chats he checked can be approved (page and script alike). | Head office wanted to release chats without waiting for the whole week, and a completed week has nothing left to wait for. | `zalo/review.js`, `zalo/tools/zalo-sop.gs`, `zalo/tools/test-gs.js` |
 | 2026-10-22 | 1.6.6 | The once-per-release self-reload now retries every two minutes while the page's version still differs from `version.json`, and the check repeats every ten minutes while the page stays open, so a tab that reloaded before a build had propagated still catches up. | Two releases today were invisible in an open tab until a hard refresh. | `zalo/app.js`, `zalo/index.html`, `zalo/version.json` |
 | 2026-10-22 | 1.6.5 | **Approve → DA per chat**: head office approves each checked chat (or all checked at once) with the SL / Anh / Other tick while the week is still being marked; the approver and time sit on the chat's row and in its log; an approved chat is locked until the approval is withdrawn, and a change by the reviewer withdraws it automatically with a notice; the week-level Publish approves whatever is left and the overall feedback; the strip and queue count approvals. New Audit columns `approved by`, `published at`; script action `hoApprove`; the reviewer's save returns `withdrawn`. | Asked at launch: HO should be able to send a chat to the DA as soon as CZ has checked it, not after the whole week. | `zalo/tools/zalo-sop.gs`, `zalo/review.js`, `zalo/app.js`, `zalo/index.html`, `zalo/version.json`, `zalo/tools/test-gs.js`, `zalo/README.md` |
 | 2026-10-22 | 1.6.4 | **D6-7** for MC, glasses and Ortho-K is a single either/or item: a waiting-time update, or the glasses-arrived notice with the pickup date (was two items, "glasses arrived (<4h)" and "pickup appointment"); the `Cadence (VN)` text and CZ's `Cadence (CN)` wording changed to match. Atropine's D6-7 (medication arrived, pickup date) is unchanged. Earlier D6-7 ticks keep counting: the first bit is the item. | The two items did not describe the SOP: at day 6–7 the DA either updates the waiting time or announces the arrival. | `zalo/core.js`, `zalo/app.js`, `zalo/index.html`, `zalo/version.json`, `zalo/README.md`, the `Cadence (VN)` and `Cadence (CN)` tabs |

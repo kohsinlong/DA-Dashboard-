@@ -72,12 +72,12 @@ var drive = (function(){
   Folder.prototype.createFile = function(blob){ var f = new File(blob, this); this.kids.push(f); return f; };
   function File(blob, parent){ this.id = "fi" + (++seq); this.blob = blob; this.parent = parent; this.trashed = false; files[this.id] = this; }
   File.prototype.getId = function(){ return this.id; }; File.prototype.getUrl = function(){ return "https://drive.google.com/file/d/" + this.id; }; File.prototype.getBlob = function(){ return this.blob; };
-  File.prototype.setTrashed = function(v){ this.trashed = v; }; File.prototype.getParents = function(){ var p = this.parent, used = false; return { hasNext: function(){ return !!p && !used; }, next: function(){ used = true; return p; } }; };
+  File.prototype.setTrashed = function(v){ this.trashed = v; }; File.prototype.setSharing = function(a, p){ this.sharing = a + "/" + p; }; File.prototype.getParents = function(){ var p = this.parent, used = false; return { hasNext: function(){ return !!p && !used; }, next: function(){ used = true; return p; } }; };
   var root = new Folder("root"); var trackerFile = new File({ name: "tracker" }, root); trackerFile.id = "TRACKER1"; files.TRACKER1 = trackerFile;
   return { files: files, folders: folders, root: root,
     getFileById: function(id){ if (!files[id]) throw new Error("no file " + id); return files[id]; },
     getFolderById: function(id){ if (!folders[id]) throw new Error("no folder " + id); return folders[id]; },
-    createFolder: function(n){ return root.createFolder(n); } };
+    createFolder: function(n){ return root.createFolder(n); }, Access: { ANYONE_WITH_LINK: "ANYONE_WITH_LINK" }, Permission: { VIEW: "VIEW" } };
 })();
 
 var sandbox = {
@@ -480,5 +480,74 @@ eq(get({ u: "NGT_DA", h: H }).weekly, undefined, "the DA's bootstrap still carri
 hpost({ action: "weekStatus", week: "2026-10-19", clinic: "NGT", status: "review" });
 hpost({ action: "weekStatus", week: "2026-10-19", clinic: "NGT", status: "marking", note: "cleanup" });
 eq(rpost({ action: "auditRemove", keys: [h1.key, h2.key], clinic: "NGT" }).removed, 2, "cleanup");
+
+/* ---------- 1.7.0: the DA's side (feedback, seen, questions), answers, resources ---------- */
+var f0 = get({ u: "NGT_DA", h: H }).feedback;
+eq([f0.audits.length, f0.weekly.length, f0.questions.length, f0.resources.length, f0.error], [0, 0, 0, 0, undefined], "the DA's bootstrap carries an empty feedback block while nothing is approved");
+/* approve a chat and publish a week for the DA */
+var f1row = Object.assign({}, a1, { key: "2026-10-26|NGT|f1", custKey: "0907683580|nguyen tuan kiet", week: "2026-10-26", status: "checked", verdict: "partial", score: 50, marks: { "CD+90": "1100" }, remark: "会员权益已发，但没有引导推荐。", notFound: 1 });
+var f2row = Object.assign({}, a1, { key: "2026-10-26|NGT|f2", custKey: "f2", week: "2026-10-26", status: "checked", verdict: "pass", score: 100, marks: { "CD+90": "1111" }, remark: "" });
+var fstats = Object.assign({}, stats, { week: "2026-10-26" });
+eq(rpost({ action: "auditSave", audits: [f1row, f2row], stats: [fstats] }).saved, 2, "two chats for the DA week");
+var ups = rpost({ action: "shotUpload", shot: { id: "sf1", week: "2026-10-26", clinic: "NGT", custKey: f1row.custKey, tag: f1row.tag, name: "chat.png", data: "data:image/png;base64," + PNG } });
+eq(ups.ok, 1, "a screenshot on the first chat");
+eq(hpost({ action: "hoEdit", clinic: "NGT", week: "2026-10-26", key: f1row.key, ho: { hoMarks: { "CD+90": "1110" }, remarkVi: "Đã gửi quyền lợi, chưa mời giới thiệu.", visible: 1 }, log: [] }).ok, 1, "HO corrects a tick and words the Vietnamese");
+eq(hpost({ action: "hoApprove", clinic: "NGT", week: "2026-10-26", keys: [f1row.key], approvedBy: "SL" }).ok, 1, "HO approves the first chat while the week is marking");
+var f1 = get({ u: "NGT_DA", h: H }).feedback;
+eq([f1.audits.length, f1.audits[0].key, f1.audits[0].marks, f1.audits[0].remarkVi, f1.audits[0].approvedBy, f1.audits[0].shots.length, f1.audits[0].shots[0].id, f1.weekly.length],
+   [1, f1row.key, { "CD+90": "1110" }, "Đã gửi quyền lợi, chưa mời giới thiệu.", "SL", 1, "sf1", 0], "the DA sees the approved chat with HO's corrected marks, the Vietnamese and its screenshot; the unapproved chat and the unpublished week stay hidden");
+ok(f1.audits[0].hoEdits === undefined && f1.audits[0].hoNote === undefined, "HO's note and edit log are not sent to the DA");
+var dshot = get({ u: "NGT_DA", h: H, action: "shot", id: "sf1" });
+eq([dshot.ok, dshot.mime, dshot.data], [1, "image/png", PNG], "the DA fetches the screenshot through the script");
+eq(get({ u: "NGT_DA", h: H, action: "shot", id: "nope" }).error, "screenshot not found", "an unknown screenshot id is refused");
+/* seen marks */
+var seen = post(body({ action: "daSeen", keys: [f1row.key], weeks: ["2026-10-26"] }));
+eq(seen.seen, 1, "the chat is marked seen (the week has no published row yet, so nothing there)");
+var seenAt = au.rows.filter(function (r) { return r[0] === f1row.key; })[0][35]; ok(!!seenAt, "seen-at written on the chat");
+eq(post(body({ action: "daSeen", keys: [f1row.key], weeks: [] })).seen, 0, "seen is kept the first time, not overwritten");
+eq(get({ u: "NGT_DA", h: H }).feedback.audits[0].seenAt, seenAt, "seen-at served back");
+/* a question from the DA, translated for HO; an answer from HO, translated for the DA */
+var ask = post(body({ action: "askQuestion", week: "2026-10-26", custKey: f1row.custKey, tag: f1row.tag, text: "Khách này không trả lời, em có nên gọi không?" }));
+eq([ask.ok, /^q/.test(ask.id), ask.qEn.slice(0, 4), ask.qZh.slice(0, 4)], [1, true, "EN: ", "ZH: "], "question stored and translated (Claude fake)");
+var qsheet = tracker.getSheetByName("问题 Questions");
+eq([qsheet.rows[0][0], qsheet.rows[1][0], qsheet.rows[1][5], qsheet.rows[1][6], qsheet.rows[1][10]], ["编号 ID", ask.id, "Tiên", "Khách này không trả lời, em có nên gọi không?", "open"], "question row");
+eq(hget({}).questions.filter(function (q) { return q.id === ask.id; })[0].qEn, "EN: Khách này không trả lời, em có nên gọi không?", "HO sees the question in English");
+eq(post(body({ action: "askQuestion", week: "2026-10-26", text: "   " })).error, "the question is empty", "an empty question is refused");
+eq(hpost({ action: "answerQuestion", clinic: "NGT", week: "2026-10-26", id: "nope", text: "x" }).error, "question not found", "unknown question refused");
+var ans = hpost({ action: "answerQuestion", clinic: "NGT", week: "2026-10-26", id: ask.id, text: "Yes, call once after one day and note the date in the CRM." });
+eq([ans.ok, ans.aVi.slice(0, 4), ans.answeredBy], [1, "VI: ", "SL"], "answered and translated to Vietnamese");
+var fq = get({ u: "NGT_DA", h: H }).feedback.questions.filter(function (q) { return q.id === ask.id; })[0];
+eq([fq.status, fq.aVi, fq.answeredBy], ["answered", "VI: Yes, call once after one day and note the date in the CRM.", "SL"], "the DA gets the answer in Vietnamese");
+var ans2 = rpost({ action: "answerQuestion", clinic: "NGT", week: "2026-10-26", id: ask.id, text: "补充：先发消息。" });
+eq([ans2.ok, ans2.answeredBy], [1, "CZ"], "the reviewer can answer too");
+/* the week-level publish stamps the second chat and shows the feedback */
+eq(rpost({ action: "feedbackSave", week: "2026-10-26", clinic: "NGT", text: "本周总评。", stats: fstats }).ok, 1, "overall feedback");
+eq(rpost({ action: "weekStatus", week: "2026-10-26", clinic: "NGT", status: "submitted", stats: fstats }).status, "submitted", "completed");
+var pubf = hpost({ action: "weekStatus", week: "2026-10-26", clinic: "NGT", status: "published", approvedBy: "Anh", stats: fstats });
+eq(pubf.approvedChats, [f2row.key], "publishing approves the remaining chat");
+var f2 = get({ u: "NGT_DA", h: H }).feedback;
+eq([f2.audits.length, f2.weekly.length, f2.weekly[0].approvedBy, f2.weekly[0].remarkVi.slice(0, 4)], [2, 1, "Anh", "VI: "], "the DA now sees both chats and the published week's feedback in Vietnamese");
+eq(post(body({ action: "daSeen", keys: [], weeks: ["2026-10-26"] })).seen, 1, "the week can be marked seen once published");
+/* resources: head office uploads; the DA sees visible ones */
+eq(rpost({ action: "resourceUpload", resource: { kind: "script", title: "x", text: "y" } }).error, "unknown action: resourceUpload", "the reviewer cannot upload");
+eq(hpost({ action: "resourceUpload", resource: { kind: "deck", title: "" } }).error, "title is required", "a title is required");
+eq(hpost({ action: "resourceUpload", resource: { kind: "video", title: "x" } }).error, "kind must be deck, photo or script", "unknown kind refused");
+var deck = hpost({ action: "resourceUpload", resource: { kind: "deck", title: "Tuần 44 · Zalo SOP", date: "2026-10-27", lang: "vi", name: "W44 VN.pdf", mime: "application/pdf", data: "data:application/pdf;base64," + Buffer.from("%PDF-1.4 fake").toString("base64") } });
+eq([deck.ok, deck.kind, deck.title, deck.date, deck.lang, deck.file, /drive.google.com/.test(deck.url), !!deck.driveId], [1, "deck", "Tuần 44 · Zalo SOP", "2026-10-27", "vi", "W44 VN.pdf", true, true], "deck uploaded to Drive");
+eq(drive.files[deck.driveId].sharing, "ANYONE_WITH_LINK/VIEW", "the deck is viewable by anyone with the link");
+var rfid = sandbox.rvSettings(tracker).resources_folder; ok(!!drive.folders[rfid] && drive.folders[rfid].name === "资料 Resources", "resources folder created and remembered");
+eq(hpost({ action: "resourceUpload", resource: { kind: "photo", title: "Poster", name: "p.txt", mime: "text/plain", data: "aGk=" } }).error, "photos and posters must be images", "a non-image photo is refused");
+var photo = hpost({ action: "resourceUpload", resource: { kind: "photo", title: "Poster 1", name: "p.png", data: "data:image/png;base64," + PNG } });
+eq([photo.ok, photo.kind, photo.mime], [1, "photo", "image/png"], "poster uploaded");
+var script = hpost({ action: "resourceUpload", resource: { kind: "script", title: "Nhắc lấy kính", text: "Chào chị, kính của bé đã về ạ." } });
+eq([script.ok, script.kind, script.text, script.driveId, script.url], [1, "script", "Chào chị, kính của bé đã về ạ.", "", ""], "a template script needs no file");
+eq(get({ u: "NGT_DA", h: H }).feedback.resources.map(function (x) { return x.kind + ":" + x.title; }), ["deck:Tuần 44 · Zalo SOP", "photo:Poster 1", "script:Nhắc lấy kính"], "the DA sees the three resources");
+eq(hpost({ action: "resourceSave", id: script.id, fields: { visible: 0, text: "Chào chị, kính đã về ạ." } }).ok, 1, "resource edited and hidden");
+eq(get({ u: "NGT_DA", h: H }).feedback.resources.length, 2, "a hidden resource is not sent to the DA");
+eq(hget({}).resources.filter(function (x) { return x.id === script.id; })[0].text, "Chào chị, kính đã về ạ.", "HO sees the edited text and the hidden item");
+eq(hpost({ action: "resourceRemove", id: photo.id }).ok, 1, "poster removed");
+eq(drive.files[photo.driveId].trashed, true, "its file is trashed");
+eq(get({ u: "NGT_DA", h: H }).feedback.resources.length, 1, "removed resources are gone for the DA");
+eq(sandbox.setupReviewer().length >= 1, true, "setupReviewer still runs");
 console.log(n + " checks, " + bad + " failed");
 process.exit(bad ? 1 : 0);

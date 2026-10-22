@@ -6,7 +6,7 @@
   /* Paste the Apps Script /exec URL here after deploying (README §2.10). ?api=<url> and the
      "Connect" box on the sign-in card override it for testing. */
   var API = { url: "https://script.google.com/macros/s/AKfycbwselLgmfAg8ffK5IqBpXVvY8Ppqv2hDNCOStNABLLNfSalUvx5UKR7GC6LIxKuVEO9kg/exec" };
-  var VERSION = "1.6.7";
+  var VERSION = "1.7.0";
 
   /* ------------------------------------------------------------------ strings */
   var L = {
@@ -23,12 +23,17 @@
       tSkipped: "Đã giữ nguyên tag", iUndoWrite: "Hoàn tác lần ghi này", aUndo: "Hoàn tác (xoá khách vừa ghi)", undoneRow: "Đã hoàn tác: dòng vừa ghi đã được xoá", undoneImport: "Đã hoàn tác lần ghi", collUndone: "Đã bỏ ngày nhận kính",
       iLibFail: "Không tải được bộ đọc Excel. Thử lại, hoặc lưu tab SO TTKSCT thành .csv rồi tải lên.", iReading: "Đang đọc {f}… (file lớn có thể mất tới một phút)",
       iRepeatOf: "mua lại · lần trước nhận {d}", iTagAfterTick: "gợi ý sau khi tick Đã kết bạn Zalo", iAlsoColl: "Cùng file này: {n} khách cần xác nhận ngày nhận kính →", iReadAs: "Đã đọc được — tab: {tabs} · dòng đầu: {row}", iAlsoNew: "Cùng file này: {n} khách mới →",
-      nav: { overview: "Tổng quan", add: "Thêm khách", collections: "Nhận kính", members: "Danh sách khách", legacy: "Chưa kết bạn Zalo", resources: "Tài liệu" },
+      nav: { overview: "Tổng quan", add: "Thêm khách", collections: "Nhận kính", members: "Danh sách khách", legacy: "Chưa kết bạn Zalo", resources: "Tài liệu", feedback: "Phản hồi tuần" },
       r: { title: "Tài liệu đào tạo", hint: "Slide buổi đào tạo MSG mỗi tuần, theo ngôn ngữ đang chọn — lật từng trang hoặc tải file gốc.", week: "Tuần {n}", slide: "{i} / {n}", download: "Tải .pptx", full: "Toàn màn hình", close: "Đóng", loading: "Đang tải danh sách…", none: "Chưa có tài liệu.", failed: "Không tải được danh sách tài liệu.", noLang: "Tuần này chưa có bản {l}, đang hiện bản {o}.", prev: "Trang trước", next: "Trang sau" },
+      fb: { title: "Phản hồi tuần", hint: "Kết quả kiểm tra Zalo của bạn, do HO duyệt: nhận xét chung, từng hội thoại và ảnh chụp. Bấm Đã xem; hỏi lại nếu có gì chưa rõ.", none: "Chưa có phản hồi nào được gửi.",
+            week: "Tuần {n} · {d}", unseen: "{n} chưa xem", approvedBy: "duyệt bởi {a} · {t}", overall: "Nhận xét chung", orig: "xem bản gốc", origHide: "ẩn bản gốc", seen: "Đã xem ✓", seenAt: "Đã xem {t}", markSeen: "Đã xem", chats: "Hội thoại",
+            found: "Đã gửi", missing: "Chưa gửi", noItems: "Không có mốc nào đến hạn tuần này", ask: "Hỏi về hội thoại này", askWeek: "Hỏi về tuần này", askPh: "Câu hỏi của bạn…", send: "Gửi câu hỏi", sent: "Đã gửi câu hỏi", cancel: "Huỷ",
+            you: "Bạn", waiting: "chờ trả lời", tScore: "điểm kiểm tra", tScoreX: "trung bình các hội thoại đã duyệt", tChats: "hội thoại đã duyệt", tGap: "đã tick, không thấy", tGapX: "nội dung đã tick nhưng không thấy trong hội thoại", shots: "Ảnh chụp" },
+      rs: { decks: "Slide đào tạo hàng tuần", photos: "Hình ảnh / Poster", scripts: "Mẫu tin nhắn", scriptsHint: "bấm Sao chép rồi dán vào Zalo", copy: "Sao chép", copied: "Đã sao chép", open: "Mở / tải về", noneDecks: "Chưa có slide.", nonePhotos: "Chưa có hình.", noneScripts: "Chưa có mẫu tin nhắn.", by: "{b} · {t}" },
       g: { btn: "Hướng dẫn", title: "Hướng dẫn sử dụng", version: "Phiên bản {v}", hello: "Chào {da}!", welcome: "Đây là bảng việc Zalo của bạn: tin cần gửi hôm nay, khách mới từ báo cáo QK và ngày nhận kính — tất cả ở một chỗ, tự ghi vào CRM.",
         startTour: "Xem hướng dẫn từng bước", later: "Để sau", gotit: "Đã hiểu", tourThis: "Dẫn trang này", next: "Tiếp", back: "Lại", done: "Xong", skip: "Thoát", stepOf: "Bước {i}/{n}", routineTitle: "Việc mỗi ngày",
         routine: ["Mở Tổng quan: nhìn 3 ô số rồi làm mục Hôm nay — mỗi khách một tin, gửi xong bấm ✓.", "Gửi hàng loạt: cùng một mẫu tin cho cả nhóm — chọn tất cả, gửi, bấm Đã gửi.", "Quá hạn: trễ dưới 1 tuần vẫn gửi bình thường; cũ hơn 2 tuần được gấp lại, mở khi cần.", "Cứ 2–3 ngày: tải báo cáo QK ở Thêm khách (khách mới), rồi sang Nhận kính (xác nhận ngày nhận).", "Khách nhận kính: tick ở Nhận kính, đổi tag N→Y trong Zalo rồi bấm xác nhận.", "Bấm nhầm? Mọi thao tác đều có Hoàn tác trong vài giây."],
-        pages: { resources: ["Slide đào tạo MSG mỗi tuần, tuần mới nhất ở trên; bản hiện ra theo ngôn ngữ đang chọn (VI/EN/中文), đổi được bằng nút trên mỗi tuần.", "Lật trang bằng mũi tên, vuốt, hoặc phím ←/→; Toàn màn hình để xem lớn.", "Tải .pptx để lưu file gốc về máy."], overview: ["3 ô số: hôm nay đã gửi / phải gửi · trễ trong tuần · nhóm gửi hàng loạt đã xong.", "Hôm nay (chăm sóc kỹ): từng khách với nội dung ghi sẵn; bấm ✓ khi gửi xong, tick từng mục nếu gửi dở.", "Tuần này: việc sắp tới để chủ động.", "Gửi hàng loạt (nhẹ): cùng mốc, cùng nội dung — chọn tất cả → Đã gửi; Sao chép tên để tìm nhanh trong Zalo.", "Quá hạn: ân hạn 1 tuần; cũ hơn 2 tuần được gấp lại."],
+        pages: { feedback: ["Mỗi tuần HO duyệt kết quả kiểm tra Zalo của bạn: nhận xét chung, từng hội thoại với nội dung đã gửi / chưa gửi và ảnh chụp.", "Bấm Đã xem khi đã đọc; HO và người kiểm thấy bạn đã xem.", "Hỏi về một hội thoại hoặc cả tuần; câu trả lời hiện ngay tại đây bằng tiếng Việt."], resources: ["Slide đào tạo MSG mỗi tuần, tuần mới nhất ở trên; bản hiện ra theo ngôn ngữ đang chọn (VI/EN/中文), đổi được bằng nút trên mỗi tuần.", "Lật trang bằng mũi tên, vuốt, hoặc phím ←/→; Toàn màn hình để xem lớn.", "Tải .pptx để lưu file gốc về máy."], overview: ["3 ô số: hôm nay đã gửi / phải gửi · trễ trong tuần · nhóm gửi hàng loạt đã xong.", "Hôm nay (chăm sóc kỹ): từng khách với nội dung ghi sẵn; bấm ✓ khi gửi xong, tick từng mục nếu gửi dở.", "Tuần này: việc sắp tới để chủ động.", "Gửi hàng loạt (nhẹ): cùng mốc, cùng nội dung — chọn tất cả → Đã gửi; Sao chép tên để tìm nhanh trong Zalo.", "Quá hạn: ân hạn 1 tuần; cũ hơn 2 tuần được gấp lại."],
           add: ["Thêm từng khách: tên bé, phụ huynh, quan hệ, SĐT, sản phẩm, ngày cọc; tag Zalo tự gợi ý; tick “Chưa kết bạn Zalo” nếu chưa add được — khách vào danh sách chờ.", "Nhập từ báo cáo QK: tải file .xlsx (hoặc tab SO TTKSCT dạng .csv) 2–3 ngày một lần; khách mới hiện theo ngày cọc mới nhất.", "Tick “Đã kết bạn Zalo” → tag được gợi ý → bổ sung phần thiếu → Ghi. Khách không tick sẽ sang danh sách Chưa kết bạn Zalo.", "Mua lại (cùng bé, cùng SĐT, cọc sau lần nhận trước) hiện như khách mới kèm nhãn “mua lại”; ghi sẽ tạo dòng mới và lịch chăm sóc bắt đầu lại."],
           collections: ["Chờ nhận kính: mọi khách có ngày cọc nhưng chưa có ngày nhận; tick + chọn ngày + Lưu khi khách đã lấy kính.", "Cập nhật tag: sau khi nhận kính, trang đề xuất tag N→Y (hoặc tag & cho anh em) — đổi tên trong Zalo trước, rồi bấm xác nhận để ghi vào sheet.", "Cập nhật từ báo cáo QK: cùng file đã tải, các khách báo cáo ghi DONE — kiểm tra rồi Ghi."],
           members: ["Tìm theo tên, tag, SĐT hoặc tên phụ huynh — lọc ngay khi gõ.", "Lọc theo sản phẩm, Cần sửa (thiếu dữ liệu) hoặc Chưa có tag; lọc theo ngày cọc / ngày nhận; sắp xếp.", "Bấm vào khách để xem chi tiết, lịch chăm sóc và sửa thông tin; sửa tag sẽ đi qua Cập nhật tag."],
@@ -86,12 +91,17 @@
       tSkipped: "Tag kept as is", iUndoWrite: "Undo this write", aUndo: "Undo (remove the row just written)", undoneRow: "Undone: the row just written was cleared", undoneImport: "The write was undone", collUndone: "Collected date removed",
       iLibFail: "The Excel reader could not be loaded. Try again, or save the SO TTKSCT tab as .csv and upload that.", iReading: "Reading {f}… (a large file can take up to a minute)",
       iRepeatOf: "repeat purchase · last collected {d}", iTagAfterTick: "suggested once Zalo added is ticked", iAlsoColl: "Same file: {n} collection confirmations →", iReadAs: "What was read — tabs: {tabs} · first row: {row}", iAlsoNew: "Same file: {n} new members →",
-      nav: { overview: "Overview", add: "Add members", collections: "Glass collections", members: "Member list", legacy: "No Zalo Add List", resources: "Resources" },
+      nav: { overview: "Overview", add: "Add members", collections: "Glass collections", members: "Member list", legacy: "No Zalo Add List", resources: "Resources", feedback: "Weekly feedback" },
       r: { title: "Training resources", hint: "The weekly MSG training deck in the language you have selected — flip through it or download the original file.", week: "Week {n}", slide: "{i} / {n}", download: "Download .pptx", full: "Full screen", close: "Close", loading: "Loading the list…", none: "No resources yet.", failed: "The resource list could not be loaded.", noLang: "No {l} deck this week, showing {o}.", prev: "Previous", next: "Next" },
+      fb: { title: "Weekly feedback", hint: "Your Zalo audit as approved by head office: the overall feedback, each chat and the screenshots. Press Seen; ask back if something is unclear.", none: "No feedback has been published yet.",
+            week: "Week {n} · {d}", unseen: "{n} new", approvedBy: "approved by {a} · {t}", overall: "Overall feedback", orig: "view original", origHide: "hide original", seen: "Seen ✓", seenAt: "Seen {t}", markSeen: "Seen", chats: "Chats",
+            found: "Sent", missing: "Not sent", noItems: "No cadence due that week", ask: "Ask about this chat", askWeek: "Ask about this week", askPh: "Your question…", send: "Send question", sent: "Question sent", cancel: "Cancel",
+            you: "You", waiting: "waiting for an answer", tScore: "audit score", tScoreX: "average over the approved chats", tChats: "approved chats", tGap: "ticked, not found", tGapX: "items ticked that the chat did not show", shots: "Screenshots" },
+      rs: { decks: "Weekly training decks", photos: "Photos / Posters", scripts: "Template scripts", scriptsHint: "press Copy, then paste into Zalo", copy: "Copy", copied: "Copied", open: "Open / download", noneDecks: "No decks yet.", nonePhotos: "No photos yet.", noneScripts: "No template scripts yet.", by: "{b} · {t}" },
       g: { btn: "Guide", title: "How to use this dashboard", version: "Version {v}", hello: "Hi {da}!", welcome: "This is your Zalo work list: every message due today, new members from the QK report and glass collections, in one place and written to the CRM for you.",
         startTour: "Show me around", later: "Later", gotit: "Got it", tourThis: "Tour this page", next: "Next", back: "Back", done: "Done", skip: "Exit", stepOf: "Step {i}/{n}", routineTitle: "Daily routine",
         routine: ["Open Overview: glance at the three tiles, then work Due today — one message per member, ✓ when sent.", "Mass send: one template for the whole group — select all, send, Mark sent.", "Overdue: under a week late still goes out; older than two weeks folds away until you need it.", "Every 2–3 days: upload the QK report under Add members (new members), then Glass collections (collection dates).", "Glasses collected: tick under Glass collections, rename the tag N→Y in Zalo, then confirm.", "Wrong tap? Everything has Undo for a few seconds."],
-        pages: { resources: ["The weekly MSG training deck, newest week on top; the deck shown follows the page language (VI/EN/中文), switchable per week.", "Flip with the arrows, a swipe, or the ←/→ keys; Full screen to see it large.", "Download .pptx keeps the original file."], overview: ["Three tiles: sent / due today · missed this week · mass groups done.", "Due today (high touch): one card per member with the content to send; ✓ when sent, tick single items for a partial send.", "This week: what is coming, so you can plan.", "Mass send (low touch): same milestone, same content — select all → Mark sent; Copy names to find them in Zalo.", "Overdue: one week of grace; older than two weeks is folded."],
+        pages: { feedback: ["Each week head office approves your Zalo audit: the overall feedback, each chat with what was sent and what was not, and the screenshots.", "Press Seen once you have read it; head office and the reviewer see that you did.", "Ask about a chat or about the week; the answer appears here in Vietnamese."], resources: ["The weekly MSG training deck, newest week on top; the deck shown follows the page language (VI/EN/中文), switchable per week.", "Flip with the arrows, a swipe, or the ←/→ keys; Full screen to see it large.", "Download .pptx keeps the original file."], overview: ["Three tiles: sent / due today · missed this week · mass groups done.", "Due today (high touch): one card per member with the content to send; ✓ when sent, tick single items for a partial send.", "This week: what is coming, so you can plan.", "Mass send (low touch): same milestone, same content — select all → Mark sent; Copy names to find them in Zalo.", "Overdue: one week of grace; older than two weeks is folded."],
           add: ["Add one member: child, parent, relation, phone, product, deposit date; the Zalo tag is suggested; tick “Zalo not added” when you could not add them — they go to the waiting list.", "QK report import: upload the .xlsx (or the SO TTKSCT tab as .csv) every 2–3 days; new members appear newest deposit first.", "Tick “Zalo added” → the tag is suggested → complete what is missing → Write. Unticked rows go to the No Zalo Add List.", "Repeat purchases (same child and phone, deposit after the last collection) appear as new entries with a “repeat purchase” chip; writing adds a new row and the cadence starts again."],
           collections: ["Pending collection: every member with a deposit and no collected date; tick + date + Save when the glasses are picked up.", "Tag updates: after a collection the page proposes N→Y (or the & tag for siblings) — rename in Zalo first, then confirm to write the sheet.", "Collection updates from the QK: the same upload, members the report marks DONE — check, then Write."],
           members: ["Search by name, tag, phone or parent — filters as you type.", "Filter by product, To fix (missing data) or No tag; by deposit / collected date; sort.", "Tap a member for details, the cadence timeline and editable fields; tag edits go through Tag updates."],
@@ -149,12 +159,17 @@
       tSkipped: "已保留标签", iUndoWrite: "撤销本次写入", aUndo: "撤销（删除刚写入的行）", undoneRow: "已撤销：刚写入的行已清除", undoneImport: "已撤销本次写入", collUndone: "已移除取镜日期",
       iLibFail: "无法加载 Excel 读取器。请重试，或将 SO TTKSCT 工作表另存为 .csv 后上传。", iReading: "正在读取 {f}…（大文件可能需要一分钟）",
       iRepeatOf: "复购 · 上次取镜 {d}", iTagAfterTick: "勾选“已加 Zalo”后给出建议", iAlsoColl: "同一文件：{n} 位需确认取镜日期 →", iReadAs: "已读取 — 工作表：{tabs} · 首行：{row}", iAlsoNew: "同一文件：{n} 位新会员 →",
-      nav: { overview: "总览", add: "新增会员", collections: "取镜", members: "会员列表", legacy: "未加 Zalo 名单", resources: "资料" },
+      nav: { overview: "总览", add: "新增会员", collections: "取镜", members: "会员列表", legacy: "未加 Zalo 名单", resources: "资料", feedback: "每周反馈" },
       r: { title: "培训资料", hint: "每周 MSG 培训幻灯片，按当前语言显示——逐页翻看或下载原文件。", week: "第 {n} 周", slide: "{i} / {n}", download: "下载 .pptx", full: "全屏", close: "关闭", loading: "正在加载列表…", none: "暂无资料。", failed: "无法加载资料列表。", noLang: "本周没有{l}版本，显示{o}版本。", prev: "上一页", next: "下一页" },
+      fb: { title: "每周反馈", hint: "HO 审批后的 Zalo 审核结果：本周总评、每个对话和截图。点“已看”；有不清楚的可以提问。", none: "尚未发布任何反馈。",
+            week: "第 {n} 周 · {d}", unseen: "{n} 未看", approvedBy: "审批人 {a} · {t}", overall: "本周总评", orig: "查看原文", origHide: "隐藏原文", seen: "已看 ✓", seenAt: "已看 {t}", markSeen: "已看", chats: "对话",
+            found: "已发送", missing: "未发送", noItems: "本周没有到期节点", ask: "就此对话提问", askWeek: "就本周提问", askPh: "你的问题…", send: "发送问题", sent: "问题已发送", cancel: "取消",
+            you: "你", waiting: "等待回复", tScore: "审核得分", tScoreX: "已审批对话的平均分", tChats: "已审批对话", tGap: "勾了但未见", tGapX: "勾选了但聊天中未见的内容", shots: "截图" },
+      rs: { decks: "每周培训幻灯片", photos: "图片 / 海报", scripts: "消息模板", scriptsHint: "点“复制”后粘贴到 Zalo", copy: "复制", copied: "已复制", open: "打开 / 下载", noneDecks: "暂无幻灯片。", nonePhotos: "暂无图片。", noneScripts: "暂无消息模板。", by: "{b} · {t}" },
       g: { btn: "使用指南", title: "使用指南", version: "版本 {v}", hello: "{da}，你好！", welcome: "这是你的 Zalo 工作清单：今天要发的消息、QK 报表里的新会员和取镜日期，全在一处，并自动写入 CRM。",
         startTour: "逐步引导", later: "稍后", gotit: "知道了", tourThis: "引导本页", next: "下一步", back: "上一步", done: "完成", skip: "退出", stepOf: "第 {i}/{n} 步", routineTitle: "每日流程",
         routine: ["打开总览：看一眼三个数字块，然后处理“今天”——每位会员一条消息，发完点 ✓。", "批量发送：同一模板发给整组——全选、发送、点“已发送”。", "逾期：迟一周内照常发送；超过两周会折叠起来，需要时再展开。", "每 2–3 天：在“新增会员”上传 QK 报表（新会员），再到“取镜”确认取镜日期。", "会员取镜后：在“取镜”勾选，在 Zalo 里把标签 N→Y 改名，然后确认。", "点错了？所有操作几秒内都可撤销。"],
-        pages: { resources: ["每周 MSG 培训幻灯片，最新一周在最上；显示的版本跟随页面语言（VI/EN/中文），每周可单独切换。", "用箭头、滑动或 ←/→ 键翻页；全屏可放大查看。", "下载 .pptx 保存原文件。"], overview: ["三个数字块：今天已发 / 应发 · 本周错过 · 批量组已完成。", "今天（重点关怀）：每位会员一张卡片，附要发的内容；发完点 ✓，部分发送则勾选单项。", "本周：即将到来的事项，便于安排。", "批量发送（轻度）：同一节点、同一内容——全选 → 已发送；复制姓名以便在 Zalo 里查找。", "逾期：一周宽限；超过两周折叠。"],
+        pages: { feedback: ["每周 HO 审批你的 Zalo 审核结果：本周总评、每个对话的已发/未发内容和截图。", "读完后点“已看”；HO 和审核人会看到。", "可以就某个对话或整周提问；回复会以越南语显示在这里。"], resources: ["每周 MSG 培训幻灯片，最新一周在最上；显示的版本跟随页面语言（VI/EN/中文），每周可单独切换。", "用箭头、滑动或 ←/→ 键翻页；全屏可放大查看。", "下载 .pptx 保存原文件。"], overview: ["三个数字块：今天已发 / 应发 · 本周错过 · 批量组已完成。", "今天（重点关怀）：每位会员一张卡片，附要发的内容；发完点 ✓，部分发送则勾选单项。", "本周：即将到来的事项，便于安排。", "批量发送（轻度）：同一节点、同一内容——全选 → 已发送；复制姓名以便在 Zalo 里查找。", "逾期：一周宽限；超过两周折叠。"],
           add: ["逐个新增：孩子姓名、家长、关系、电话、产品、订金日期；自动建议 Zalo 标签；加不上 Zalo 就勾“未加 Zalo”——进入等待名单。", "从 QK 报表导入：每 2–3 天上传 .xlsx（或 SO TTKSCT 工作表另存的 .csv）；新会员按订金日期从新到旧显示。", "勾“已加 Zalo”→ 给出标签建议 → 补齐缺项 → 写入。未勾选的进入“未加 Zalo 名单”。", "复购（同一孩子、同一电话、订金晚于上次取镜）作为新条目显示并带“复购”标记；写入会新增一行，关怀周期重新开始。"],
           collections: ["待取镜：所有有订金日期但没有取镜日期的会员；取镜后勾选 + 选日期 + 保存。", "标签更新：取镜后页面会建议 N→Y（兄弟姐妹则是 & 标签）——先在 Zalo 里改名，再点确认写入表格。", "从 QK 报表更新：同一文件，报表标为 DONE 的会员——核对后写入。"],
           members: ["按姓名、标签、电话或家长姓名搜索——边输入边筛选。", "按产品、待修正（缺数据）或无标签筛选；按订金 / 取镜日期筛选；排序。", "点击会员查看详情、关怀时间线并编辑；标签修改会走“标签更新”。"],
@@ -278,10 +293,23 @@
   /* ------------------------------------------------------------------ demo engine (mirrors the script, in memory) */
   var DemoAPI = {
     load: function () {
-      var saved = store("zalo_demo_state"), today = st.today;
-      if (saved) { try { var d = JSON.parse(saved); if (d.today === today) return d; } catch (e) {} }
-      var fresh = DEMO.build(Z, today); store("zalo_demo_state", JSON.stringify(fresh)); return fresh;
+      var saved = store("zalo_demo_state"), today = st.today, d = null;
+      if (saved) { try { d = JSON.parse(saved); if (d.today !== today) d = null; } catch (e) { d = null; } }
+      if (!d) { d = DEMO.build(Z, today); store("zalo_demo_state", JSON.stringify(d)); }
+      d.feedback = DemoAPI.feedback(); return d;
     },
+    /* the reviewer / head-office demo keeps its tracker in this browser: the DA demo shows what was approved there */
+    rv: function () { try { return JSON.parse(store("zalo_demo_rv") || "null"); } catch (e) { return null; } },
+    feedback: function () {
+      var r = DemoAPI.rv(); if (!r) return { audits: [], weekly: [], questions: [], resources: [] };
+      var shots = {}; (r.shots || []).forEach(function (x) { (shots[x.week + "|" + x.custKey] = shots[x.week + "|" + x.custKey] || []).push({ id: x.id, file: x.file }); });
+      return {
+        audits: (r.audits || []).filter(function (a) { return a.publishedAt && a.visible !== 0; }).map(function (a) { return Object.assign({}, a, { marks: a.hoMarks || a.marks || {}, shots: shots[a.week + "|" + a.custKey] || [] }); }),
+        weekly: (r.weekly || []).filter(function (w) { return w.status === "published" || w.status === "acknowledged"; }),
+        questions: (r.questions || []).slice(), resources: (r.resources || []).filter(function (x) { return x.visible !== 0; })
+      };
+    },
+    rvSave: function (r) { try { store("zalo_demo_rv", JSON.stringify(r)); } catch (e) {} },
     save: function () { try { store("zalo_demo_state", JSON.stringify(st.data)); } catch (e) {} },
     get: function (p) { return rvRole() ? RV.demo.get(p) : DemoAPI.load(); },
     post: function (b) {
@@ -319,6 +347,8 @@
           res = { ok: 1, results: results, stored: storeImports(Object.keys(byCode).map(function (k) { return byCode[k]; })) }; break;
         case "saveDetails": res = upsert(b.key, b.details || {}); break;
         case "removeCustomer": { var rc = find(b.ref); if (!rc.friend || rc.row <= 48) throw new Error("only rows added by the dashboard can be removed"); d.customers.splice(d.customers.indexOf(rc), 1); res = { ok: 1, row: rc.row }; break; }
+        case "daSeen": { var rv0 = DemoAPI.rv(); if (rv0) { (rv0.audits || []).forEach(function (a) { if ((b.keys || []).indexOf(a.key) !== -1 && !a.seenAt) a.seenAt = at; }); (rv0.weekly || []).forEach(function (w) { if ((b.weeks || []).indexOf(w.week) !== -1 && !w.seenAt) w.seenAt = at; }); DemoAPI.rvSave(rv0); } res = { ok: 1, at: at }; break; }
+        case "askQuestion": { var rv1 = DemoAPI.rv(), qid = "q" + Date.now().toString(36); if (rv1) { rv1.questions = rv1.questions || []; rv1.questions.push({ id: qid, week: b.week, clinic: "NGT", custKey: b.custKey || "", tag: b.tag || "", from: st.da, q: b.text, qEn: "", qZh: "", askedAt: at, status: "open" }); DemoAPI.rvSave(rv1); } res = { ok: 1, id: qid, askedAt: at, qEn: "", qZh: "" }; break; }
         case "removeImport": { var ri = d.imports.filter(function (x) { return x.code === b.code; })[0]; if (ri) d.imports.splice(d.imports.indexOf(ri), 1); res = { ok: 1, removed: ri ? 1 : 0 }; break; }
         default: throw new Error("unknown action");
       }
@@ -382,10 +412,10 @@
   }
   function renderChrome(){
     var t = T(), p = st.plan, rv = rvRole();
-    var counts = rv ? {} : { overview: p ? (p.tiles.today.due - p.tiles.today.done) + p.tiles.missed : 0, collections: st.cust.filter(function (c) { return c.dep && !c.coll && !c.exam; }).length + tagProposals().length, legacy: parkedImports().length };
+    var counts = rv ? {} : { overview: p ? (p.tiles.today.due - p.tiles.today.done) + p.tiles.missed : 0, collections: st.cust.filter(function (c) { return c.dep && !c.coll && !c.exam; }).length + tagProposals().length, legacy: parkedImports().length, feedback: fbUnseen() };
     $("nav").innerHTML = rv ? RV.navItems(st.route).map(function (it) {
       return '<a href="#/' + it.route + '"' + (it.current ? ' aria-current="page"' : "") + (it.off ? ' class="off" tabindex="-1" aria-disabled="true"' : "") + ">" + esc(it.label) + (it.off ? "<small>" + esc(it.offLabel) + "</small>" : "") + (it.count ? '<span class="cn">' + it.count + "</span>" : "") + "</a>";
-    }).join("") : ["overview", "add", "collections", "members", "legacy", "resources"].map(function (r) {
+    }).join("") : ["overview", "add", "collections", "members", "legacy", "resources", "feedback"].map(function (r) {
       return '<a href="#/' + r + '"' + (st.route === r ? ' aria-current="page"' : "") + ">" + esc(t.nav[r]) + (counts[r] ? '<span class="cn">' + counts[r] + "</span>" : "") + "</a>";
     }).join("");
     $("pgTitle").textContent = rv ? RV.title() : "DA Zalo Dashboard";
@@ -401,16 +431,16 @@
     if (!st.session) return;
     st.plan = currentPlan();
     renderChrome(); $("helpBtn").title = T().g.btn;
-    var r = st.route, h = rvRole() ? RV.page(r) : r === "members" ? pageMembers() : r === "add" ? pageAdd() : r === "collections" ? pageCollections() : r === "legacy" ? pageLegacy() : r === "resources" ? pageResources() : pageTasks();
+    var r = st.route, h = rvRole() ? RV.page(r) : r === "members" ? pageMembers() : r === "add" ? pageAdd() : r === "collections" ? pageCollections() : r === "legacy" ? pageLegacy() : r === "resources" ? pageResources() : r === "feedback" ? pageFeedback() : pageTasks();
     $("app").innerHTML = h;
-    afterRender(); if (rvRole()) RV.after();
+    afterRender(); if (!rvRole()) fbAfter(); if (rvRole()) RV.after();
     maybeConfetti();
   }
   var ALIAS = { tasks: "overview", customers: "members", pending: "collections", tags: "collections", import: "add", nozalo: "legacy" };
   function route(){
     if (rvRole()) { var mr = /^#\/([a-z0-9-]+)/i.exec(location.hash || ""); st.route = RV.resolveRoute(mr ? mr[1] : ""); render(); window.scrollTo(0, 0); return; }
     var m = /^#\/([a-z]+)/.exec(location.hash || ""); st.route = m ? (ALIAS[m[1]] || m[1]) : "overview";
-    if (["overview", "add", "collections", "members", "legacy", "resources"].indexOf(st.route) === -1) st.route = "overview";
+    if (["overview", "add", "collections", "members", "legacy", "resources", "feedback"].indexOf(st.route) === -1) st.route = "overview";
     render(); window.scrollTo(0, 0);
   }
 
@@ -898,6 +928,105 @@
         + '<button type="button" class="btn sm" data-act="lg-dismiss" data-code="' + esc(i.code) + '">' + esc(t.lDismiss) + "</button>") + "</div></div></div>";
   }
 
+  /* ------------------------------------------------------------------ page: weekly feedback (1.7.0) */
+  /* What head office approved for this DA: each chat with the cadences due that week (sent / not sent), the
+     remark in the page's language with the original behind a toggle, the screenshots, the week's overall
+     feedback once published; "seen" per chat and per week; questions to head office with the answers. */
+  st.fbBlobs = {}; st.ui.fbOrig = {}; st.ui.fbAsk = {};
+  function fbData(){ var d = (st.data && st.data.feedback) || {}; return { audits: d.audits || [], weekly: d.weekly || [], questions: d.questions || [], resources: d.resources || [], error: d.error || "" }; }
+  function fbRes(){ return fbData().resources; }
+  function fbWeeks(){ var set = {}; fbData().audits.forEach(function (a) { set[a.week] = 1; }); fbData().weekly.forEach(function (w) { set[w.week] = 1; }); return Object.keys(set).sort().reverse(); }
+  function fbText(x){ var l = st.lang, v = l === "vi" ? x.remarkVi : l === "en" ? x.remarkEn : x.remarkZh; return v || x.remarkVi || x.remark || ""; }
+  function fbQ(q){ var l = st.lang; return (l === "en" ? q.qEn : l === "zh" ? q.qZh : "") || q.q || ""; }
+  function fbA(q){ var l = st.lang; return (l === "vi" ? q.aVi : l === "en" ? q.aEn : q.aZh) || q.aVi || q.a || ""; }
+  function fbUnseen(){ var d = fbData(); return d.audits.filter(function (a) { return !a.seenAt; }).length + d.weekly.filter(function (w) { return !w.seenAt; }).length; }
+  function fbWhen(iso){ if (!iso) return ""; var d = new Date(iso); if (isNaN(d)) return iso; return Z.fmtDM(iso.slice(0, 10)) + " " + ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2); }
+  function fbWeekNo(monday){ var thu = new Date(Date.parse(monday + "T00:00:00Z") + 3 * Z.MS), y0 = Date.UTC(thu.getUTCFullYear(), 0, 1); return Math.floor((thu.getTime() - y0) / Z.MS / 7) + 1; }
+  /* the customer's milestones as the reviewer audits them (D1 / D6-7 kept after collection) */
+  function fbJourney(c){
+    var out = []; if (!c || !Z.CAD[c.product]) return out;
+    for (var si = 0; si < Z.STAGES.length; si++) {
+      var stage = Z.STAGES[si], info = Z.cadenceInfo(c.product, stage, st.cadence); if (!info) continue;
+      var anchor = Z.OFFSETS[si][0] === 0 ? c.dep : c.coll; if (!anchor) continue;
+      out.push({ stage: stage, due: Z.addDays(anchor, Z.OFFSETS[si][1]), items: info.items });
+    }
+    return out;
+  }
+  function fbItemLabel(k){ return ((Z.CP[st.lang] || Z.CP.vi)[k]) || k; }
+  function fbThread(list, id, week, custKey, tag){
+    var t = T(), f = t.fb, h = "";
+    if (list.length) h += '<div class="thread">' + list.map(function (q) {
+      return '<div class="msg me"><div class="mh"><span>' + esc(q.from || f.you) + "</span><span>" + esc(fbWhen(q.askedAt)) + "</span></div>" + esc(fbQ(q)) + "</div>"
+        + (q.status === "answered" && (q.a || q.aVi) ? '<div class="msg"><div class="mh"><span>' + esc(q.answeredBy || "HO") + "</span><span>" + esc(fbWhen(q.answeredAt)) + "</span></div>" + esc(fbA(q)) + "</div>" : '<div class="msg wait">' + esc(f.waiting) + "</div>");
+    }).join("") + "</div>";
+    if (st.ui.fbAsk[id]) h += '<div class="askbox"><textarea id="fbq-' + esc(id) + '" placeholder="' + esc(f.askPh) + '"></textarea><div class="rvrow"><button type="button" class="btn primary sm" data-act="fb-send" data-id="' + esc(id) + '" data-week="' + esc(week) + '" data-cust="' + esc(custKey || "") + '" data-tag="' + esc(tag || "") + '">' + esc(f.send) + '</button><button type="button" class="btn sm" data-act="fb-cancel" data-id="' + esc(id) + '">' + esc(f.cancel) + "</button></div></div>";
+    else h += '<div class="rvrow"><button type="button" class="btn sm" data-act="fb-ask" data-id="' + esc(id) + '">' + esc(custKey ? f.ask : f.askWeek) + "</button></div>";
+    return h;
+  }
+  function fbCard(a){
+    var t = T(), f = t.fb, c = st.byKey[a.custKey], end = Z.addDays(a.week, 6), marks = a.marks || {}, qs = fbData().questions.filter(function (q) { return q.week === a.week && q.custKey === a.custKey; });
+    var ms = fbJourney(c).filter(function (m) { return m.due >= a.week && m.due <= end; });
+    var h = '<div class="rvcard"><div class="rvhead"><div class="rvwho"><div class="tag">' + esc(a.tag || a.name) + '</div><div class="meta">' + esc(a.name) + ' · <span class="prodchip">' + esc(prodLabel(a.product)) + "</span>" + (a.due ? ' · <span class="pill p-accent">' + esc(a.due) + "</span>" : "") + "</div></div>"
+      + '<div class="rvverdict">' + (a.score !== "" && a.score !== null && a.score !== undefined ? '<b style="color:' + (+a.score >= 80 ? "var(--ok)" : +a.score >= 50 ? "var(--warn)" : "var(--bad)") + '">' + a.score + "%</b>" : "") + (a.notFound ? ' <span class="pill p-bad">' + a.notFound + " " + esc(f.tGap) + "</span>" : "") + "</div></div>";
+    h += '<div class="fbitems">';
+    if (!ms.length) h += '<div class="hint">' + esc(f.noItems) + "</div>";
+    ms.forEach(function (m) {
+      var bits = marks[m.stage] || "", on = [], off = [];
+      m.items.forEach(function (it, i) { (bits.charAt(i) === "1" ? on : off).push(fbItemLabel(it[0])); });
+      h += '<div class="fbms"><b>' + esc(m.stage) + '</b> <span class="d">' + esc(Z.fmtDM(m.due)) + "</span>" + (on.length ? '<div class="ok">✓ ' + esc(f.found) + ": " + esc(on.join(", ")) + "</div>" : "") + (off.length ? '<div class="bad">✗ ' + esc(f.missing) + ": " + esc(off.join(", ")) + "</div>" : "") + "</div>";
+    });
+    h += "</div>";
+    var shown = fbText(a), orig = a.remark || "";
+    if (shown) h += '<div class="trb">' + esc(shown) + (orig && orig !== shown ? '<div class="note2"><button type="button" class="linkbtn" data-act="fb-orig" data-id="' + esc(a.key) + '">' + esc(st.ui.fbOrig[a.key] ? f.origHide : f.orig) + "</button>" + (st.ui.fbOrig[a.key] ? '<div class="orig">' + esc(orig) + "</div>" : "") + "</div>" : "") + "</div>";
+    if (a.shots && a.shots.length) h += '<div class="rvjt" style="margin-top:8px">' + esc(f.shots) + '</div><div class="rvshots">' + a.shots.map(function (x) { var src = st.fbBlobs[x.id]; return '<figure class="rvshot"><img data-fbshot="' + esc(x.id) + '" src="' + esc(src || "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==") + '" class="' + (src ? "" : "ph") + '" alt="' + esc(x.file || "") + '" data-act="fb-shot" data-id="' + esc(x.id) + '"></figure>'; }).join("") + "</div>";
+    h += '<div class="rvrow">' + (a.seenAt ? '<span class="rvstat ok">' + esc(fill(f.seenAt, { t: fbWhen(a.seenAt) })) + "</span>" : '<button type="button" class="btn good sm" data-act="fb-seen" data-key="' + esc(a.key) + '">' + esc(f.markSeen) + "</button>") + "</div>";
+    h += fbThread(qs, a.key, a.week, a.custKey, a.tag);
+    return h + "</div>";
+  }
+  function pageFeedback(){
+    var t = T(), f = t.fb, d = fbData(), weeks = fbWeeks(), h = '<p class="hint" style="margin:0 0 10px">' + esc(f.hint) + "</p>";
+    if (!weeks.length) return h + '<div class="panel"><div class="empty">' + esc(f.none) + "</div></div>";
+    weeks.forEach(function (wk, i) {
+      var id = "fb:" + wk, w = d.weekly.filter(function (x) { return x.week === wk; })[0], chats = d.audits.filter(function (a) { return a.week === wk; }).sort(function (x, y) { return (x.publishedAt || "") < (y.publishedAt || "") ? 1 : -1; });
+      var unseen = chats.filter(function (a) { return !a.seenAt; }).length + (w && !w.seenAt ? 1 : 0), wqs = d.questions.filter(function (q) { return q.week === wk && !q.custKey; });
+      if (st.ui.folds[id] === undefined && i > 0) st.ui.folds[id] = true;
+      h += '<div class="panel">' + foldHead(id, esc(fill(f.week, { n: fbWeekNo(wk), d: Z.fmtDM(wk) + "–" + Z.fmtDM(Z.addDays(wk, 6)) })) + (unseen ? ' <span class="pill p-warn">' + esc(fill(f.unseen, { n: unseen })) + "</span>" : ""), w ? fill(f.approvedBy, { a: w.approvedBy || "", t: fbWhen(w.publishedAt) }) : "");
+      if (!isFolded(id)) {
+        var scores = chats.map(function (a) { return a.score; }).filter(function (x) { return x !== "" && x !== null && x !== undefined; }).map(Number), avg = scores.length ? Math.round(scores.reduce(function (x, y) { return x + y; }, 0) / scores.length) : null, gap = chats.reduce(function (n, a) { return n + (a.notFound || 0); }, 0);
+        h += '<div class="pad"><div class="tiles fb3">' + tile(avg === null ? "" : avg >= 80 ? "ok" : avg >= 50 ? "warn" : "bad", avg === null ? "—" : avg + "<small>%</small>", f.tScore, f.tScoreX) + tile("", String(chats.length), f.tChats, "") + tile(gap ? "bad" : "", String(gap), f.tGap, f.tGapX) + "</div>";
+        if (w) {
+          var shown = fbText(w), orig = w.remark || "";
+          h += '<div class="rvjt">' + esc(f.overall) + '</div><div class="trb">' + esc(shown || "—") + (orig && orig !== shown ? '<div class="note2"><button type="button" class="linkbtn" data-act="fb-orig" data-id="w:' + esc(wk) + '">' + esc(st.ui.fbOrig["w:" + wk] ? f.origHide : f.orig) + "</button>" + (st.ui.fbOrig["w:" + wk] ? '<div class="orig">' + esc(orig) + "</div>" : "") + "</div>" : "") + "</div>";
+          h += '<div class="rvrow">' + (w.seenAt ? '<span class="rvstat ok">' + esc(fill(f.seenAt, { t: fbWhen(w.seenAt) })) + "</span>" : '<button type="button" class="btn good sm" data-act="fb-seen" data-week="' + esc(wk) + '">' + esc(f.markSeen) + "</button>") + "</div>";
+        }
+        h += fbThread(wqs, "w:" + wk, wk, "", "") + "</div>";
+        if (chats.length) h += "<h3>" + esc(f.chats) + " · " + chats.length + "</h3>";
+        chats.forEach(function (a) { h += fbCard(a); });
+      }
+      h += "</div>";
+    });
+    return h;
+  }
+  function fbSeen(keys, weeks){
+    var d = fbData(), at = nowIso();
+    apiPost({ action: "daSeen", keys: keys, weeks: weeks }).then(function () {
+      d.audits.forEach(function (a) { if (keys.indexOf(a.key) !== -1) a.seenAt = at; }); d.weekly.forEach(function (w) { if (weeks.indexOf(w.week) !== -1) w.seenAt = at; }); render();
+    }).catch(function (e) { toast(fill(T().errToast, { e: e.message }), true); });
+  }
+  function fbSend(id, week, custKey, tag){
+    var t = T(), ta = $("fbq-" + id), text = ta ? ta.value.trim() : ""; if (!text) { if (ta) ta.focus(); return; }
+    apiPost({ action: "askQuestion", week: week, custKey: custKey || "", tag: tag || "", text: text }).then(function (r) {
+      fbData().questions.push({ id: r.id || ("q" + Date.now()), week: week, clinic: st.clinic, custKey: custKey || "", tag: tag || "", from: st.da, q: text, qEn: r.qEn || "", qZh: r.qZh || "", askedAt: r.askedAt || nowIso(), status: "open" });
+      st.ui.fbAsk[id] = false; toast(t.fb.sent); render();
+    }).catch(function (e) { toast(fill(t.errToast, { e: e.message }), true); });
+  }
+  function fbAfter(){
+    document.querySelectorAll("img.ph[data-fbshot]").forEach(function (img) {
+      var id = img.dataset.fbshot; if (st.fbBlobs[id] || st.fbBlobs["loading:" + id]) return; st.fbBlobs["loading:" + id] = true;
+      apiGet({ action: "shot", id: id }).then(function (r) { if (r && r.data) { st.fbBlobs[id] = "data:" + (r.mime || "image/jpeg") + ";base64," + r.data; document.querySelectorAll('img[data-fbshot="' + CSS.escape(id) + '"]').forEach(function (im) { im.src = st.fbBlobs[id]; im.classList.remove("ph"); }); } }).catch(function () {});
+    });
+  }
+
   /* ------------------------------------------------------------------ page: resources */
   /* zalo/resources/manifest.json lists the weeks (zalo/tools/add-week.py writes it); each deck is
      a folder of JPEG slides plus the original .pptx for download. */
@@ -918,19 +1047,35 @@
     return ui;
   }
   function slideUrl(w, lang, i){ var d = w.decks[lang]; return "resources/" + w.date + "/" + lang + "/" + Z.pad2(i + 1) + ".jpg?r=" + (d.rev || ""); }
+  /* Three sections (1.7.0): the weekly decks (uploaded by head office, shown in a Drive viewer, plus the
+     weeks rendered into the repository), photos and posters, and template scripts to copy and paste. */
   function pageResources(){
-    var t = T(), r = t.r;
+    var t = T(), r = t.r, rs = t.rs, up = fbRes().filter(function (x) { return x.visible !== 0; }), byDate = function (a, b) { return (a.date || a.uploaded || "") < (b.date || b.uploaded || "") ? 1 : -1; };
     loadResources();
-    if (!st.res || st.res === "loading") return '<div class="panel"><div class="empty">' + esc(r.loading) + "</div></div>";
-    var weeks = resWeeks(), h = '<p class="hint" style="margin:0 0 10px">' + esc(r.hint) + "</p>";
-    if (!weeks.length) return h + '<div class="panel"><div class="empty">' + esc(st.res.error ? r.failed : r.none) + "</div></div>";
-    weeks.forEach(function (w, i) {
-      var id = "res:" + w.date;
-      if (st.ui.folds[id] === undefined && i > 0) st.ui.folds[id] = true;                 /* older weeks start folded */
-      h += '<div class="panel">' + foldHead(id, esc(fill(r.week, { n: weeks.length - i })) + ' <span class="dsub">' + esc(dmy(w.date)) + "</span>", w.title || "");
-      if (!isFolded(id) && resLangs(w).length) h += viewerHtml(w);
+    var h = '<h3 class="sec">' + esc(rs.decks) + "</h3>", decks = up.filter(function (x) { return x.kind === "deck"; }).sort(byDate), n = 0;
+    decks.forEach(function (x) {
+      var id = "res:" + x.id; if (st.ui.folds[id] === undefined && n > 0) st.ui.folds[id] = true; n++;
+      h += '<div class="panel">' + foldHead(id, esc(x.title) + (x.date ? ' <span class="dsub">' + esc(dmy(x.date)) + "</span>" : "") + (x.lang ? ' <span class="pill p-inert">' + esc(LANG_LABEL[x.lang] || x.lang) + "</span>" : ""), fill(rs.by, { b: x.by, t: fbWhen(x.uploaded) }));
+      if (!isFolded(id)) h += '<div class="pad">' + (x.driveId ? '<iframe class="resframe" src="https://drive.google.com/file/d/' + esc(x.driveId) + '/preview" allow="autoplay" loading="lazy"></iframe>' : "") + '<div class="rvrow"><a class="btn sm" href="' + esc(x.url || "#") + '" target="_blank" rel="noopener">' + esc(rs.open) + "</a></div></div>";
       h += "</div>";
     });
+    if (st.res && st.res !== "loading") {
+      resWeeks().forEach(function (w, i) {
+        var id = "res:" + w.date; if (st.ui.folds[id] === undefined && n > 0) st.ui.folds[id] = true; n++;
+        h += '<div class="panel">' + foldHead(id, esc(w.title || fill(r.week, { n: resWeeks().length - i })) + ' <span class="dsub">' + esc(dmy(w.date)) + "</span>", "");
+        if (!isFolded(id) && resLangs(w).length) h += viewerHtml(w);
+        h += "</div>";
+      });
+    } else if (!decks.length) h += '<div class="panel"><div class="empty">' + esc(r.loading) + "</div></div>";
+    if (!n && st.res && st.res !== "loading") h += '<div class="panel"><div class="empty">' + esc(st.res.error ? r.failed : rs.noneDecks) + "</div></div>";
+    var photos = up.filter(function (x) { return x.kind === "photo"; }).sort(byDate);
+    h += '<h3 class="sec">' + esc(rs.photos) + "</h3>";
+    if (!photos.length) h += '<div class="panel"><div class="empty">' + esc(rs.nonePhotos) + "</div></div>";
+    else h += '<div class="panel"><div class="pad resgrid">' + photos.map(function (x) { return '<a class="resph" href="' + esc(x.url || "#") + '" target="_blank" rel="noopener"><img src="https://drive.google.com/thumbnail?id=' + esc(x.driveId) + '&sz=w800" alt="' + esc(x.title) + '" loading="lazy"><span>' + esc(x.title) + "</span></a>"; }).join("") + "</div></div>";
+    var scripts = up.filter(function (x) { return x.kind === "script"; }).sort(function (a, b) { return (a.order || 0) - (b.order || 0); });
+    h += '<h3 class="sec">' + esc(rs.scripts) + ' <span class="hint">' + esc(rs.scriptsHint) + "</span></h3>";
+    if (!scripts.length) h += '<div class="panel"><div class="empty">' + esc(rs.noneScripts) + "</div></div>";
+    else scripts.forEach(function (x) { h += '<div class="panel tplp"><div class="tplh"><b>' + esc(x.title) + '</b><button type="button" class="btn primary sm" data-act="res-copy" data-id="' + esc(x.id) + '">' + esc(rs.copy) + '</button></div><pre class="tpl">' + esc(x.text || "") + "</pre></div>"; });
     return h;
   }
   function viewerHtml(w){
@@ -998,7 +1143,7 @@
     legacy: [{ sel: '[data-act="fold-panel"][data-id="legacy"]', k: "lg-list" }, { sel: '[data-act="lg-add"]', k: "lg-add" }, { sel: '[data-act="fold-panel"][data-id="repeats"]', k: "lg-rep" }],
     resources: [{ sel: '[data-act="fold-panel"][data-id^="res:"]', k: "rs-week" }, { sel: ".slides", k: "rs-view" }, { sel: ".rbar", k: "rs-dl" }]
   };
-  var PAGES = ["overview", "add", "collections", "members", "legacy", "resources"], tour = null;
+  var PAGES = ["overview", "add", "collections", "members", "legacy", "resources", "feedback"], tour = null;
   function guideHtml(mode){
     var t = T(), g = t.g, welcome = mode === "welcome";
     var h = '<div class="guide">' + (welcome ? "<h2>" + esc(fill(g.hello, { da: st.da || "" })) + '</h2><p class="lede">' + esc(g.welcome) + "</p>"
@@ -1169,6 +1314,13 @@
       case "res-go": resGo(el.dataset.week, +el.dataset.i); break;
       case "res-lang": resLang(el.dataset.week, el.dataset.l); break;
       case "res-full": resFull(el.dataset.week); break;
+      case "res-copy": { var rc = fbRes().filter(function (x) { return x.id === el.dataset.id; })[0]; if (rc) { copyText(rc.text || ""); toast(t.rs.copied); } break; }
+      case "fb-seen": fbSeen(el.dataset.key ? [el.dataset.key] : [], el.dataset.week ? [el.dataset.week] : []); break;
+      case "fb-orig": st.ui.fbOrig[el.dataset.id] = !st.ui.fbOrig[el.dataset.id]; render(); break;
+      case "fb-ask": st.ui.fbAsk[el.dataset.id] = !st.ui.fbAsk[el.dataset.id]; render(); { var ta0 = $("fbq-" + el.dataset.id); if (ta0) ta0.focus(); } break;
+      case "fb-cancel": st.ui.fbAsk[el.dataset.id] = false; render(); break;
+      case "fb-send": fbSend(el.dataset.id, el.dataset.week, el.dataset.cust, el.dataset.tag); break;
+      case "fb-shot": { var fsrc = st.fbBlobs[el.dataset.id]; if (fsrc) { var fw = window.open(); if (fw) fw.document.write('<img src="' + fsrc + '" style="max-width:100%">'); } break; }
       case "lg-month": st.ui.folds["lg:" + el.dataset.m] = el.dataset.open === "1"; store("zalo_folds", JSON.stringify(st.ui.folds)); render(); break;
     }
   });
