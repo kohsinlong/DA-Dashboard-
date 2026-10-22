@@ -14,8 +14,16 @@
  * audit view instead of the DA's task list. The reviewer path only READS the clinics' CRM
  * workbooks (never ensureTabs, never a write there); everything a reviewer records goes to the
  * reviewer's own tracker workbook (tabs created by ensureTracker) and screenshots to Drive.
- * See zalo/README.md §2.15. After adding this section, run setupReviewer() once from the
+ * See zalo/README.md §2.14. After adding this section, run setupReviewer() once from the
  * editor (it asks for the Drive permission the screenshots need), then publish a new version.
+ *
+ * Head office (1.6.0): a username listed in HO_USERS gets the same tracker in review mode: it
+ * takes a week the reviewer completed, corrects ticks and the Vietnamese wording the DA will
+ * read (the reviewer's originals are never overwritten; every change is logged), publishes it
+ * with the approver's name, or sends it back with a note. Remarks are translated zh / en / vi
+ * through the Claude API (key in Script properties, ANTHROPIC_API_KEY; see setAnthropicKey)
+ * with Google Translate as the fallback. Run testTranslation() once from the editor so the
+ * script gets the external-request permission before you publish the new version.
  */
 
 var CLINICS = {
@@ -27,6 +35,12 @@ var USERS = { "NGT_DA1": "NGT" };    /* username → clinic; only names listed h
 var REVIEWERS = {
   "CZ": { name: "ChenZhong", hash: "c7425b8bfb79932f5d6f5b46f3ddc20bb7c5050dd516aef9e87425afc4cf51c3",
           clinics: { "NGT": "1ki5FZBdnNDM83S5kYSKYk2uLVuSEoMa3559y4Av7OG8" } }
+};
+/* Head office: username → name, own password hash, how the name appears in "approved by". HO sees
+   every clinic that has a reviewer tracker (REVIEWERS) in review mode. */
+var HO_USERS = {
+  "SL":  { name: "Sin Long", hash: "fa76a43aaab8f7eab98ffea561815c3edb78c31d8e3cfbc152e20410b990f7c5", approver: "SL" },
+  "ANH": { name: "Anh",      hash: "87886b83b8d2801c4d3050ac23331fcdb6af92fe8c481cedc692b77343014836", approver: "Anh" }
 };
 var PW_HASH = "d006b3f546ac914c34dfc209ad535ea530f32a1e8e0ae822ea049b3a783e4d20";   /* sha256 of the shared password */
 var TZ = "Asia/Ho_Chi_Minh";
@@ -61,7 +75,7 @@ var TOUCH_HIGH = {
 function doGet(e) {
   var p = (e && e.parameter) || {};
   try {
-    var rv = reviewerOf(p.u, p.h);
+    var rv = reviewerOf(p.u, p.h) || hoOf(p.u, p.h);
     if (rv) return out(reviewerGet(rv, p));
     var clinic = auth(p.u, p.h);
     if (p.action === "ping") return out({ ok: 1, clinic: clinic, at: now() });
@@ -74,7 +88,7 @@ function doPost(e) {
   try { body = JSON.parse((e && e.postData && e.postData.contents) || "{}"); }
   catch (err) { return out({ error: "bad json" }); }
   try {
-    var rv = reviewerOf(body.u, body.h);
+    var rv = reviewerOf(body.u, body.h) || hoOf(body.u, body.h);
     if (rv) {
       var rlock = LockService.getScriptLock(); rlock.waitLock(25000);
       try { return out(reviewerPost(rv, body)); } finally { rlock.releaseLock(); }
@@ -246,7 +260,7 @@ function productKey(text) {
 function ensureTabs(ss) {
   Object.keys(HEADERS).forEach(function (name) {
     var sh = ss.getSheetByName(name), hdr = HEADERS[name];
-    if (!sh) { sh = ss.insertSheet(name); sh.getRange(1, 1, 1, hdr.length).setValues([hdr]); sh.setFrozenRows(1); }
+    if (!sh) { sh = ss.insertSheet(name); if (sh.getMaxColumns() < hdr.length) sh.insertColumnsAfter(sh.getMaxColumns(), hdr.length - sh.getMaxColumns()); sh.getRange(1, 1, 1, hdr.length).setValues([hdr]); sh.setFrozenRows(1); }
     else {
       /* columns added in later versions get their header; existing data is untouched */
       if (sh.getMaxColumns() < hdr.length) sh.insertColumnsAfter(sh.getMaxColumns(), hdr.length - sh.getMaxColumns());
@@ -458,10 +472,13 @@ var RV_TABS = { audit: "审核 Audit", weekly: "周总评 Weekly", shots: "截�
 var RV_HEADERS = {
   audit: ["键 Key", "周 Week", "诊所 Clinic", "客户键 Customer key", "Zalo 标签 Zalo tag", "客户 Customer", "产品 Product", "助理 DA",
           "本周到期 Due this week", "状态 Status", "结论 Verdict", "得分 Score", "已发送 Found", "缺失 Missing", "助理已勾未见 DA ticked, not found",
-          "备注 Remark", "数据问题 Data issue", "截图 Screenshots", "检查时间 Checked at", "审核人 By", "更新时间 Updated", "评分明细 Marks", "来源 Source", "抽样时间 Added"],
+          "备注 Remark", "数据问题 Data issue", "截图 Screenshots", "检查时间 Checked at", "审核人 By", "更新时间 Updated", "评分明细 Marks", "来源 Source", "抽样时间 Added",
+          /* 1.6.0, head office: the reviewer's columns above are never changed by HO */
+          "HO 备注 HO note", "备注 EN Remark EN", "备注 VI Remark VI", "备注 ZH Remark ZH", "对助理可见 Visible to DA", "HO 修改记录 HO edits", "HO 评分明细 HO marks", "翻译时间 Translated at", "翻译来源 Translated by"],
   weekly: ["键 Key", "周 Week", "诊所 Clinic", "到期客户 Customers due", "到期节点 Cadences due", "抽样 Sampled", "已检查 Checked", "合规 Pass", "部分 Partial",
            "未合规 Fail", "数据问题 Data issues", "得分 Score %", "本周节点得分 This week's cadences %", "助理已勾未见 DA ticked, not found", "助理自报已发 DA reported sent %",
-           "本周总评 Overall remark", "审核人 By", "更新时间 Updated", "状态 Status", "提交时间 Submitted at", "审批人 Approved by", "发布时间 Published at"],
+           "本周总评 Overall remark", "审核人 By", "更新时间 Updated", "状态 Status", "提交时间 Submitted at", "审批人 Approved by", "发布时间 Published at",
+           "总评 EN Remark EN", "总评 VI Remark VI", "总评 ZH Remark ZH", "HO 备注 HO note", "退回说明 Send-back note", "HO 修改记录 HO edits", "翻译时间 Translated at", "翻译来源 Translated by", "审核开始 Taken at", "HO 审核人 HO reviewer"],
   shots: ["编号 ID", "周 Week", "诊所 Clinic", "客户键 Customer key", "Zalo 标签 Zalo tag", "文件 File", "链接 Link", "Drive ID", "上传时间 Uploaded", "审核人 By", "已删除 Removed"],
   settings: ["键 Key", "值 Value", "说明 Note"]
 };
@@ -471,17 +488,42 @@ var RV_SETTINGS_DEFAULT = [
   ["screenshot_folder", "", "截图文件夹 ID（首次上传时自动创建）/ Drive folder for screenshots, created on the first upload"],
   ["switched_over", "", "旧周表导入时间（W 表已隐藏）/ When the old week sheets were imported and hidden"],
   ["email_ho", "sinlong.koh@kkr.com, anh.lhn@matsaigon.com", "完成本周时通知的 HO 邮箱（逗号分隔）/ HO addresses emailed when a week is completed"],
-  ["app_url", "https://kohsinlong.github.io/DA-Dashboard-/zalo/", "邮件中的链接 / Link used in the emails"]
+  ["app_url", "https://kohsinlong.github.io/DA-Dashboard-/zalo/", "邮件中的链接 / Link used in the emails"],
+  ["email_cz", "", "HO 发布或退回时通知的审核人邮箱 / Reviewer address emailed when HO publishes or sends a week back"],
+  ["translate", "claude", "翻译方式：claude（需在脚本属性中设置 ANTHROPIC_API_KEY，否则自动退回 google）、google、off / Translation: claude (needs ANTHROPIC_API_KEY in Script properties, falls back to google), google, or off"],
+  ["translate_model", "claude-opus-5-5", "Claude 模型 / Claude model used for translations"]
 ];
-var RV_LOCKED = { submitted: 1, review: 1, published: 1, acknowledged: 1 };
+var RV_LOCKED = { submitted: 1, review: 1, published: 1, acknowledged: 1 };   /* the reviewer cannot write */
+var HO_OPEN = { submitted: 1, review: 1 };                                       /* HO can edit */
 var RV_AUDIT_COLS = RV_HEADERS.audit.length;
+var RV_AUDIT_RV_COLS = 24;                                                       /* the reviewer's own columns (A–X) */
+var RV_WEEKLY_COLS = RV_HEADERS.weekly.length;
 
 function reviewerOf(u, h) {
   var id = String(u || "").trim().toUpperCase(), r = REVIEWERS[id];
   if (!r) return null;
   if (!r.hash || String(h || "").toLowerCase() !== r.hash) throw new Error("forbidden");
-  return { id: id, name: r.name || id, clinics: r.clinics || {}, cache: {} };
+  return { id: id, name: r.name || id, role: "reviewer", clinics: r.clinics || {}, cache: {} };
 }
+/* Head office signs in with its own username and sees every clinic that has a reviewer tracker. */
+function hoOf(u, h) {
+  var id = String(u || "").trim().toUpperCase(), r = HO_USERS[id];
+  if (!r) return null;
+  if (!r.hash || String(h || "").toLowerCase() !== r.hash) throw new Error("forbidden");
+  return { id: id, name: r.name || id, role: "ho", approver: r.approver || r.name || id, clinics: hoClinics(), cache: {} };
+}
+function hoClinics() {
+  var o = {};
+  Object.keys(REVIEWERS).forEach(function (rid) { var cl = REVIEWERS[rid].clinics || {}; Object.keys(cl).forEach(function (code) { if (!o[code]) o[code] = cl[code]; }); });
+  return o;
+}
+function reviewerFor(code) {
+  var ids = Object.keys(REVIEWERS);
+  for (var i = 0; i < ids.length; i++) if ((REVIEWERS[ids[i]].clinics || {})[code]) return { id: ids[i], name: REVIEWERS[ids[i]].name || ids[i] };
+  return { id: "", name: "the reviewer" };
+}
+function approverNames() { return Object.keys(HO_USERS).map(function (k) { return HO_USERS[k].approver || HO_USERS[k].name || k; }); }
+function parseJson(s, fallback) { try { return s ? JSON.parse(s) : fallback; } catch (e) { return fallback; } }
 function rvTracker(rv, clinic) {
   var id = rv.clinics[clinic];
   if (!id) throw new Error("clinic " + clinic + " is not in your list");
@@ -496,7 +538,7 @@ function rvStamp(v) { return v instanceof Date && !isNaN(v) ? v.toISOString() : 
 function ensureTracker(ss) {
   ["settings", "audit", "weekly", "shots"].forEach(function (k) {
     var name = RV_TABS[k], hdr = RV_HEADERS[k], sh = ss.getSheetByName(name);
-    if (!sh) { sh = ss.insertSheet(name); sh.getRange(1, 1, 1, hdr.length).setValues([hdr]); sh.setFrozenRows(1); }
+    if (!sh) { sh = ss.insertSheet(name); if (sh.getMaxColumns() < hdr.length) sh.insertColumnsAfter(sh.getMaxColumns(), hdr.length - sh.getMaxColumns()); sh.getRange(1, 1, 1, hdr.length).setValues([hdr]); sh.setFrozenRows(1); }
     else {
       if (sh.getMaxColumns() < hdr.length) sh.insertColumnsAfter(sh.getMaxColumns(), hdr.length - sh.getMaxColumns());
       var cur = sh.getRange(1, 1, 1, hdr.length).getValues()[0];
@@ -544,17 +586,23 @@ function readAudits(ss) {
   return rvRows(ss, "audit").map(function (r) {
     var v = r.v, marks = {};
     try { marks = v[21] ? JSON.parse(v[21]) : {}; } catch (e) { marks = {}; }
+    var hoMarks = parseJson(cellText(v[30]), null); if (hoMarks && typeof hoMarks !== "object") hoMarks = null;
     return { key: cellText(v[0]), week: rvDay(v[1]), clinic: cellText(v[2]), custKey: cellText(v[3]), tag: cellText(v[4]), name: cellText(v[5]),
              product: cellText(v[6]), da: cellText(v[7]), due: cellText(v[8]), status: cellText(v[9]), verdict: cellText(v[10]), score: v[11] === "" ? "" : Number(v[11]),
              found: cellText(v[12]), missing: cellText(v[13]), notFound: cellText(v[14]), remark: cellText(v[15]), data: cellText(v[16]) ? 1 : 0,
-             shots: Number(v[17]) || 0, checkedAt: rvStamp(v[18]), by: cellText(v[19]), updated: rvStamp(v[20]), marks: marks, source: cellText(v[22]), added: rvStamp(v[23]) };
+             shots: Number(v[17]) || 0, checkedAt: rvStamp(v[18]), by: cellText(v[19]), updated: rvStamp(v[20]), marks: marks, source: cellText(v[22]), added: rvStamp(v[23]),
+             /* head office */
+             hoNote: cellText(v[24]), remarkEn: cellText(v[25]), remarkVi: cellText(v[26]), remarkZh: cellText(v[27]), visible: cellText(v[28]) === "N" ? 0 : 1,
+             hoEdits: parseJson(cellText(v[29]), []), hoMarks: hoMarks, translatedAt: rvStamp(v[31]), translatedBy: cellText(v[32]) };
   });
 }
 function readWeekly(ss) {
   return rvRows(ss, "weekly").map(function (r) {
     var v = r.v;
     return { key: cellText(v[0]), week: rvDay(v[1]), clinic: cellText(v[2]), remark: cellText(v[15]), by: cellText(v[16]), updated: rvStamp(v[17]),
-             status: cellText(v[18]) || "marking", submittedAt: rvStamp(v[19]), approvedBy: cellText(v[20]), publishedAt: rvStamp(v[21]) };
+             status: cellText(v[18]) || "marking", submittedAt: rvStamp(v[19]), approvedBy: cellText(v[20]), publishedAt: rvStamp(v[21]),
+             remarkEn: cellText(v[22]), remarkVi: cellText(v[23]), remarkZh: cellText(v[24]), hoNote: cellText(v[25]), sendBack: cellText(v[26]),
+             hoEdits: parseJson(cellText(v[27]), []), translatedAt: rvStamp(v[28]), translatedBy: cellText(v[29]), takenAt: rvStamp(v[30]), hoBy: cellText(v[31]) };
   });
 }
 function readShots(ss) {
@@ -572,12 +620,12 @@ function readCadenceCN(ss) {
 
 /* ---------------------------------------------------------------- reading for the page */
 function reviewerGet(rv, p) {
-  if (p.action === "ping") return { ok: 1, role: "reviewer", reviewer: rv.id, at: now() };
+  if (p.action === "ping") return { ok: 1, role: rv.role, reviewer: rv.id, at: now() };
   if (p.action === "shot") return getShot(rv, p.id);
   return reviewerBootstrap(rv);
 }
 function reviewerBootstrap(rv) {
-  var res = { ok: 1, role: "reviewer", reviewer: rv.id, name: rv.name, generated: now(), today: rvToday(),
+  var res = { ok: 1, role: rv.role, reviewer: rv.id, name: rv.name, approver: rv.approver || "", approvers: approverNames(), reviewers: {}, generated: now(), today: rvToday(),
               clinics: {}, audits: [], weekly: [], shots: [], settings: {}, cadenceCN: [] }, done = {};
   Object.keys(rv.clinics).forEach(function (code) {
     if (!CLINICS[code]) { res.clinics[code] = { error: "clinic not configured" }; return; }
@@ -589,7 +637,8 @@ function reviewerBootstrap(rv) {
   Object.keys(rv.clinics).forEach(function (code) {
     if (!res.clinics[code] || res.clinics[code].error) return;
     var ss = rvTracker(rv, code);
-    switchOver(ss, rv, code, res.clinics[code].customers);
+    if (rv.role === "reviewer") switchOver(ss, rv, code, res.clinics[code].customers);
+    res.reviewers[code] = reviewerFor(code).name;
     var mine = function (x) { return !x.clinic || x.clinic === code; };
     res.audits = res.audits.concat(readAudits(ss).filter(mine));
     res.weekly = res.weekly.concat(readWeekly(ss).filter(mine));
@@ -655,15 +704,29 @@ function compactTag(t) { return String(t || "").split("\n")[0].replace(/\s+/g, "
 
 /* ---------------------------------------------------------------- writes */
 function reviewerPost(rv, body) {
-  switch (body.action) {
+  var a = body.action;
+  if (rv.role === "ho") {
+    switch (a) {
+      case "hoEdit":       return hoEdit(rv, body);
+      case "hoFeedback":   return hoFeedback(rv, body);
+      case "hoTranslate":  return hoTranslate(rv, body);
+      case "weekStatus":   return weekStatus(rv, body);
+      case "shotUpload":   return shotUpload(rv, body.shot || {});
+      case "shotRemove":   return shotSetRemoved(rv, body.clinic, body.id, true);
+      case "shotRestore":  return shotSetRemoved(rv, body.clinic, body.id, false);
+      default: throw new Error("unknown action: " + a);
+    }
+  }
+  switch (a) {
     case "auditSave":     return auditSave(rv, body.audits || [], body.stats || []);
     case "auditRemove":   return auditRemove(rv, body.keys || [], body.clinic, body.stats || []);
     case "feedbackSave":  return feedbackSave(rv, body);
     case "weekStatus":    return weekStatus(rv, body);
+    case "hoTranslate":   return hoTranslate(rv, body);
     case "shotUpload":    return shotUpload(rv, body.shot || {});
     case "shotRemove":    return shotSetRemoved(rv, body.clinic, body.id, true);
     case "shotRestore":   return shotSetRemoved(rv, body.clinic, body.id, false);
-    default: throw new Error("unknown action: " + body.action);
+    default: throw new Error("unknown action: " + a);
   }
 }
 function auditLine(rv, a) {
@@ -688,7 +751,8 @@ function auditSave(rv, audits, stats) {
   audits.forEach(function (a) {
     var ss = rvTracker(rv, a.clinic); assertOpen(ss, a.week, a.clinic);
     var sh = ss.getSheetByName(RV_TABS.audit), line = auditLine(rv, a), r = rvFindRow(sh, line[0]);
-    if (r) sh.getRange(r, 1, 1, RV_AUDIT_COLS).setValues([line]); else sh.getRange(sh.getLastRow() + 1, 1, 1, RV_AUDIT_COLS).setValues([line]);
+    if (r) { sh.getRange(r, 1, 1, RV_AUDIT_RV_COLS).setValues([line]); if (cellText(sh.getRange(r, 31).getValue())) sh.getRange(r, 31).setValue(""); }
+    else sh.getRange(sh.getLastRow() + 1, 1, 1, RV_AUDIT_RV_COLS).setValues([line]);
     saved++;
   });
   stats.forEach(function (s) { upsertWeekly(rvTracker(rv, s.clinic), rv, s); });
@@ -700,17 +764,21 @@ function auditRemove(rv, keys, clinic, stats) {
   stats.forEach(function (s) { upsertWeekly(rvTracker(rv, s.clinic), rv, s); });
   return { ok: 1, removed: removed };
 }
-/* s: {week, clinic, remark?, dueCustomers, dueCadences, sampled, checked, pass, partial, fail, data, score, weekScore, notFound, daSent} */
+/* s: {week, clinic, remark?, dueCustomers, dueCadences, sampled, checked, pass, partial, fail, data, score, weekScore, notFound, daSent,
+       status?, submittedAt?, approvedBy?, publishedAt?, remarkEn?, remarkVi?, remarkZh?, hoNote?, sendBack?, hoEdits?, translatedAt?, translatedBy?, takenAt?, hoBy?}
+   Fields left undefined keep their cell. "By" (the reviewer) is only rewritten by a reviewer; HO's identity goes to "HO reviewer". */
 function upsertWeekly(ss, rv, s) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(String(s.week || ""))) throw new Error("weekly row needs week");
-  var sh = ss.getSheetByName(RV_TABS.weekly), key = s.week + "|" + s.clinic, r = rvFindRow(sh, key), n = RV_HEADERS.weekly.length;
+  var sh = ss.getSheetByName(RV_TABS.weekly), key = s.week + "|" + s.clinic, r = rvFindRow(sh, key), n = RV_WEEKLY_COLS;
   var cur = r ? sh.getRange(r, 1, 1, n).getValues()[0] : [];
   function keep(i, v) { return v === undefined ? (cur[i] === undefined ? "" : cur[i]) : v; }
+  function text(i, v, max) { return v === undefined ? cellText(cur[i]) : cellText(v).slice(0, max || 8000); }
   var line = [key, "'" + s.week, s.clinic, keep(3, s.dueCustomers), keep(4, s.dueCadences), keep(5, s.sampled), keep(6, s.checked), keep(7, s.pass), keep(8, s.partial),
               keep(9, s.fail), keep(10, s.data), keep(11, s.score), keep(12, s.weekScore), keep(13, s.notFound), keep(14, s.daSent),
-              s.remark === undefined ? cellText(cur[15]) : cellText(s.remark).slice(0, 8000), rv.id, now(),
-              s.status === undefined ? (cellText(cur[18]) || "marking") : s.status, s.submittedAt === undefined ? cellText(cur[19]) : s.submittedAt,
-              s.approvedBy === undefined ? cellText(cur[20]) : s.approvedBy, s.publishedAt === undefined ? cellText(cur[21]) : s.publishedAt];
+              text(15, s.remark), rv.role === "reviewer" || !r ? rv.id : cellText(cur[16]), now(),
+              s.status === undefined ? (cellText(cur[18]) || "marking") : s.status, text(19, s.submittedAt), text(20, s.approvedBy, 200), text(21, s.publishedAt),
+              text(22, s.remarkEn), text(23, s.remarkVi), text(24, s.remarkZh), text(25, s.hoNote), text(26, s.sendBack, 4000),
+              s.hoEdits === undefined ? cellText(cur[27]) : JSON.stringify(s.hoEdits || []).slice(0, 20000), text(28, s.translatedAt), text(29, s.translatedBy, 100), text(30, s.takenAt), text(31, s.hoBy, 80)];
   line = line.map(function (v) { return v === null ? "" : v; });
   if (r) sh.getRange(r, 1, 1, n).setValues([line]); else sh.getRange(sh.getLastRow() + 1, 1, 1, n).setValues([line]);
   return { ok: 1, key: key };
@@ -721,19 +789,55 @@ function feedbackSave(rv, b) {
   upsertWeekly(ss, rv, s);
   return { ok: 1, at: now() };
 }
-/* body: {week, clinic, status: "submitted" | "marking", stats}. Completing a week (marking → submitted)
-   locks it and emails HO once; a reviewer may reopen (submitted → marking) until HO has taken it. */
+/* body: {week, clinic, status, stats, note?, approvedBy?}.
+   Reviewer: marking → submitted (Complete: locks the week, translates the remarks, emails HO once);
+             submitted → marking (Reopen, no email).
+   HO:       submitted → review (Start review); submitted | review → published (Publish, needs approvedBy,
+             emails the reviewer); submitted | review → marking (Send back, needs a note, emails the reviewer);
+             published → review (Reopen review). */
 function weekStatus(rv, b) {
   var ss = rvTracker(rv, b.clinic), cur = weekRowStatus(ss, b.week, b.clinic), next = String(b.status || "");
   if (!/^\d{4}-\d{2}-\d{2}$/.test(String(b.week || ""))) throw new Error("week needed");
-  if (next === "submitted") { if (cur !== "marking") throw new Error("week is already " + cur); }
-  else if (next === "marking") { if (cur !== "submitted") throw new Error("only a submitted week can be reopened; it is " + cur); }
+  var at = now(), s = Object.assign({}, b.stats || {}, { week: b.week, clinic: b.clinic, status: next }), emailed = 0, translated = null, log = null;
+  if (rv.role === "ho") {
+    var wk = readWeeklyRow(ss, b.week, b.clinic), edits = wk.hoEdits || [];
+    function logIt(what, extra) { edits.push(Object.assign({ at: at, by: rv.id, f: "status", old: cur, "new": next, what: what }, extra || {})); }
+    if (next === "review") {
+      if (cur !== "submitted" && cur !== "published") throw new Error("only a submitted or published week can be reviewed; it is " + cur);
+      if (!wk.takenAt || cur === "published") { s.takenAt = at; s.hoBy = rv.id; }
+      if (cur === "published") { logIt("reopened review", { approvedBy: wk.approvedBy, publishedAt: wk.publishedAt }); s.publishedAt = ""; }
+      else logIt("took for review");
+    } else if (next === "published") {
+      if (!HO_OPEN[cur]) throw new Error("only a submitted week or one under review can be published; it is " + cur);
+      var ap = cellText(b.approvedBy).trim(); if (!ap) throw new Error("approvedBy is required: who approved this week");
+      s.approvedBy = ap; s.publishedAt = at; if (!wk.takenAt) { s.takenAt = at; s.hoBy = rv.id; }
+      translated = safeTranslate(ss, rv, b.clinic, b.week, { force: false });
+      logIt("published", { approvedBy: ap });
+    } else if (next === "marking") {
+      if (!HO_OPEN[cur]) throw new Error("only a submitted week or one under review can be sent back; it is " + cur);
+      var note = cellText(b.note).trim(); if (!note) throw new Error("a note for the reviewer is required to send a week back");
+      s.sendBack = note; logIt("sent back", { note: note });
+    } else throw new Error("unknown status: " + next);
+    s.hoEdits = edits;
+    upsertWeekly(ss, rv, s);
+    if (next === "published") emailed = notifyCz(ss, rv, b.clinic, b.week, "published", { approvedBy: s.approvedBy, stats: b.stats || {} });
+    if (next === "marking") emailed = notifyCz(ss, rv, b.clinic, b.week, "sent back", { note: s.sendBack, stats: b.stats || {} });
+    return { ok: 1, status: next, at: at, emailed: emailed, translated: translated, takenAt: s.takenAt || wk.takenAt || "", hoBy: s.hoBy || wk.hoBy || "" };
+  }
+  if (next === "submitted") { if (cur !== "marking") throw new Error("week is already " + cur); s.submittedAt = at; s.sendBack = ""; }
+  else if (next === "marking") { if (cur !== "submitted") throw new Error("only a submitted week can be reopened; it is " + cur); s.submittedAt = ""; }
   else throw new Error("unknown status: " + next);
-  var at = now(), s = Object.assign({}, b.stats || {}, { week: b.week, clinic: b.clinic, status: next, submittedAt: next === "submitted" ? at : "" });
   upsertWeekly(ss, rv, s);
-  var emailed = 0;
-  if (next === "submitted") emailed = notifyHo(ss, rv, b.clinic, b.week, b.stats || {});
-  return { ok: 1, status: next, at: at, emailed: emailed };
+  if (next === "submitted") { translated = safeTranslate(ss, rv, b.clinic, b.week, { force: false }); emailed = notifyHo(ss, rv, b.clinic, b.week, b.stats || {}); }
+  return { ok: 1, status: next, at: at, emailed: emailed, translated: translated };
+}
+function readWeeklyRow(ss, week, clinic) {
+  var hit = readWeekly(ss).filter(function (w) { return w.week === week && w.clinic === clinic; })[0];
+  return hit || { key: week + "|" + clinic, week: week, clinic: clinic, status: "marking", hoEdits: [] };
+}
+function safeTranslate(ss, rv, clinic, week, opt) {
+  try { return translateWeek(ss, rv, clinic, week, opt || {}); }
+  catch (err) { return { ok: 0, error: String(err && err.message || err) }; }
 }
 function notifyHo(ss, rv, clinic, week, st) {
   var set = rvSettings(ss), to = String(set.email_ho || "").split(/[,;\s]+/).filter(Boolean);
@@ -748,6 +852,204 @@ function notifyHo(ss, rv, clinic, week, st) {
     + "Open it: " + link + "\n";
   try { MailApp.sendEmail({ to: to.join(","), subject: subject, body: body }); return to.length; }
   catch (err) { return 0; }
+}
+/* HO published a week, or sent it back: one email to the reviewer (email_cz in the tracker's settings). */
+function notifyCz(ss, rv, clinic, week, what, x) {
+  var set = rvSettings(ss), to = String(set.email_cz || "").split(/[,;\s]+/).filter(Boolean);
+  if (!to.length) return 0;
+  var st = x.stats || {}, link = String(set.app_url || "") + "#/clinic-" + String(clinic).toLowerCase();
+  var subject = "[Zalo SOP] " + rv.name + " " + what + " " + clinic + " week of " + week + (what === "published" ? " (approved by " + x.approvedBy + ")" : "");
+  var body = rv.name + " (head office) has " + what + " the Zalo SOP audit for " + clinic + ", week of " + week + ".\n\n"
+    + (what === "published" ? "Approved by: " + x.approvedBy + "\n" : "Note: " + x.note + "\n\n")
+    + (what === "published" ? "" : "The week is open for marking again; its entries can be changed and the week completed once more.\n\n")
+    + "Sampled: " + (st.sampled || 0) + " chats · checked: " + (st.checked || 0) + " · items sent: " + (st.score === "" || st.score === undefined ? "—" : st.score + "%") + "\n\n"
+    + "Open it: " + link + "\n";
+  try { MailApp.sendEmail({ to: to.join(","), subject: subject, body: body }); return to.length; }
+  catch (err) { return 0; }
+}
+
+/* ================================================================ head office (1.6.0)
+   HO edits live in their own columns of the Audit and Weekly tabs; the reviewer's cells are never
+   rewritten by HO. Every change carries who and when in the "HO edits" log. README §2.14.
+   ================================================================ */
+function assertHoOpen(ss, week, clinic) {
+  var s = weekRowStatus(ss, week, clinic);
+  if (s === "marking") throw new Error("week " + week + " is still being marked by the reviewer");
+  if (!HO_OPEN[s]) throw new Error("week " + week + " is " + s + "; reopen the review first");
+  return s;
+}
+/* a first HO write on a submitted week takes it into review */
+function takeWeek(ss, rv, week, clinic, status) {
+  if (status !== "submitted") return;
+  var wk = readWeeklyRow(ss, week, clinic), edits = wk.hoEdits || [], at = now();
+  edits.push({ at: at, by: rv.id, f: "status", old: "submitted", "new": "review", what: "took for review" });
+  upsertWeekly(ss, rv, { week: week, clinic: clinic, status: "review", takenAt: wk.takenAt || at, hoBy: rv.id, hoEdits: edits });
+}
+/* b: {clinic, week, key, ho: {hoMarks, remarkVi, remarkEn, remarkZh, hoNote, visible}, log: [new edit entries], derived: {verdict, score, found, missing, notFound}, stats}
+   Writes HO's columns of one audit row (fields left undefined keep their cell), appends the page's new log
+   entries, and the derived verdict columns, which the page recomputes from the corrected marks. */
+function hoEdit(rv, b) {
+  var ss = rvTracker(rv, b.clinic), status = assertHoOpen(ss, b.week, b.clinic);
+  var sh = ss.getSheetByName(RV_TABS.audit), r = rvFindRow(sh, String(b.key || "")); if (!r) throw new Error("audit row not found: " + b.key);
+  takeWeek(ss, rv, b.week, b.clinic, status);
+  var h = b.ho || {}, d = b.derived || {}, cur = sh.getRange(r, 25, 1, 7).getValues()[0];
+  function text(i, v, max) { return v === undefined ? cellText(cur[i]) : cellText(v).slice(0, max || 5000); }
+  var line = [text(0, h.hoNote), text(1, h.remarkEn), text(2, h.remarkVi), text(3, h.remarkZh),
+              h.visible === undefined ? cellText(cur[4]) : (h.visible ? "Y" : "N"),
+              appendLog(parseJson(cellText(cur[5]), []), b.log),
+              h.hoMarks === undefined ? cellText(cur[6]) : (h.hoMarks ? JSON.stringify(h.hoMarks).slice(0, 20000) : "")];
+  sh.getRange(r, 25, 1, 7).setValues([line]);
+  if (d.verdict !== undefined) sh.getRange(r, 11, 1, 5).setValues([[cellText(d.verdict), d.score === "" || d.score === null || d.score === undefined ? "" : Number(d.score), cellText(d.found).slice(0, 500), cellText(d.missing).slice(0, 2000), Number(d.notFound) || 0]]);
+  if (b.stats) upsertWeekly(ss, rv, Object.assign({}, b.stats, { week: b.week, clinic: b.clinic }));
+  return { ok: 1, key: String(b.key), at: now(), status: status === "submitted" ? "review" : status };
+}
+/* b: {clinic, week, remarkVi?, hoNote?, log?: [new edit entries], stats?} — HO's wording of the week's overall feedback */
+function hoFeedback(rv, b) {
+  var ss = rvTracker(rv, b.clinic), status = assertHoOpen(ss, b.week, b.clinic);
+  takeWeek(ss, rv, b.week, b.clinic, status);
+  var s = Object.assign({}, b.stats || {}, { week: b.week, clinic: b.clinic });
+  ["remarkVi", "remarkEn", "remarkZh", "hoNote"].forEach(function (f) { if (b[f] !== undefined) s[f] = b[f]; });
+  if (b.log && b.log.length) s.hoEdits = JSON.parse(appendLog(readWeeklyRow(ss, b.week, b.clinic).hoEdits || [], b.log));
+  upsertWeekly(ss, rv, s);
+  return { ok: 1, at: now(), status: status === "submitted" ? "review" : status };
+}
+/* the edit log as a cell: existing entries plus the new ones, oldest dropped past 20000 characters */
+function appendLog(cur, add) {
+  var list = (cur || []).concat(add || []), text = JSON.stringify(list);
+  while (text.length > 20000 && list.length > 1) { list.shift(); text = JSON.stringify(list); }
+  return text;
+}
+/* b: {clinic, week, keys?: [audit keys], weekly?: 1, force?: 1} — translate on demand (both roles) */
+function hoTranslate(rv, b) {
+  var ss = rvTracker(rv, b.clinic);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(b.week || ""))) throw new Error("week needed");
+  return translateWeek(ss, rv, b.clinic, b.week, { keys: b.keys, weekly: b.weekly === undefined ? 1 : b.weekly, force: !!b.force });
+}
+
+/* ---------------------------------------------------------------- translation
+   Each remark is kept in the language it was written in plus the other two. The reviewer's remark
+   (usually Chinese) feeds en + vi; once HO has edited the Vietnamese, that Vietnamese is what the DA
+   reads and feeds en + zh, so the reviewer can read back what was published. A row is translated when
+   its source is newer than its last translation (or force). Claude via the Messages API when
+   ANTHROPIC_API_KEY is set and the setting `translate` is claude; otherwise Google Translate. */
+var TR_GLOSSARY = [
+  ["会员权益", "quyền lợi hội viên", "member benefits"], ["转介绍 / 引导推荐", "mời giới thiệu", "referral request"], ["回访 / 关心", "hỏi thăm", "check-in"],
+  ["使用指南 / 使用说明", "hướng dẫn sử dụng", "usage guide"], ["介绍消息", "tin nhắn giới thiệu", "intro message"], ["预计制镜时间", "thời gian dự kiến làm kính", "production ETA"],
+  ["到货通知", "báo kính về", "glasses arrived"], ["取镜预约", "hẹn ngày lấy kính", "pickup appointment"], ["取镜", "nhận kính", "glass collection"], ["定金", "đặt cọc", "deposit"],
+  ["复诊", "tái khám", "recall visit"], ["调整镜架", "chỉnh gọng", "frame adjustment"], ["提醒佩戴", "nhắc đeo", "wear reminder"], ["滴药指导", "hướng dẫn nhỏ thuốc", "drop instructions"],
+  ["助理", "trợ lý", "DA (clinic assistant)"], ["截图", "ảnh chụp màn hình", "screenshot"], ["Zalo 标签", "tag Zalo", "Zalo tag"], ["节点", "mốc / cadence", "cadence"], ["客户", "khách hàng", "customer"]
+];
+function detectLang(text) {
+  var s = String(text || "");
+  if (/[\u4e00-\u9fff\u3400-\u4dbf]/.test(s)) return "zh";
+  if (/[ăâđêôơưàáạảãèéẹẻẽìíịỉĩòóọỏõùúụủũỳýỵỷỹĂÂĐÊÔƠƯ]/.test(s) || /\b(và|không|của|được|khách|chưa|đã)\b/i.test(s)) return "vi";
+  return "en";
+}
+function anthropicKey() { try { return PropertiesService.getScriptProperties().getProperty("ANTHROPIC_API_KEY") || ""; } catch (e) { return ""; } }
+/* translateWeek: rows of the week (the sample, or opt.keys) and the weekly remark. Returns what changed. */
+function translateWeek(ss, rv, clinic, week, opt) {
+  var set = rvSettings(ss), mode = String(set.translate || "claude").toLowerCase();
+  var res = { ok: 1, by: "none", rows: {}, weekly: null, skipped: 0, errors: [] };
+  if (mode === "off") { res.by = "off"; return res; }
+  var sh = ss.getSheetByName(RV_TABS.audit), items = [], targets = {}, want = opt.keys ? {} : null;
+  (opt.keys || []).forEach(function (k) { want[String(k)] = 1; });
+  rvRows(ss, "audit").forEach(function (r) {
+    var v = r.v; if (rvDay(v[1]) !== week || cellText(v[2]) !== clinic) return;
+    if (want && !want[cellText(v[0])]) return;
+    var src = pickSource({ remark: cellText(v[15]), remarkVi: cellText(v[26]), hoEdits: parseJson(cellText(v[29]), []), translatedAt: rvStamp(v[31]), translatedBy: cellText(v[32]) }, opt.force);
+    if (!src) { res.skipped++; return; }
+    items.push({ id: cellText(v[0]), text: src.text, from: src.from }); targets[cellText(v[0])] = { row: r.row, from: src.from, text: src.text };
+  });
+  var wk = null;
+  if (opt.weekly === undefined || opt.weekly) {
+    wk = readWeeklyRow(ss, week, clinic);
+    var wsrc = pickSource(wk, opt.force);
+    if (wsrc) { items.push({ id: "weekly", text: wsrc.text, from: wsrc.from }); targets.weekly = { from: wsrc.from, text: wsrc.text }; }
+  }
+  if (!items.length) return res;
+  var out = translateBatch(items, mode, set.translate_model, res), at = now();
+  Object.keys(targets).forEach(function (key) {
+    var t = out.map[key]; if (!t || key === "weekly") return;
+    var tg = targets[key], line = [t.en || "", t.vi || "", t.zh || ""], by = out.by + " " + tg.from + ":" + fp(tg.text);
+    /* the source language's slot keeps the original wording; "translated by" also records which text was translated */
+    sh.getRange(tg.row, 26, 1, 3).setValues([line]); sh.getRange(tg.row, 32, 1, 2).setValues([[at, by]]);
+    res.rows[key] = { en: line[0], vi: line[1], zh: line[2], translatedAt: at, translatedBy: by };
+  });
+  if (out.map.weekly && targets.weekly) {
+    var w = out.map.weekly, wby = out.by + " " + targets.weekly.from + ":" + fp(targets.weekly.text);
+    upsertWeekly(ss, rv, { week: week, clinic: clinic, remarkEn: w.en || "", remarkVi: w.vi || "", remarkZh: w.zh || "", translatedAt: at, translatedBy: wby });
+    res.weekly = { en: w.en || "", vi: w.vi || "", zh: w.zh || "", translatedAt: at, translatedBy: wby };
+  }
+  res.by = out.by;
+  return res;
+}
+/* Which text feeds a row's translation, and whether it needs doing. HO's Vietnamese edit is the source
+   while it was made against the reviewer's current remark (the edit log carries `base`); otherwise the
+   reviewer's remark is. A text already translated (its fingerprint sits in "translated by") is skipped. */
+function pickSource(x, force) {
+  var edits = x.hoEdits || [], e = null;
+  for (var i = 0; i < edits.length; i++) if (edits[i].f === "remarkVi" && (!e || edits[i].at > e.at)) e = edits[i];
+  var viValid = !!(e && x.remarkVi && (e.base === undefined || e.base === (x.remark || "")));
+  var src = viValid ? { text: x.remarkVi, from: "vi" } : x.remark ? { text: x.remark, from: detectLang(x.remark) } : null;
+  if (!src) return null;
+  if (force || !x.translatedAt) return src;
+  return String(x.translatedBy || "").indexOf(src.from + ":" + fp(src.text)) !== -1 ? null : src;
+}
+function fp(s) { s = String(s || ""); var h = 5381; for (var i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return (h >>> 0).toString(36); }
+/* items: [{id, text, from}] → {by, map: {id: {en, vi, zh}}} */
+function translateBatch(items, mode, model, res) {
+  var key = mode === "claude" ? anthropicKey() : "";
+  if (mode === "claude" && key) {
+    try { return { by: "claude:" + (model || "claude-opus-5-5"), map: claudeTranslate(items, key, model || "claude-opus-5-5") }; }
+    catch (err) { res.errors.push("claude: " + String(err && err.message || err)); }
+  } else if (mode === "claude") res.errors.push("claude: no ANTHROPIC_API_KEY in Script properties");
+  var map = {};
+  items.forEach(function (it) {
+    var o = {}; o[it.from] = it.text;
+    ["en", "vi", "zh"].forEach(function (to) { if (to === it.from) return; try { o[to] = LanguageApp.translate(it.text, it.from, to === "zh" ? "zh-CN" : to); } catch (err) { o[to] = ""; res.errors.push("google: " + String(err && err.message || err)); } });
+    map[it.id] = o;
+  });
+  return { by: "google", map: map };
+}
+var TR_SYSTEM = "You translate quality-audit feedback for the Zalo customer-care SOP of an eye-care clinic group in Vietnam (Bệnh viện Mắt Sài Gòn). "
+  + "A Chinese-speaking QA reviewer writes how a clinic assistant (DA, 助理, trợ lý) followed up customers on Zalo; head office reads it in English; the assistant reads it in Vietnamese. "
+  + "For every item, give the text in all three languages: keep the field of the source language exactly as written and translate into the other two. "
+  + "Rules: faithful and complete, nothing added or dropped; natural and polite in Vietnamese (the assistant is addressed as 'em' or 'bạn', not scolded); concise in English. "
+  + "Keep cadence codes (D1, D6-7, CD, CDN, CD+1, CD+3-5, CD+7, CD+14, CD+30, CD+90, CD+180, CD+270, CD+365, also written CD3-5 or D90), product codes (MC, Kính, OK, Ortho-K, Atropine), "
+  + "names, phone numbers, dates, counts and Zalo tags exactly as written. Use this glossary (zh = vi = en): "
+  + TR_GLOSSARY.map(function (g) { return g[0] + " = " + g[1] + " = " + g[2]; }).join("; ") + ". "
+  + "Reply with only a JSON array, one object per input item in the same order: {\"id\": …, \"en\": …, \"vi\": …, \"zh\": …}. No markdown, no commentary.";
+function claudeTranslate(items, key, model) {
+  var payload = { model: model, max_tokens: 16000, system: TR_SYSTEM, output_config: { effort: "low" },
+                  messages: [{ role: "user", content: JSON.stringify(items.map(function (it) { return { id: it.id, from: it.from, text: it.text }; })) }] };
+  var resp = UrlFetchApp.fetch("https://api.anthropic.com/v1/messages", {
+    method: "post", contentType: "application/json", headers: { "x-api-key": key, "anthropic-version": "2026-10-21" }, payload: JSON.stringify(payload), muteHttpExceptions: true });
+  var code = resp.getResponseCode(), text = resp.getContentText();
+  if (code !== 200) throw new Error("HTTP " + code + " " + text.slice(0, 300));
+  var j = JSON.parse(text);
+  if (j.stop_reason === "refusal") throw new Error("the model declined to translate");
+  if (j.stop_reason === "max_tokens") throw new Error("translation cut off (max_tokens)");
+  var body = (j.content || []).filter(function (b) { return b.type === "text"; }).map(function (b) { return b.text; }).join("").trim();
+  body = body.replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/, "").trim();
+  var arr = JSON.parse(body), map = {};
+  if (!Array.isArray(arr)) throw new Error("unexpected reply shape");
+  arr.forEach(function (o) { if (o && o.id !== undefined) map[String(o.id)] = { en: cellText(o.en), vi: cellText(o.vi), zh: cellText(o.zh) }; });
+  items.forEach(function (it) { if (!map[it.id]) throw new Error("item " + it.id + " missing from the reply"); map[it.id][it.from] = it.text; });
+  return map;
+}
+/* Paste the key, run once from the editor, then put PASTE-KEY-HERE back (the key lives in Script
+   properties, never in this file). Or add it by hand: Project settings → Script properties. */
+function setAnthropicKey() {
+  var key = "PASTE-KEY-HERE";
+  if (!/^sk-/.test(key)) throw new Error("paste the key into setAnthropicKey() first");
+  PropertiesService.getScriptProperties().setProperty("ANTHROPIC_API_KEY", key);
+  Logger.log("ANTHROPIC_API_KEY saved (" + key.slice(0, 7) + "…)");
+}
+/* Run once from the editor before publishing 1.6.0: asks for the external-request permission and shows a sample. */
+function testTranslation() {
+  var r = { errors: [] }, out = translateBatch([{ id: "t", text: "会员权益已发，但 CD3-5 没有回访。", from: "zh" }], anthropicKey() ? "claude" : "google", "claude-opus-5-5", r);
+  Logger.log(JSON.stringify({ by: out.by, result: out.map.t, errors: r.errors }));
+  return out;
 }
 
 /* ---------------------------------------------------------------- screenshots */
@@ -812,6 +1114,7 @@ function setupReviewer() {
       report.push(id + " / " + code + ": tracker tabs ok, screenshots in " + f.getName());
     });
   });
+  report.push("HO users: " + Object.keys(HO_USERS).join(", ") + " · Claude key " + (anthropicKey() ? "set" : "NOT set (translations fall back to Google Translate; see setAnthropicKey)"));
   Logger.log(report.join("\n"));
   return report;
 }

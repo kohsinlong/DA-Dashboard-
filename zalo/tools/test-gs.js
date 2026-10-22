@@ -19,7 +19,7 @@ FakeSheet.prototype.insertRowsAfter = function(after, k){ for (var i = 0; i < k;
 FakeSheet.prototype.getRange = function(r, c, nr, nc){ var sh = this; nr = nr || 1; nc = nc || 1; while (sh.rows.length < r + nr - 1) sh.insertRowsAfter(sh.rows.length, 1);
   return {
     getValues: function(){ var o = []; for (var i = 0; i < nr; i++) { var row = []; for (var j = 0; j < nc; j++) row.push(sh.rows[r - 1 + i][c - 1 + j]); o.push(row); } return o; },
-    setValues: function(v){ for (var i = 0; i < nr; i++) for (var j = 0; j < nc; j++) sh.rows[r - 1 + i][c - 1 + j] = v[i][j]; },
+    setValues: function(v){ if (c + nc - 1 > sh.getMaxColumns()) throw new Error("Those columns are out of bounds (" + sh.name + ": " + (c + nc - 1) + " > " + sh.getMaxColumns() + ")"); for (var i = 0; i < nr; i++) for (var j = 0; j < nc; j++) sh.rows[r - 1 + i][c - 1 + j] = v[i][j]; },
     getValue: function(){ return sh.rows[r - 1][c - 1]; },
     setValue: function(v){ sh.rows[r - 1][c - 1] = v; },
     setNumberFormat: function(f){ sh.formats[r + ":" + c] = f; return this; },
@@ -29,7 +29,7 @@ FakeSheet.prototype.getRange = function(r, c, nr, nc){ var sh = this; nr = nr ||
 function FakeSS(id){ this.sheets = {}; this.order = []; this.id = id || "crm"; }
 FakeSS.prototype.getId = function(){ return this.id; };
 FakeSS.prototype.getSheetByName = function(n){ return this.sheets[n] || null; };
-FakeSS.prototype.insertSheet = function(n){ var s = new FakeSheet(n, 50, 20); this.sheets[n] = s; this.order.push(n); return s; };
+FakeSS.prototype.insertSheet = function(n){ var s = new FakeSheet(n, 50, 26); this.sheets[n] = s; this.order.push(n); return s; };   /* a new tab has 26 columns, as in Sheets */
 FakeSS.prototype.getSheets = function(){ var self = this; return this.order.map(function (n) { return self.sheets[n]; }); };
 var ss = new FakeSS();
 var mem = ss.insertSheet("Membership_NGT"); mem.rows = []; for (var i = 0; i < 12; i++) { var a = []; for (var c = 0; c < 34; c++) a.push(""); mem.rows.push(a); }
@@ -302,5 +302,138 @@ var re = rpost({ action: "weekStatus", week: "2026-10-19", clinic: "NGT", status
 eq([re.ok, re.status, re.emailed, sandbox.MailApp.sent.length], [1, "marking", 0, 1], "reopening sends no email");
 eq(rpost({ action: "auditSave", audits: [a2], stats: [stats] }).saved, 1, "writes allowed again after reopening");
 eq(rpost({ action: "auditRemove", keys: [a2.key], clinic: "NGT" }).removed, 1, "cleanup");
+
+/* ---------- head office (1.6.0) ---------- */
+var SLH = "fa76a43aaab8f7eab98ffea561815c3edb78c31d8e3cfbc152e20410b990f7c5", ANHH = "87886b83b8d2801c4d3050ac23331fcdb6af92fe8c481cedc692b77343014836";
+sandbox.HO_USERS = { SL: { name: "Sin Long", hash: SLH, approver: "SL" }, ANH: { name: "Anh", hash: ANHH, approver: "Anh" } };
+function hget(p){ return get(Object.assign({ u: "sl", h: SLH }, p)); }
+function hpost(b){ return post(Object.assign({ u: "SL", h: SLH }, b)); }
+/* fakes for the translation: script properties, Claude over UrlFetch, Google Translate */
+var fetches = [], claudeFail = 0;
+sandbox.PropertiesService = { props: {}, getScriptProperties: function(){ var self = this; return { getProperty: function(k){ return self.props[k] || null; }, setProperty: function(k, v){ self.props[k] = v; } }; } };
+sandbox.LanguageApp = { translate: function(text, from, to){ return "[" + to + "] " + text; } };
+sandbox.UrlFetchApp = { fetch: function(url, opt){
+  fetches.push({ url: url, opt: opt });
+  if (claudeFail) { claudeFail--; return { getResponseCode: function(){ return 500; }, getContentText: function(){ return '{"error":"boom"}'; } }; }
+  var items = JSON.parse(JSON.parse(opt.payload).messages[0].content);
+  var arr = items.map(function (it) { return { id: it.id, en: "EN: " + it.text, vi: "VI: " + it.text, zh: "ZH: " + it.text }; });
+  return { getResponseCode: function(){ return 200; }, getContentText: function(){ return JSON.stringify({ stop_reason: "end_turn", content: [{ type: "thinking", thinking: "…" }, { type: "text", text: "```json\n" + JSON.stringify(arr) + "\n```" }] }); } };
+} };
+eq(get({ u: "SL", h: "wrong", action: "ping" }), { error: "forbidden" }, "HO with a wrong hash is refused");
+eq(get({ u: "SL", h: RVH, action: "ping" }), { error: "forbidden" }, "the reviewer's password does not open the HO login");
+eq(hget({ action: "ping" }).role, "ho", "HO ping, case-insensitive username");
+memBefore = JSON.stringify(mem.rows);
+var hb = hget({});
+eq([hb.ok, hb.role, hb.reviewer, hb.name, hb.approver, hb.approvers, hb.reviewers], [1, "ho", "SL", "Sin Long", "SL", ["SL", "Anh"], { NGT: "ChenZhong" }], "HO bootstrap: role, approvers, the clinic's reviewer");
+ok(hb.clinics.NGT && hb.clinics.NGT.customers.length >= 3 && hb.audits.length >= 3, "HO sees the clinic and the reviewer's audits");
+eq(JSON.stringify(mem.rows), memBefore, "the CRM form is untouched by the HO path");
+eq([au.rows[0][24], au.rows[0][32], au.rows[0].length >= 33], ["HO 备注 HO note", "翻译来源 Translated by", true], "audit tab gained the HO columns");
+eq([wk.rows[0][22], wk.rows[0][31]], ["总评 EN Remark EN", "HO 审核人 HO reviewer"], "weekly tab gained the HO columns");
+eq(sandbox.rvSettings(tracker).translate, "claude", "translate setting seeded");
+eq(hb.audits[0].visible, 1, "a row without the visible flag is visible");
+/* the reviewer marks and completes a week; remarks are translated at Complete (no key → Google) */
+var h1 = Object.assign({}, a1, { key: "2026-10-19|NGT|h1", custKey: "h1", status: "checked", verdict: "partial", score: 50, marks: { "CD+90": "1100" }, remark: "会员权益已发，但 CD3-5 没有回访。", notFound: 1 });
+var h2 = Object.assign({}, a1, { key: "2026-10-19|NGT|h2", custKey: "h2", status: "checked", verdict: "pass", score: 100, marks: { "CD+90": "1111" }, remark: "" });
+eq(rpost({ action: "auditSave", audits: [h1, h2], stats: [stats] }).saved, 2, "two rows saved by the reviewer");
+eq(rpost({ action: "feedbackSave", week: "2026-10-19", clinic: "NGT", text: "NGT 本周回访偏少。", stats: stats }).ok, 1, "overall remark saved");
+eq(hpost({ action: "hoEdit", clinic: "NGT", week: "2026-10-19", key: h1.key, ho: { visible: 0 } }).error, "week 2026-10-19 is still being marked by the reviewer", "HO cannot edit a week the reviewer is still marking");
+eq(hpost({ action: "weekStatus", week: "2026-10-19", clinic: "NGT", status: "published", approvedBy: "SL" }).error, "only a submitted week or one under review can be published; it is marking", "HO cannot publish a week that was not completed");
+eq(hpost({ action: "auditSave", audits: [h1] }).error, "unknown action: auditSave", "HO cannot run the reviewer's writes");
+var done2 = rpost({ action: "weekStatus", week: "2026-10-19", clinic: "NGT", status: "submitted", stats: stats });
+eq([done2.ok, done2.status, done2.emailed, done2.translated && done2.translated.by], [1, "submitted", 2, "google"], "Complete translates with Google Translate when no Claude key is set");
+ok(done2.translated.errors.length === 1 && /no ANTHROPIC_API_KEY/.test(done2.translated.errors[0]), "the missing key is reported: " + JSON.stringify(done2.translated.errors));
+var hr = au.rows.filter(function (r) { return r[0] === h1.key; })[0];
+eq([hr[25], hr[26], hr[27], /^google zh:/.test(hr[32]), !!hr[31]], ["[en] 会员权益已发，但 CD3-5 没有回访。", "[vi] 会员权益已发，但 CD3-5 没有回访。", "会员权益已发，但 CD3-5 没有回访。", true, true], "remark translated to en and vi, the Chinese slot keeps the original, provenance recorded");
+var hr2 = au.rows.filter(function (r) { return r[0] === h2.key; })[0];
+eq([hr2[25], hr2[26], hr2[31]], ["", "", ""], "a row without a remark is not translated");
+wr = wk.rows.filter(function (r) { return r[0] === "2026-10-19|NGT"; })[0];
+eq([wr[22], wr[23], wr[24], wr[18]], ["[en] NGT 本周回访偏少。", "[vi] NGT 本周回访偏少。", "NGT 本周回访偏少。", "submitted"], "the overall remark is translated too");
+eq(done2.translated.rows[h1.key].vi, "[vi] 会员权益已发，但 CD3-5 没有回访。", "Complete returns the translations to the page");
+/* HO review: the first edit takes the week; HO columns written, the reviewer's untouched */
+var edits1 = [{ at: "2026-10-23T02:00:00.000Z", by: "SL", f: "tick", stage: "CD+90", i: 2, old: "0", "new": "1" }, { at: "2026-10-23T02:01:00.000Z", by: "SL", f: "remarkVi", old: "[vi] 会员权益已发，但 CD3-5 没有回访。", "new": "Đã gửi quyền lợi hội viên; có hỏi thăm 14/10 nhưng chưa mời giới thiệu.", base: h1.remark }];
+var he = hpost({ action: "hoEdit", clinic: "NGT", week: "2026-10-19", key: h1.key, ho: { hoMarks: { "CD+90": "1110" }, remarkVi: "Đã gửi quyền lợi hội viên; có hỏi thăm 14/10 nhưng chưa mời giới thiệu.", hoNote: "screenshot 2 shows the check-in", visible: 1 }, log: edits1,
+                derived: { verdict: "partial", score: 75, found: "CD+90 ½", missing: "CD+90: 转介绍邀请", notFound: 0 }, stats: Object.assign({}, stats, { score: 75 }) });
+eq([he.ok, he.status], [1, "review"], "HO's first edit takes the week into review");
+hr = au.rows.filter(function (r) { return r[0] === h1.key; })[0];
+eq([hr[30], hr[26], hr[24], hr[28], JSON.parse(hr[29]).length], ['{"CD+90":"1110"}', "Đã gửi quyền lợi hội viên; có hỏi thăm 14/10 nhưng chưa mời giới thiệu.", "screenshot 2 shows the check-in", "Y", 2], "HO marks, Vietnamese, note, visibility and the edit log written");
+eq([hr[21], hr[15], hr[19]], ['{"CD+90":"1100"}', "会员权益已发，但 CD3-5 没有回访。", "CZ"], "the reviewer's marks, remark and name are untouched");
+eq([hr[10], hr[11], hr[14]], ["partial", 75, 0], "the derived verdict columns follow the corrected marks");
+wr = wk.rows.filter(function (r) { return r[0] === "2026-10-19|NGT"; })[0];
+eq([wr[18], wr[31], !!wr[30], wr[16], wr[11]], ["review", "SL", true, "CZ", 75], "weekly: under review by SL, taken at set, the reviewer's By kept, stats updated");
+eq(hget({}).weekly.filter(function (w) { return w.week === "2026-10-19"; })[0].hoBy, "SL", "HO reviewer served on bootstrap");
+eq(hget({}).audits.filter(function (a) { return a.key === h1.key; })[0].hoMarks, { "CD+90": "1110" }, "HO marks served on bootstrap");
+eq(hpost({ action: "hoEdit", clinic: "NGT", week: "2026-10-19", key: h1.key, ho: { visible: 0 } }).ok, 1, "a partial HO edit");
+hr = au.rows.filter(function (r) { return r[0] === h1.key; })[0];
+eq([hr[28], hr[30], hr[24]], ["N", '{"CD+90":"1110"}', "screenshot 2 shows the check-in"], "fields not sent keep their cell");
+eq(hget({}).audits.filter(function (a) { return a.key === h1.key; })[0].visible, 0, "hidden from the DA");
+eq(rpost({ action: "auditSave", audits: [h1], stats: [stats] }).error, "week 2026-10-19 is review; reopen it first", "the reviewer cannot write during HO review");
+eq(rpost({ action: "weekStatus", week: "2026-10-19", clinic: "NGT", status: "marking" }).error, "only a submitted week can be reopened; it is review", "the reviewer cannot reopen a week HO has taken");
+eq(hpost({ action: "hoFeedback", clinic: "NGT", week: "2026-10-19", remarkVi: "NGT: tuần này hỏi thăm còn ít.", hoNote: "soften", log: [{ at: "2026-10-23T02:05:00.000Z", by: "SL", f: "remarkVi", old: "[vi] NGT 本周回访偏少。", "new": "NGT: tuần này hỏi thăm còn ít.", base: "NGT 本周回访偏少。" }] }).ok, 1, "HO wording of the overall remark saved");
+wr = wk.rows.filter(function (r) { return r[0] === "2026-10-19|NGT"; })[0];
+eq([wr[23], wr[25], wr[15], JSON.parse(wr[27]).length], ["NGT: tuần này hỏi thăm còn ít.", "soften", "NGT 本周回访偏少。", 2], "weekly Vietnamese and note written, the reviewer's remark kept, log appended to the take entry");
+/* translation on demand through Claude: HO's Vietnamese is now the source */
+sandbox.PropertiesService.props.ANTHROPIC_API_KEY = "sk-test-key";
+var tr = hpost({ action: "hoTranslate", clinic: "NGT", week: "2026-10-19", keys: [h1.key], weekly: 1 });
+eq([tr.ok, tr.by, Object.keys(tr.rows)], [1, "claude:claude-opus-5-5", [h1.key]], "Claude used once a key is set");
+var call = fetches[fetches.length - 1], pay = JSON.parse(call.opt.payload);
+eq([call.url, call.opt.headers["x-api-key"], call.opt.headers["anthropic-version"], call.opt.contentType, pay.model, pay.output_config.effort, pay.max_tokens], ["https://api.anthropic.com/v1/messages", "sk-test-key", "2026-10-21", "application/json", "claude-opus-5-5", "low", 16000], "Messages API call shape");
+ok(/会员权益 = quyền lợi hội viên = member benefits/.test(pay.system) && /JSON array/.test(pay.system), "system prompt carries the glossary and the output rule");
+var sent = JSON.parse(pay.messages[0].content);
+eq(sent, [{ id: h1.key, from: "vi", text: "Đã gửi quyền lợi hội viên; có hỏi thăm 14/10 nhưng chưa mời giới thiệu." }, { id: "weekly", from: "vi", text: "NGT: tuần này hỏi thăm còn ít." }], "HO's Vietnamese edits are the source text");
+hr = au.rows.filter(function (r) { return r[0] === h1.key; })[0];
+eq([hr[25], hr[26], hr[27], /^claude:claude-opus-5-5 vi:/.test(hr[32])], ["EN: Đã gửi quyền lợi hội viên; có hỏi thăm 14/10 nhưng chưa mời giới thiệu.", "Đã gửi quyền lợi hội viên; có hỏi thăm 14/10 nhưng chưa mời giới thiệu.", "ZH: Đã gửi quyền lợi hội viên; có hỏi thăm 14/10 nhưng chưa mời giới thiệu.", true], "en and zh now follow the Vietnamese the DA will read");
+wr = wk.rows.filter(function (r) { return r[0] === "2026-10-19|NGT"; })[0];
+eq([wr[22], wr[24], wr[23]], ["EN: NGT: tuần này hỏi thăm còn ít.", "ZH: NGT: tuần này hỏi thăm còn ít.", "NGT: tuần này hỏi thăm còn ít."], "weekly remark re-translated from HO's Vietnamese");
+var tr2 = hpost({ action: "hoTranslate", clinic: "NGT", week: "2026-10-19", keys: [h1.key], weekly: 1 });
+eq([tr2.by, Object.keys(tr2.rows).length, tr2.weekly, tr2.skipped], ["none", 0, null, 1], "nothing is translated twice");
+claudeFail = 1;
+var tr3 = hpost({ action: "hoTranslate", clinic: "NGT", week: "2026-10-19", keys: [h1.key], weekly: 0, force: 1 });
+eq([tr3.by, tr3.rows[h1.key].en, /^claude: HTTP 500/.test(tr3.errors[0])], ["google", "[en] Đã gửi quyền lợi hội viên; có hỏi thăm 14/10 nhưng chưa mời giới thiệu.", true], "a failing Claude call falls back to Google Translate and says so");
+/* publish: approver required, email to the reviewer when email_cz is set */
+eq(hpost({ action: "weekStatus", week: "2026-10-19", clinic: "NGT", status: "published" }).error, "approvedBy is required: who approved this week", "publishing without an approver is refused");
+eq(hpost({ action: "weekStatus", week: "2026-10-19", clinic: "NGT", status: "marking" }).error, "a note for the reviewer is required to send a week back", "sending back without a note is refused");
+var mails = sandbox.MailApp.sent.length;
+var pub = hpost({ action: "weekStatus", week: "2026-10-19", clinic: "NGT", status: "published", approvedBy: "Other: Minh", stats: Object.assign({}, stats, { score: 75 }) });
+eq([pub.ok, pub.status, pub.emailed, sandbox.MailApp.sent.length], [1, "published", 0, mails], "published; no reviewer address yet, so no email");
+wr = wk.rows.filter(function (r) { return r[0] === "2026-10-19|NGT"; })[0];
+var wlog = JSON.parse(wr[27]);
+eq([wr[18], wr[20], !!wr[21], wlog[wlog.length - 1].what, wlog[wlog.length - 1].approvedBy], ["published", "Other: Minh", true, "published", "Other: Minh"], "approver and time written, logged");
+eq(hpost({ action: "hoEdit", clinic: "NGT", week: "2026-10-19", key: h1.key, ho: { visible: 1 } }).error, "week 2026-10-19 is published; reopen the review first", "no edits on a published week");
+eq(rpost({ action: "weekStatus", week: "2026-10-19", clinic: "NGT", status: "marking" }).error, "only a submitted week can be reopened; it is published", "the reviewer cannot reopen a published week");
+var ro = hpost({ action: "weekStatus", week: "2026-10-19", clinic: "NGT", status: "review" });
+wr = wk.rows.filter(function (r) { return r[0] === "2026-10-19|NGT"; })[0];
+eq([ro.ok, ro.status, wr[18], wr[21], wr[20]], [1, "review", "review", "", "Other: Minh"], "reopened review: published-at cleared, the approver kept in the row and the log");
+sandbox.setRvSetting(tracker, "email_cz", "cz@example.com");
+var sb = hpost({ action: "weekStatus", week: "2026-10-19", clinic: "NGT", status: "marking", note: "Please check chat 3 again: the screenshot shows a check-in.", stats: stats });
+eq([sb.ok, sb.status, sb.emailed], [1, "marking", 1], "sent back to the reviewer with an email");
+var m2 = sandbox.MailApp.sent[sandbox.MailApp.sent.length - 1];
+eq([m2.to, m2.subject], ["cz@example.com", "[Zalo SOP] Sin Long sent back NGT week of 2026-10-19"], "send-back email");
+ok(/Note: Please check chat 3 again/.test(m2.body) && /#\/clinic-ngt/.test(m2.body), "send-back email carries the note and the link");
+wr = wk.rows.filter(function (r) { return r[0] === "2026-10-19|NGT"; })[0];
+eq([wr[18], wr[26]], ["marking", "Please check chat 3 again: the screenshot shows a check-in."], "status back to marking with the note stored");
+eq(hget({}).weekly.filter(function (w) { return w.week === "2026-10-19"; })[0].sendBack, "Please check chat 3 again: the screenshot shows a check-in.", "the note is served");
+/* the reviewer takes it back: a re-save clears HO's tick corrections, the log stays; re-completing keeps HO's Vietnamese when the remark did not change */
+eq(rpost({ action: "auditSave", audits: [h1], stats: [stats] }).saved, 1, "the reviewer can write again");
+hr = au.rows.filter(function (r) { return r[0] === h1.key; })[0];
+eq([hr[30], JSON.parse(hr[29]).length, hr[26]], ["", 2, "Đã gửi quyền lợi hội viên; có hỏi thăm 14/10 nhưng chưa mời giới thiệu."], "HO marks cleared by the reviewer's save; log and Vietnamese kept");
+var done3 = rpost({ action: "weekStatus", week: "2026-10-19", clinic: "NGT", status: "submitted", stats: stats });
+eq([done3.status, done3.translated.by, Object.keys(done3.translated.rows).length, !!done3.translated.weekly], ["submitted", "none", 0, false], "re-completing an unchanged week translates nothing");
+wr = wk.rows.filter(function (r) { return r[0] === "2026-10-19|NGT"; })[0];
+eq([wr[26], !!wr[19]], ["", true], "the send-back note is cleared on the next Complete");
+var h1b = Object.assign({}, h1, { remark: "会员权益已发，CD3-5 有回访，但没有引导推荐。" });
+eq(rpost({ action: "weekStatus", week: "2026-10-19", clinic: "NGT", status: "marking" }).ok, 1, "reviewer reopens");
+eq(rpost({ action: "auditSave", audits: [h1b], stats: [stats] }).saved, 1, "reviewer changes the remark");
+var done4 = rpost({ action: "weekStatus", week: "2026-10-19", clinic: "NGT", status: "submitted", stats: stats });
+hr = au.rows.filter(function (r) { return r[0] === h1.key; })[0];
+eq([done4.translated.by, hr[26], hr[25]], ["claude:claude-opus-5-5", "VI: 会员权益已发，CD3-5 有回访，但没有引导推荐。", "EN: 会员权益已发，CD3-5 有回访，但没有引导推荐。"], "a changed remark is translated afresh and replaces HO's older Vietnamese");
+var pub2 = hpost({ action: "weekStatus", week: "2026-10-19", clinic: "NGT", status: "published", approvedBy: "Anh", stats: stats });
+var m3 = sandbox.MailApp.sent[sandbox.MailApp.sent.length - 1];
+eq([pub2.status, pub2.emailed, m3.subject], ["published", 1, "[Zalo SOP] Sin Long published NGT week of 2026-10-19 (approved by Anh)"], "publishing straight from submitted, approver in the email");
+ok(/Approved by: Anh/.test(m3.body), "publish email body names the approver");
+eq(get({ u: "NGT_DA1", h: H }).weekly, undefined, "the DA's bootstrap still carries no tracker data");
+/* cleanup so nothing above this block changes */
+hpost({ action: "weekStatus", week: "2026-10-19", clinic: "NGT", status: "review" });
+hpost({ action: "weekStatus", week: "2026-10-19", clinic: "NGT", status: "marking", note: "cleanup" });
+eq(rpost({ action: "auditRemove", keys: [h1.key, h2.key], clinic: "NGT" }).removed, 2, "cleanup");
 console.log(n + " checks, " + bad + " failed");
 process.exit(bad ? 1 : 0);
