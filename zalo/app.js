@@ -6,12 +6,12 @@
   /* Paste the Apps Script /exec URL here after deploying (README §2.10). ?api=<url> and the
      "Connect" box on the sign-in card override it for testing. */
   var API = { url: "https://script.google.com/macros/s/AKfycbwselLgmfAg8ffK5IqBpXVvY8Ppqv2hDNCOStNABLLNfSalUvx5UKR7GC6LIxKuVEO9kg/exec" };
-  var VERSION = "1.6.0";
+  var VERSION = "1.6.1";
 
   /* ------------------------------------------------------------------ strings */
   var L = {
     vi: {
-      brand: "DA Zalo Dashboard", sub: "{c} · {d}", glede: "Đăng nhập bằng tên đăng nhập của phòng khám, ví dụ NGT_DA1.", luser: "Tên đăng nhập", lpass: "Mật khẩu",
+      brand: "DA Zalo Dashboard", sub: "{c} · {d}", glede: "Đăng nhập bằng tên đăng nhập của phòng khám, ví dụ NGT_DA.", luser: "Tên đăng nhập", lpass: "Mật khẩu",
       signin: "Đăng nhập", signingin: "Đang đăng nhập…", badlogin: "Tên đăng nhập hoặc mật khẩu không đúng.", neterr: "Không kết nối được với Google Sheets: {e}",
       demo: "Xem bản demo (dữ liệu giả)", adv: "Kết nối script (nâng cao)", lapi: "Địa chỉ Apps Script (/exec)", apiHint: "Chỉ cần nhập một lần trên mỗi thiết bị. Để trống để dùng địa chỉ đã cài sẵn.",
       noapi: "Chưa kết nối Google Sheets. Triển khai script theo hướng dẫn trong README rồi dán địa chỉ /exec vào mục nâng cao, hoặc xem bản demo.",
@@ -74,7 +74,7 @@
       setupTitle: "Chưa kết nối Google Sheets", confettiMsg: "🎉 Xong hết việc hôm nay!", demoWrite: "Bản demo: thay đổi chỉ lưu trên trình duyệt này.", notConnected: "Chưa kết nối sheet: không ghi được."
     },
     en: {
-      brand: "DA Zalo Dashboard", sub: "{c} · {d}", glede: "Sign in with your clinic's username, e.g. NGT_DA1.", luser: "Username", lpass: "Password",
+      brand: "DA Zalo Dashboard", sub: "{c} · {d}", glede: "Sign in with your clinic's username, e.g. NGT_DA.", luser: "Username", lpass: "Password",
       signin: "Sign in", signingin: "Signing in…", badlogin: "Incorrect username or password.", neterr: "Could not reach Google Sheets: {e}",
       demo: "Try the demo (sample data)", adv: "Connect the script (advanced)", lapi: "Apps Script address (/exec)", apiHint: "Needed once per device. Leave empty to use the built-in address.",
       noapi: "Google Sheets is not connected yet. Deploy the script as described in the README and paste its /exec address under Advanced, or try the demo.",
@@ -137,7 +137,7 @@
       setupTitle: "Google Sheets not connected", confettiMsg: "🎉 Everything due today is done!", demoWrite: "Demo: changes stay in this browser only.", notConnected: "Not connected to the sheet: nothing was saved."
     },
     zh: {
-      brand: "助理 Zalo 看板", sub: "{c} · {d}", glede: "使用诊所的用户名登录，例如 NGT_DA1。", luser: "用户名", lpass: "密码",
+      brand: "助理 Zalo 看板", sub: "{c} · {d}", glede: "使用诊所的用户名登录，例如 NGT_DA。", luser: "用户名", lpass: "密码",
       signin: "登录", signingin: "正在登录…", badlogin: "用户名或密码不正确。", neterr: "无法连接 Google Sheets：{e}",
       demo: "查看演示（示例数据）", adv: "连接脚本（高级）", lapi: "Apps Script 地址（/exec）", apiHint: "每台设备只需输入一次。留空则使用内置地址。",
       noapi: "尚未连接 Google Sheets。请按 README 部署脚本并在“高级”中粘贴 /exec 地址，或查看演示。",
