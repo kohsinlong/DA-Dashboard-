@@ -12,6 +12,8 @@ FakeSheet.prototype.getMaxColumns = function(){ return this.rows[0].length; };
 FakeSheet.prototype.getLastRow = function(){ var last = 0; this.rows.forEach(function (r, i) { if (r.some(function (v) { return v !== "" && v !== null && v !== undefined; })) last = i + 1; }); return last; };
 FakeSheet.prototype.getLastColumn = function(){ var last = 0; this.rows.forEach(function (r) { r.forEach(function (v, j) { if (v !== "") last = Math.max(last, j + 1); }); }); return last; };
 FakeSheet.prototype.setFrozenRows = function(k){ this.frozen = k; };
+FakeSheet.prototype.hideSheet = function(){ this.hidden = true; };
+FakeSheet.prototype.isSheetHidden = function(){ return !!this.hidden; };
 FakeSheet.prototype.deleteRow = function(r){ this.rows.splice(r - 1, 1); };
 FakeSheet.prototype.insertRowsAfter = function(after, k){ for (var i = 0; i < k; i++) { var a = []; for (var c = 0; c < this.rows[0].length; c++) a.push(""); this.rows.splice(after, 0, a); } };
 FakeSheet.prototype.getRange = function(r, c, nr, nc){ var sh = this; nr = nr || 1; nc = nc || 1; while (sh.rows.length < r + nr - 1) sh.insertRowsAfter(sh.rows.length, 1);
@@ -24,7 +26,8 @@ FakeSheet.prototype.getRange = function(r, c, nr, nc){ var sh = this; nr = nr ||
     clearContent: function(){ for (var i = 0; i < nr; i++) for (var j = 0; j < nc; j++) sh.rows[r - 1 + i][c - 1 + j] = ""; },
     copyTo: function(dst, type){ var src = this.getValues(); dst.setValues(src.map(function (row) { return row.map(function (v) { return typeof v === "string" && v.charAt(0) === "=" ? v : ""; }); })); }
   }; };
-function FakeSS(){ this.sheets = {}; this.order = []; }
+function FakeSS(id){ this.sheets = {}; this.order = []; this.id = id || "crm"; }
+FakeSS.prototype.getId = function(){ return this.id; };
 FakeSS.prototype.getSheetByName = function(n){ return this.sheets[n] || null; };
 FakeSS.prototype.insertSheet = function(n){ var s = new FakeSheet(n, 50, 20); this.sheets[n] = s; this.order.push(n); return s; };
 FakeSS.prototype.getSheets = function(){ var self = this; return this.order.map(function (n) { return self.sheets[n]; }); };
@@ -45,15 +48,53 @@ var cad = ss.insertSheet("Cadence (VN)");
 var oldImp = ss.insertSheet("DA_Imports"); oldImp.rows = []; for (var oi = 0; oi < 50; oi++) { var oa = []; for (var oc = 0; oc < 16; oc++) oa.push(""); oldImp.rows.push(oa); }
 ["code","clinic","uploaded_at","uploaded_by","deposit","appointment","status","name","phone","patient_code","lens","product","state","result","last_seen","collected"].forEach(function (h, j) { oldImp.rows[0][j] = h; });
 FakeSheet.prototype.insertColumnsAfter = function(after, k){ this.rows.forEach(function (r) { for (var i = 0; i < k; i++) r.splice(after, 0, ""); }); };
+/* the reviewer's tracker workbook: a cover, two old week sheets (one before start_week) and the CN cadence tab */
+var tracker = new FakeSS("TRACKER1");
+var cover = tracker.insertSheet("封面 Cover"); cover.rows[1][1] = "NGT 跟进合规追踪表";
+var cadCN = tracker.insertSheet("Cadence (CN)"); [["产品","节点","应做事项","Key"],["MC","D1","定金：发送介绍信息；更新预计配镜时间","MC|D1"],["Kính","CD","发送使用说明；会员权益；邀请转介绍","Kính|CD"]].forEach(function (r, i) { r.forEach(function (v, j) { cadCN.rows[i][j] = v; }); });
+function weekSheet(name, from, to, marks){
+  var sh = tracker.insertSheet(name);
+  sh.rows[0][0] = "第 42 周 / Week 42   ·   " + from + " – " + to + "   ·   实时 Live"; sh.rows[6][0] = "本周综合评述 (CZ)\nOverall remark (CZ)"; sh.rows[6][1] = marks.remark || "";
+  sh.rows[9] = ["序号\nNo.","Zalo 标签\nZalo Tag","客户\nCustomer","助理\nDA","产品\nProduct","锚定日 (CD)\nAnchor","本周到期\nDue This Week","应做事项","缺失的节点项\nMissing cadence items","质性反馈\nQualitative feedback","","","",""].concat(["","","","","",""]);
+  (marks.rows || []).forEach(function (r, i) { sh.rows[10 + i] = [String(i + 1), r[0], r[1], "Tiên", r[2], "2026-10-01", r[3] || "", "", r[4] || "", r[5] || ""].concat(["","","","","","","","","",""]); });
+  return sh;
+}
+weekSheet("W41", "2026-10-05", "2026-10-11", { remark: "old week", rows: [["MCY 260720 Ô.Ngoại bé Tuấn Kiệt", "Nguyễn Tuấn Kiệt", "MC", "CD+90", "D90：N", ""]] });
+weekSheet("W42", "2026-10-12", "2026-10-18", { remark: "NGT 本周回访偏少", rows: [["MCY 260720 Ô.Ngoại bé Tuấn Kiệt", "Nguyễn Tuấn Kiệt", "MC", "CD+90", "", "Y：权益、定制"], ["KTN 261003 Mẹ bé Bảo Anh & Tâm Anh 0938123456", "Hoàng Lưu Bảo Anh, Tâm Anh", "Kính", "D6-7", "D6-7: Not sent", ""], ["XXY 261001 Unknown", "Nobody", "MC", "", "", "no such customer"], ["MCY 260720 Ô.Ngoại bé Tuấn Kiệt", "Nguyễn Tuấn Kiệt", "MC", "", "", ""]] });
+
+/* fake Drive: folders and files in memory */
+var drive = (function(){
+  var files = {}, folders = {}, seq = 0;
+  function Folder(name, parent){ this.id = "fo" + (++seq); this.name = name; this.parent = parent || null; this.kids = []; folders[this.id] = this; }
+  Folder.prototype.getId = function(){ return this.id; }; Folder.prototype.getName = function(){ return this.name; };
+  Folder.prototype.getFoldersByName = function(n){ var list = this.kids.filter(function (k) { return k instanceof Folder && k.name === n; }), i = 0; return { hasNext: function(){ return i < list.length; }, next: function(){ return list[i++]; } }; };
+  Folder.prototype.createFolder = function(n){ var f = new Folder(n, this); this.kids.push(f); return f; };
+  Folder.prototype.createFile = function(blob){ var f = new File(blob, this); this.kids.push(f); return f; };
+  function File(blob, parent){ this.id = "fi" + (++seq); this.blob = blob; this.parent = parent; this.trashed = false; files[this.id] = this; }
+  File.prototype.getId = function(){ return this.id; }; File.prototype.getUrl = function(){ return "https://drive.google.com/file/d/" + this.id; }; File.prototype.getBlob = function(){ return this.blob; };
+  File.prototype.setTrashed = function(v){ this.trashed = v; }; File.prototype.getParents = function(){ var p = this.parent, used = false; return { hasNext: function(){ return !!p && !used; }, next: function(){ used = true; return p; } }; };
+  var root = new Folder("root"); var trackerFile = new File({ name: "tracker" }, root); trackerFile.id = "TRACKER1"; files.TRACKER1 = trackerFile;
+  return { files: files, folders: folders, root: root,
+    getFileById: function(id){ if (!files[id]) throw new Error("no file " + id); return files[id]; },
+    getFolderById: function(id){ if (!folders[id]) throw new Error("no folder " + id); return folders[id]; },
+    createFolder: function(n){ return root.createFolder(n); } };
+})();
+
 var sandbox = {
-  SpreadsheetApp: { openById: function(){ return ss; }, CopyPasteType: { PASTE_FORMULA: "formula" } },
-  Utilities: { formatDate: function(d, tz, fmt){ var t = new Date(d.getTime() + (tz === "UTC" ? 0 : 7 * 3600000)); var s = t.toISOString(); return fmt === "yyyy-MM-dd" ? s.slice(0, 10) : s; } },
+  SpreadsheetApp: { openById: function(id){ return id === "TRACKER1" ? tracker : ss; }, CopyPasteType: { PASTE_FORMULA: "formula" } },
+  DriveApp: drive,
+  MailApp: { sent: [], sendEmail: function(m){ this.sent.push(m); } },
+  Utilities: { formatDate: function(d, tz, fmt){ var t = new Date(d.getTime() + (tz === "UTC" ? 0 : 7 * 3600000)); var s = t.toISOString(); return fmt === "yyyy-MM-dd" ? s.slice(0, 10) : s; },
+               base64Decode: function(s){ return Array.prototype.slice.call(Buffer.from(s, "base64")); }, base64Encode: function(bytes){ return Buffer.from(bytes).toString("base64"); },
+               newBlob: function(bytes, mime, name){ return { bytes: bytes, mime: mime, name: name, getBytes: function(){ return bytes; }, getContentType: function(){ return mime; } }; } },
   LockService: { getScriptLock: function(){ return { waitLock: function(){}, releaseLock: function(){} }; } },
   ContentService: { createTextOutput: function(s){ return { setMimeType: function(){ return { text: s }; } }; }, MimeType: { JSON: "json" } },
   Logger: { log: function(){} }, console: console, Date: Date, JSON: JSON, Object: Object, String: String, Math: Math, Error: Error, Array: Array, RegExp: RegExp, Number: Number
 };
 vm.createContext(sandbox);
 vm.runInContext(fs.readFileSync(__dirname + "/zalo-sop.gs", "utf8"), sandbox);
+var RVH = "c7425b8bfb79932f5d6f5b46f3ddc20bb7c5050dd516aef9e87425afc4cf51c3";       /* sha256 of the reviewer demo password */
+sandbox.REVIEWERS = { CZ: { name: "ChenZhong", hash: RVH, clinics: { NGT: "TRACKER1" } } };
 var H = "d006b3f546ac914c34dfc209ad535ea530f32a1e8e0ae822ea049b3a783e4d20";
 function get(p){ return JSON.parse(sandbox.doGet({ parameter: p }).text); }
 function post(b){ return JSON.parse(sandbox.doPost({ postData: { contents: JSON.stringify(b) } }).text); }
@@ -164,5 +205,102 @@ for (var k = 0; k < 8; k++) post(body({ action: "addCustomer", fields: { name: "
 var lastAdd = post(body({ action: "addCustomer", fields: { name: "Overflow", phone: "0900000099", product: "MC", tag: "t" } }));
 eq(lastAdd.ok, 1, "adding beyond the pre-formatted rows still works");
 eq(mem.rows[lastAdd.row - 1][0].slice(0, 4), "=IF(", "formula column carried down into the new row");
+
+/* ---------- reviewer (QA audit) ---------- */
+function rget(p){ return get(Object.assign({ u: "cz", h: RVH }, p)); }
+function rpost(b){ return post(Object.assign({ u: "CZ", h: RVH }, b)); }
+eq(get({ u: "CZ", h: "wrong", action: "ping" }), { error: "forbidden" }, "reviewer with a wrong hash is refused");
+eq(get({ u: "CZ", h: H, action: "ping" }), { error: "forbidden" }, "the DA password does not open the reviewer login");
+eq(rget({ action: "ping" }).role, "reviewer", "reviewer ping, case-insensitive username");
+var crmTabsBefore = ss.order.slice(), memBefore = JSON.stringify(mem.rows);
+var rb = rget({});
+eq([rb.ok, rb.role, rb.reviewer, rb.name], [1, "reviewer", "CZ", "ChenZhong"], "reviewer bootstrap");
+ok(rb.clinics.NGT && rb.clinics.NGT.customers.length === get({ u: "NGT_DA1", h: H }).customers.length, "the reviewer sees the clinic's customers");
+ok(rb.clinics.NGT.tasks.length >= 1 && rb.clinics.NGT.settings.go_live === "2026-10-16", "the DA's ticks and settings come along");
+eq(JSON.stringify(mem.rows), memBefore, "the CRM form is untouched by the reviewer path");
+eq(ss.order, crmTabsBefore, "no tab is added to the CRM workbook by the reviewer path");
+eq(tracker.order.slice(-4), ["设置 Settings", "审核 Audit", "周总评 Weekly", "截图 Screenshots"], "tracker tabs created");
+eq(tracker.getSheetByName("审核 Audit").rows[0][0], "键 Key", "audit header");
+eq(rb.settings.NGT.sample_size, "15", "tracker settings seeded and served");
+eq(rb.settings.NGT.start_week, "2026-10-12", "start week seeded");
+eq(rb.cadenceCN.length, 2, "Cadence (CN) served");
+eq(rb.cadenceCN[1], { product: "Kính", stage: "CD", text: "发送使用说明；会员权益；邀请转介绍" }, "Cadence (CN) row");
+/* switch-over: W42 marks imported (W41 is before start_week), W sheets hidden */
+eq(rb.audits.length, 3, "three marked W42 rows imported (W41 skipped, the unmarked row skipped)");
+eq([rb.audits[0].custKey, rb.audits[0].missing, rb.audits[0].remark, rb.audits[0].source, rb.audits[0].status, rb.audits[0].verdict], ["0907683580|nguyen tuan kiet", "", "Y：权益、定制", "sheet W42", "checked", "noted"], "a W42 mark becomes a noted audit keyed to the customer");
+eq(rb.audits[1].custKey, "0938123456|hoang luu bao anh", "two-kid tag matched to its row");
+eq(rb.audits[2].custKey, "tag:xxy261001unknown", "an unmatched tag keeps a tag key");
+eq(rb.weekly.length, 1, "the W42 overall remark became a weekly row");
+eq([rb.weekly[0].week, rb.weekly[0].remark], ["2026-10-12", "NGT 本周回访偏少"], "weekly remark");
+ok(tracker.getSheetByName("W41").isSheetHidden() && tracker.getSheetByName("W42").isSheetHidden(), "old week sheets hidden");
+ok(!tracker.getSheetByName("Cadence (CN)").isSheetHidden(), "other tabs stay visible");
+var so = sandbox.rvSettings(tracker).switched_over; ok(/W42:3/.test(so), "switch-over recorded: " + so);
+var rb2 = rget({});
+eq(rb2.audits.length, 3, "a second bootstrap imports nothing twice");
+/* audit save: insert, then update the same key */
+var a1 = { key: "2026-10-19|NGT|0907683580|nguyen tuan kiet", week: "2026-10-19", clinic: "NGT", custKey: "0907683580|nguyen tuan kiet", tag: "MCY 260720 Ô.Ngoại bé Tuấn Kiệt", name: "Nguyễn Tuấn Kiệt", product: "MC", da: "Tiên", due: "CD+90",
+           status: "sampled", verdict: "open", score: "", found: "", missing: "", notFound: 0, remark: "", data: 0, shots: 0, checkedAt: "", marks: {}, source: "draw", added: "2026-10-22T01:00:00.000Z" };
+var stats = { week: "2026-10-19", clinic: "NGT", dueCustomers: 19, dueCadences: 25, sampled: 1, checked: 0, pass: 0, partial: 0, fail: 0, data: 0, score: "", weekScore: "", notFound: 0, daSent: 40 };
+eq(rpost({ action: "auditSave", audits: [a1], stats: [stats] }).saved, 1, "audit row saved");
+var au = tracker.getSheetByName("审核 Audit"); var r1 = au.getLastRow();
+eq([au.rows[r1 - 1][0], au.rows[r1 - 1][9], au.rows[r1 - 1][22]], [a1.key, "sampled", "draw"], "audit row content");
+a1.status = "checked"; a1.verdict = "partial"; a1.score = 50; a1.marks = { "CD+90": "1100" }; a1.found = "CD+90 ½"; a1.missing = "CD+90: 会员权益、转介绍邀请"; a1.notFound = 1; a1.remark = "没有会员权益"; a1.checkedAt = "2026-10-22T01:05:00.000Z";
+stats.checked = 1; stats.partial = 1; stats.score = 50; stats.weekScore = 50; stats.notFound = 1;
+eq(rpost({ action: "auditSave", audits: [a1], stats: [stats] }).saved, 1, "audit row updated");
+eq(au.getLastRow(), r1, "an update does not add a row");
+eq([au.rows[r1 - 1][9], au.rows[r1 - 1][10], au.rows[r1 - 1][11], au.rows[r1 - 1][14], au.rows[r1 - 1][15], au.rows[r1 - 1][21]], ["checked", "partial", 50, 1, "没有会员权益", '{"CD+90":"1100"}'], "updated cells");
+var wk = tracker.getSheetByName("周总评 Weekly"); var wr = wk.rows.filter(function (r) { return r[0] === "2026-10-19|NGT"; })[0];
+eq([wr[5], wr[6], wr[8], wr[11], wr[13], wr[14], wr[15]], [1, 1, 1, 50, 1, 40, ""], "weekly stats row, remark still empty");
+eq(rpost({ action: "feedbackSave", week: "2026-10-19", clinic: "NGT", text: "本周回访有进步", stats: stats }).ok, 1, "feedback saved");
+wr = wk.rows.filter(function (r) { return r[0] === "2026-10-19|NGT"; })[0];
+eq([wr[15], wr[16], wr[11]], ["本周回访有进步", "CZ", 50], "feedback written next to the stats");
+eq(rpost({ action: "feedbackSave", week: "2026-10-19", clinic: "NGT", text: "改了", stats: {} }).ok, 1, "feedback saved again without stats");
+wr = wk.rows.filter(function (r) { return r[0] === "2026-10-19|NGT"; })[0];
+eq([wr[15], wr[11]], ["改了", 50], "stats kept when the feedback alone changes");
+/* screenshots */
+var PNG = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
+var up = rpost({ action: "shotUpload", shot: { id: "s1", week: "2026-10-19", clinic: "NGT", custKey: a1.custKey, tag: a1.tag, name: "chat.png", data: "data:image/png;base64," + PNG } });
+eq([up.ok, up.id, /drive.google.com/.test(up.url)], [1, "s1", true], "screenshot uploaded to Drive");
+ok(/^2026-10-19 NGT MCY 260720/.test(up.file) && /\.png$/.test(up.file), "file named by week, clinic and tag: " + up.file);
+var fid = sandbox.rvSettings(tracker).screenshot_folder; ok(!!drive.folders[fid], "screenshot folder created and remembered");
+eq(drive.folders[fid].kids[0].name, "2026-10-19 NGT", "one subfolder per week and clinic");
+var sh = rget({ action: "shot", id: "s1" }); eq([sh.ok, sh.mime, sh.data], [1, "image/png", PNG], "screenshot served back as base64");
+eq(rget({}).shots.length, 1, "shot listed on bootstrap");
+eq(rpost({ action: "shotRemove", clinic: "NGT", id: "s1" }).removed, 1, "screenshot removed");
+eq(rget({}).shots.length, 0, "removed shot no longer listed");
+eq(rpost({ action: "shotRestore", clinic: "NGT", id: "s1" }).removed, 0, "and restored");
+eq(rpost({ action: "shotUpload", shot: { id: "s2", week: "2026-10-19", clinic: "NGT", data: "data:text/plain;base64,aGk=" } }).error, "screenshots must be images", "non-image refused");
+/* remove from sample, refusals */
+eq(rpost({ action: "auditRemove", keys: [a1.key], clinic: "NGT", stats: [Object.assign({}, stats, { sampled: 0 })] }).removed, 1, "audit row removed");
+eq(au.getLastRow(), r1 - 1, "row gone");
+eq(rpost({ action: "markSent", items: [{ key: "k", stage: "D1" }] }).error, "unknown action: markSent", "a reviewer cannot run DA writes");
+eq(rpost({ action: "auditSave", audits: [{ key: "x", week: "bad", clinic: "NGT" }] }).error, "audit needs key and week", "bad week refused");
+eq(rpost({ action: "auditSave", audits: [{ key: "x", week: "2026-10-19", clinic: "XX" }] }).error, "clinic XX is not in your list", "unknown clinic refused");
+eq(get({ u: "NGT_DA1", h: H }).audits, undefined, "the DA's bootstrap carries no audit data");
+
+/* ---------- week status: complete → email → locked → reopen ---------- */
+eq(wk.rows[0].slice(18, 22), ["状态 Status", "提交时间 Submitted at", "审批人 Approved by", "发布时间 Published at"], "weekly tab gained the status and approval columns");
+eq(sandbox.rvSettings(tracker).email_ho, "sinlong.koh@kkr.com, anh.lhn@matsaigon.com", "HO addresses seeded in settings");
+var a2 = Object.assign({}, a1, { key: "2026-10-19|NGT|k2", custKey: "k2", status: "checked" });
+eq(rpost({ action: "auditSave", audits: [a2], stats: [stats] }).saved, 1, "a row can be saved while the week is marking");
+eq(rpost({ action: "weekStatus", week: "2026-10-19", clinic: "NGT", status: "marking" }).error, "only a submitted week can be reopened; it is marking", "cannot reopen a week that is not submitted");
+var done = rpost({ action: "weekStatus", week: "2026-10-19", clinic: "NGT", status: "submitted", stats: Object.assign({}, stats, { sampled: 15, checked: 15, score: 56, daSent: 72, notFound: 6 }) });
+eq([done.ok, done.status, done.emailed], [1, "submitted", 2], "completing the week emails both HO addresses");
+var mail = sandbox.MailApp.sent[0];
+eq(mail.to, "sinlong.koh@kkr.com,anh.lhn@matsaigon.com", "email recipients");
+eq(mail.subject, "[Zalo SOP] ChenZhong completed NGT week of 2026-10-19", "email subject");
+ok(/Sampled: 15 chats · checked: 15/.test(mail.body) && /Items sent: 56%/.test(mail.body) && /#\/clinic-ngt/.test(mail.body), "email body carries the figures and the link: " + mail.body.replace(/\n/g, " | "));
+wr = wk.rows.filter(function (r) { return r[0] === "2026-10-19|NGT"; })[0];
+eq([wr[18], wr[5], wr[11], !!wr[19]], ["submitted", 15, 56, true], "status, stats and submitted time written");
+eq(rget({}).weekly.filter(function (w) { return w.week === "2026-10-19"; })[0].status, "submitted", "status served on bootstrap");
+eq(rpost({ action: "auditSave", audits: [a2], stats: [stats] }).error, "week 2026-10-19 is submitted; reopen it first", "audit writes refused on a submitted week");
+eq(rpost({ action: "auditRemove", keys: [a2.key], clinic: "NGT" }).error, "week 2026-10-19 is submitted; reopen it first", "removal refused on a submitted week");
+eq(rpost({ action: "feedbackSave", week: "2026-10-19", clinic: "NGT", text: "x" }).error, "week 2026-10-19 is submitted; reopen it first", "feedback refused on a submitted week");
+eq(rpost({ action: "weekStatus", week: "2026-10-19", clinic: "NGT", status: "submitted" }).error, "week is already submitted", "cannot submit twice");
+eq(rpost({ action: "weekStatus", week: "2026-10-19", clinic: "NGT", status: "published" }).error, "unknown status: published", "a reviewer cannot publish");
+var re = rpost({ action: "weekStatus", week: "2026-10-19", clinic: "NGT", status: "marking" });
+eq([re.ok, re.status, re.emailed, sandbox.MailApp.sent.length], [1, "marking", 0, 1], "reopening sends no email");
+eq(rpost({ action: "auditSave", audits: [a2], stats: [stats] }).saved, 1, "writes allowed again after reopening");
+eq(rpost({ action: "auditRemove", keys: [a2.key], clinic: "NGT" }).removed, 1, "cleanup");
 console.log(n + " checks, " + bad + " failed");
 process.exit(bad ? 1 : 0);

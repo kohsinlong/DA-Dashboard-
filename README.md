@@ -15,7 +15,7 @@ root).
 | `/sop/` Zalo SOP | Your follow-ups: due today, due this week, missed, open queries, data flags, streaks, team | Real (sent marks modelled) |
 | `/sales/` Sales | Member revenue MTD vs target, members, revenue this week, repurchase / referral / rescue split, week-by-week trend | Weekly report |
 | `/leads/` Leads | Leads MTD vs target, conversion to referral customers, week by week | Modelled until the report carries leads |
-| `/zalo/` DA Zalo Dashboard | The DA's own Zalo SOP to-do list that writes back to the CRM form: Overview (due today, mass sends), Add members (with QK import), Glass collections (pending, tag updates, QK import), Member list, No Zalo Add List. Own sign-in, own Apps Script. See `zalo/README.md`. | Live from the CRM workbook through `zalo/tools/zalo-sop.gs` |
+| `/zalo/` DA Zalo Dashboard | The DA's own Zalo SOP to-do list that writes back to the CRM form: Overview (due today, mass sends), Add members (with QK import), Glass collections (pending, tag updates, QK import), Member list, No Zalo Add List. Own sign-in, own Apps Script. The QA reviewer signs in on the same page with his own username and gets the Zalo SOP Compliance Tracker instead (Overview, a tab per clinic, CRM). See `zalo/README.md`. | Live from the CRM workbook through `zalo/tools/zalo-sop.gs` |
 
 Shared pieces: `shell.js` (sign-in, DA picker, session, language, header,
 navigation, live-feed loading), `theme.css`, `kpi-core.js` (report data helpers,

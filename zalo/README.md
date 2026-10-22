@@ -1,6 +1,6 @@
 # DA Zalo Dashboard — design, operations and change log
 
-**Status:** v1.3.1 live: script deployed 16 Oct 2026, address baked into `zalo/app.js` · **Go-live:** 16 Oct 2026 · **Clinic:** NGT · **Last updated:** 16 Oct 2026
+**Status:** v1.5.0 launched 22 Oct 2026 — the Zalo SOP Compliance Tracker for the reviewer (CZ); the script needs a new version (§2.10) · DA dashboard live since 16 Oct 2026 · **Go-live:** 16 Oct 2026 · **Clinic:** NGT · **Last updated:** 22 Oct 2026
 
 This file is the single source of truth for the DA Zalo Dashboard. Part 1 is the view at a
 glance, Part 2 the granular rules, Part 3 the change log. Every change to the dashboard updates
@@ -25,6 +25,8 @@ information store; the dashboard writes to it.
 |---|---|
 | DA (Tiên) | signs in, works the task list, adds customers, records collections, uploads the QK report, confirms Zalo tag renames |
 | Manager (you) | edits the SOP content and the high/low split in the `Cadence (VN)` tab, changes settings in `DA_Settings`, reads `DA_Log` |
+| Reviewer (CZ) | signs in on the same page with his own username; audits a weekly sample of chats against the CRM and the DA's ticks, writes remarks, screenshots and the week's feedback, then completes the week — all into the Zalo SOP Compliance Tracker workbook (§2.14) |
+| HO (Sin Long, Anh) | next release: signs in with an HO username; reviews what CZ completed, edits the comments, records who approved, publishes to the DA and answers her questions (§2.14, "Next") |
 | Head office | unchanged: the head-office SOP page reads the same sheet through its own feed |
 
 ### Moving parts
@@ -98,6 +100,8 @@ Files in `zalo/`:
 | Change what a milestone says to do | `Cadence (VN)` column C |
 | Change the username or password | `USERS` / `PW_HASH` in `zalo-sop.gs` (sha256 of the new password), then publish a new version of the script |
 | Add a clinic or a username | add the workbook to `CLINICS` and the username to `USERS` in `zalo-sop.gs`, then publish a new version |
+| Change the reviewer's password, or the clinics he audits | `REVIEWERS` in `zalo-sop.gs` (sha256 of the new password; clinic code → his tracker's spreadsheet ID), then publish a new version |
+| Change the audit sample size, the first audited week, or who gets the Complete-week email | `设置 Settings` tab in the tracker (`sample_size`, `start_week`, `email_ho`) |
 | Update the script after editing it | Apps Script editor → Deploy → Manage deployments → Edit → New version |
 
 ---
@@ -423,6 +427,9 @@ already created on 16 Oct 2026, and `setup()` is safe to run again):
    to use your Google Sheets; allow it. The log should read "NGT: tabs ok".
 3. **Deploy → New deployment** → type **Web app** → Execute as **Me** → Who has access
    **Anyone** → Deploy → copy the URL ending in `/exec`.
+   For the reviewer (1.4.0+): run `setupReviewer` once as well; it creates the tracker's four
+   tabs and the screenshot folder and asks for the Drive and Gmail permissions the uploads and
+   the Complete-week email need.
 4. Either paste that URL into `API.url` at the top of `zalo/app.js` and commit (the permanent
    way), or on the sign-in card open **Connect the script (advanced)** and paste it there, once
    per device. Sending the URL to Claude also works: it commits it.
@@ -468,14 +475,125 @@ does not change. After editing the page: commit to `main`; GitHub Pages publishe
 
 ### 2.13 Not in v1
 
-Resources page · Zalo API sent-marks (ticks are manual) · per-DA passwords · clinics other
-than NGT (supported by config, not switched on) · manager views · using `DA_Tasks` ticks on the
-head-office page (its scores stay modelled until then; its due dates do move to K/L in this
-release) · a conversion follow-up for Exam customers.
+Zalo API sent-marks (ticks are manual) · per-DA passwords · clinics other than NGT (supported
+by config, not switched on) · manager views · using `DA_Tasks` ticks on the head-office page
+(its scores stay modelled until then; its due dates do move to K/L in this release) · a
+conversion follow-up for Exam customers. Resources (1.3.0) and the reviewer's audit (1.4.0)
+have since been added.
 
 ---
 
-### 2.14 Adding a training week
+### 2.14 Zalo SOP Compliance Tracker (reviewer and HO)
+
+**Agreed design, 22 Oct 2026.** One login page, three roles, one tracker workbook. The username
+decides what opens: `NGT_DA1` the DA dashboard (§2.5); `CZ` the reviewer's tracker (this release);
+an HO username the HO tracker (next release). All three run off the same script and workbooks.
+The old head-office compliance page in `zalo-sop-dashboard` is retired; its views are rebuilt here
+on the DA's real ticks.
+
+**Who:** the QA reviewer (CZ), username `CZ` in `REVIEWERS` in `zalo-sop.gs` with its own password
+hash · **code:** `zalo/review.js` (pages and reviewer state; `app.js` only switches role, nav and
+routes) · **data:** the "Zalo SOP Compliance Tracker" workbook (CZ's tracker), never the clinics'
+CRM forms.
+
+**Tabs.** Overview · NGT · LA · CMTT · SH · D5 · D7 · CRM. A clinic tab is live once the script
+serves that clinic (`CLINICS` plus the reviewer's clinic list); the others are greyed "not live".
+A global week picker opens on last week, the one just closed.
+
+**Overview** — one card per clinic for the week: items sent against items possible (audited),
+the SOP score, the DA-reported rate, "ticked, not found", marked against the target, the week's
+status, the first line of the overall feedback and an eight-week trend. Below: a cadence × clinic
+heat map of audited scores, most-missed and most-done items across live clinics, and a
+needs-attention list (not started, marked but not completed, submitted and waiting for HO).
+
+**Clinic tab**, top to bottom:
+
+1. **Status strip** — Marking: marked / target, extras, checked, and **Complete week → send to
+   HO**. Submitted: the time, "entries locked", and **Reopen** (until HO takes the week).
+2. **Scoreboard** — tiles: items sent / possible (this week's cadences in the sample; the
+   headline "ticks against the total possible"), SOP score (1 · 0.5 · 0 per cadence, as on the
+   DA's page), DA-reported (her ticks across every due cadence), ticked-not-found, marked.
+   Views: **Cadences** (per cadence: due, in sample, items sent, full / partial / missed, score,
+   DA-reported; or, under DA-reported, her full / partial / not-ticked counts), **Items**
+   (most-missed and most-done items by cadence), **Weeks** (week by week with status). The
+   source toggle switches between the audited sample and the DA's own ticks.
+3. **Overall feedback** for the week, saved in the Weekly tab.
+4. **To mark** — the sample. The target (`sample_size`, 15) is split across the cadences due
+   that week as **quotas**: 3–5 per cadence as a guide, at least one where a cadence is due,
+   scaled so the total is the target; a chat with several cadences due counts once toward the
+   15 and toward each cadence's quota, and all its cadences score. **Draw** fills the quotas
+   from shuffled, product-alternating pools and tops up from the biggest pools; chips show
+   covered / quota per cadence. Any customer can be added from the search box. Each sampled
+   chat shows the **customer journey** — every milestone from the deposit up to the week, the
+   one due that week highlighted, each with the SOP items as tick boxes, "All sent" / "Nothing
+   sent", a "DA ticked" badge per milestone and item, and a red item wherever the DA ticked what
+   the reviewer did not find — plus a remark, screenshots, a data-issue flag and **Mark as
+   checked**.
+5. **Other chats due** — every remaining due chat with the DA's tick status per cadence and a
+   **Mark** button. Marked ones open inline, count as **extra** (in the scores, not in the 15).
+6. **History** (folded) — the weeks table, every audited chat with filters, CSV export.
+
+**Rules.** Due dates are the dashboard's (deposit date for D1 / D6-7, collection date from CD
+on; §2.3). The journey keeps D1 and D6-7 after collection and flags milestones due before
+go-live. A milestone scores 1 when every item is ticked, 0.5 when some are, 0 when none; only
+milestones the reviewer marked count; a chat's verdict is pass / partial / fail / data issue,
+or "not checked" until something is marked. Marks copied from the old week sheets read "noted".
+Phone numbers sit behind **Show phone**. Every change saves itself; **Complete week** is the only
+submit: it sets the week to Submitted, locks every entry (the script refuses writes), and emails
+the HO addresses in `email_ho` once with the figures and a link. Reopen (Submitted → Marking)
+sends nothing.
+
+**Tracker workbook** (tabs created by `setupReviewer()` or the first reviewer sign-in):
+
+| Tab | Columns |
+|---|---|
+| `审核 Audit` | key (`week\|clinic\|customerKey`) · week · clinic · customer key · tag · customer · product · DA · due this week · status (sampled / checked) · verdict · score · found · missing · DA ticked not found · remark · data issue · screenshots (count) · checked at · by · updated · marks (JSON `{stage: bits}`) · source (draw / manual / extra / `sheet W42`) · added |
+| `周总评 Weekly` | key (`week\|clinic`) · week · clinic · customers due · cadences due · sampled · checked · pass · partial · fail · data issues · score % (items sent) · this week's cadences % · DA ticked not found · DA reported sent % · overall remark · by · updated · **status** (marking / submitted / review / published / acknowledged) · submitted at · **approved by** · published at |
+| `截图 Screenshots` | id · week · clinic · customer key · tag · file · link · Drive id · uploaded · by · removed |
+| `设置 Settings` | `sample_size` 15 · `start_week` 2026-10-12 · `screenshot_folder` · `switched_over` · `email_ho` · `app_url` |
+
+Screenshots go to a Drive folder next to the tracker, one subfolder per week and clinic,
+downscaled to 1600 px in the browser; the page fetches them back through the script, so the
+files need no sharing. **Switch-over:** on the first reviewer bootstrap the script copies the
+hand-typed marks of the old week sheets from `start_week` on into `审核 Audit` as "noted"
+entries (matched by tag, or by the phone in the tag), copies each week's remark into
+`周总评 Weekly`, hides every W sheet (never deletes) and records the time in `switched_over`.
+
+**Script API** (every call carries the reviewer's `u` and `h`; `reviewerOf` routes before `auth`):
+
+| Call | Does |
+|---|---|
+| `GET` (bootstrap) | clinics (customers, DA ticks, cadence, settings — read only), audits, weekly, shots, tracker settings, `Cadence (CN)` |
+| `GET ?action=shot&id=` | one screenshot as base64 |
+| `POST auditSave {audits, stats}` · `auditRemove {keys, clinic, stats}` | audit rows and the week's stats row; refused on a locked week |
+| `POST feedbackSave {week, clinic, text, stats}` | the week's overall remark; refused on a locked week |
+| `POST weekStatus {week, clinic, status, stats}` | `submitted` (from marking; emails HO) or `marking` (reopen, from submitted) |
+| `POST shotUpload {shot}` · `shotRemove` · `shotRestore` | screenshots |
+
+The reviewer cannot run any DA write; they answer "unknown action". `?demo=reviewer` opens the
+reviewer view on the demo data.
+
+**Next (agreed, not built).** *HO dashboard:* an HO username per person; Overview with a review
+queue; the clinic tab in review mode showing CZ's marks and remarks, the comment edited in a
+separate field so CZ's original is never lost, ticks correctable with the change logged, a
+"visible to DA" switch per chat, **Publish to DA** that records who approved (a tick for SL, Anh
+or Other with a typed name, stored in `approved by` and shown on the DA's page and the overview),
+**Send back to CZ** with a note; the compliance views (cadence ladder, by DA, by product) on the
+DA's real ticks with the audited score beside them. *Translation:* at save time the script calls
+the Claude API — Chinese to English and Vietnamese, Vietnamese to English and Chinese — with a
+glossary of the SOP terms; the original and the translations are stored side by side; HO corrects
+the Vietnamese before publishing. Tick boxes, cadence and item names are keys shown in each
+language and are never translated. *DA page:* a "Weekly feedback" tab showing published weeks
+with the score, the feedback in Vietnamese with "view original", the chats with what was missing
+and the screenshots, Acknowledge, and questions per chat or week saved as drafts and submitted
+together; one thread per chat or week with pictures, where CZ answers in Chinese and HO releases
+it or answers directly. *Emails,* one per action: CZ completes (HO), HO publishes (CZ), DA submits
+questions (HO and CZ), a reply to the DA (in-app badge). *Zalo API,* when it comes: messages are
+matched to customers by phone and to SOP items by template or classification, written in the
+same shape as the DA's ticks with a Zalo source; her ticks become confirmation, "ticked, not
+found" becomes automatic across every chat, and the audit shifts to quality.
+
+### 2.15 Adding a training week
 
 ```
 python3 zalo/tools/add-week.py 2026-10-14 --vi Deck_VN.pptx --en Deck_EN.pptx --zh Deck_CN.pptx --title "MSG DA Training"
@@ -505,6 +623,8 @@ Newest first. Each entry: date · version · what changed · why · files.
 
 | Date | Version | Change | Why | Files |
 |---|---|---|---|---|
+| 2026-10-22 | 1.5.0 | **Zalo SOP Compliance Tracker** for the reviewer: Overview (clinic cards with status and trend, cadence × clinic heat map, most-missed / most-done items, needs attention) and a tab per clinic (NGT live, the others greyed) with the scoreboard (cadences / items / weeks, audited vs DA-reported, items sent against the total possible), the overall feedback, **To mark** with per-cadence quotas, **Other chats due** with optional extra marks, folded history with CSV, and **Complete week** that locks the week and emails HO once; Reopen until HO takes it. Weekly tab gains status, submitted-at, approved-by and published-at; settings gain `email_ho` and `app_url`. The agreed three-role design is written up in §2.14. | CZ's weekly audit of NGT moves fully onto the dashboard; HO review and the DA's feedback page follow. | `zalo/review.js`, `zalo/app.js`, `zalo/zalo.css`, `zalo/index.html`, `zalo/version.json`, `zalo/tools/zalo-sop.gs`, `zalo/tools/test-gs.js`, `zalo/README.md` |
+| 2026-10-22 | 1.4.0 | **Reviewer mode**: the QA reviewer signs in with his own username and gets This week · Tracker · CRM instead of the DA's tabs. A weekly sample drawn across cadences and products, the customer's whole journey as tick boxes next to the DA's own ticks (with "ticked, not found" counted), remarks, screenshots to Drive, a data-issue flag, the week's overall feedback, a week-by-week tracker with CSV export. Everything is written to the reviewer's tracker workbook (tabs `审核 Audit`, `周总评 Weekly`, `截图 Screenshots`, `设置 Settings`); the CRM is read only on that path. The tracker's hand-typed week sheets are imported once from W42 and hidden. | CZ's weekly audit of NGT moves from a formula sheet to the dashboard, on the same due dates the DA works from. | `zalo/review.js`, `zalo/app.js`, `zalo/zalo.css`, `zalo/index.html`, `zalo/version.json`, `zalo/tools/zalo-sop.gs`, `zalo/tools/test-gs.js`, `zalo/README.md` |
 | 2026-10-19 | 1.3.1 | The nav wraps onto a second row on phones so every tab is visible (the Resources tab sat off-screen to the right). The page checks `zalo/version.json` on every start and reloads itself once when a newer release is published, so releases show without a hard refresh (Pages caches `index.html` for ten minutes). A release now bumps `VERSION` in `app.js`, the four `?v=` tags in `index.html` and `version.json` together. | The Resources tab was not found on a phone after release. | `zalo/zalo.css`, `zalo/app.js`, `zalo/index.html`, `zalo/version.json` |
 | 2026-10-19 | 1.3.0 | **Resources** page: the weekly MSG training decks, one panel per week, shown in the page's language with per-week tabs, a slide flipper (arrows, tap, swipe, keys, dots, full screen) and the original .pptx for download; `zalo/tools/add-week.py` renders a week's decks and updates the manifest. Five weeks loaded (25 Aug, 2 Sep, 24 Sep, 1 Oct, 14 Oct 2026). Also: a late mass-send task marked sent today now stays in its group, ticked, instead of vanishing. | DAs get every week's training on the dashboard. | `zalo/app.js`, `zalo/zalo.css`, `zalo/index.html`, `zalo/tools/add-week.py`, `zalo/resources/` |
 | 2026-10-18 | 1.2.0 | On-page guide: **?** button opening the routine and a section per page, a step-by-step tour that highlights the page's own elements, and a one-time welcome on first sign-in per device; in Vietnamese, English and Chinese. | DAs can learn the dashboard on the spot without a separate manual. | `zalo/app.js`, `zalo/index.html`, `zalo/zalo.css` |
