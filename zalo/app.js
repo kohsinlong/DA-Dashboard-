@@ -6,7 +6,7 @@
   /* Paste the Apps Script /exec URL here after deploying (README §2.10). ?api=<url> and the
      "Connect" box on the sign-in card override it for testing. */
   var API = { url: "https://script.google.com/macros/s/AKfycbwselLgmfAg8ffK5IqBpXVvY8Ppqv2hDNCOStNABLLNfSalUvx5UKR7GC6LIxKuVEO9kg/exec" };
-  var VERSION = "1.5.0";
+  var VERSION = "1.6.0";
 
   /* ------------------------------------------------------------------ strings */
   var L = {
@@ -256,6 +256,8 @@
   /* ------------------------------------------------------------------ API */
   function apiUrl(){ var q = /[?&]api=([^&]+)/.exec(location.search); if (q) return decodeURIComponent(q[1]); return store("zalo_api") || API.url; }
   function creds(){ return { u: st.u, h: st.h, da: st.da }; }
+  /* the reviewer (CZ) and head office (SL, Anh) share the tracker pages in review.js; the DA has her own */
+  function rvRole(){ return st.role === "reviewer" || st.role === "ho"; }
   function apiGet(params){
     if (st.demo) return Promise.resolve(DemoAPI.get(params));
     var url = apiUrl(); if (!url) return Promise.reject(new Error("no api"));
@@ -281,9 +283,9 @@
       var fresh = DEMO.build(Z, today); store("zalo_demo_state", JSON.stringify(fresh)); return fresh;
     },
     save: function () { try { store("zalo_demo_state", JSON.stringify(st.data)); } catch (e) {} },
-    get: function (p) { return st.role === "reviewer" ? RV.demo.get(p) : DemoAPI.load(); },
+    get: function (p) { return rvRole() ? RV.demo.get(p) : DemoAPI.load(); },
     post: function (b) {
-      if (st.role === "reviewer") return RV.demo.post(b);
+      if (rvRole()) return RV.demo.post(b);
       var d = st.data, at = nowIso();
       function keyOf(ph, nm){ return Z.customerKey(ph, nm); }
       function find(ref){ var c = d.customers.filter(function (x) { return x.row === ref.row; })[0]; if (!c || Z.normName(c.name) !== Z.normName(ref.name)) { c = d.customers.filter(function (x) { return Z.normName(x.name) === Z.normName(ref.name) && Z.normPhone(x.phone) === Z.normPhone(ref.phone); })[0]; } if (!c) throw new Error("row not found"); return c; }
@@ -379,7 +381,7 @@
     document.body.className = st.lang === "zh" ? "lang-zh" : ""; document.documentElement.lang = st.lang;
   }
   function renderChrome(){
-    var t = T(), p = st.plan, rv = st.role === "reviewer";
+    var t = T(), p = st.plan, rv = rvRole();
     var counts = rv ? {} : { overview: p ? (p.tiles.today.due - p.tiles.today.done) + p.tiles.missed : 0, collections: st.cust.filter(function (c) { return c.dep && !c.coll && !c.exam; }).length + tagProposals().length, legacy: parkedImports().length };
     $("nav").innerHTML = rv ? RV.navItems(st.route).map(function (it) {
       return '<a href="#/' + it.route + '"' + (it.current ? ' aria-current="page"' : "") + (it.off ? ' class="off" tabindex="-1" aria-disabled="true"' : "") + ">" + esc(it.label) + (it.off ? "<small>" + esc(it.offLabel) + "</small>" : "") + (it.count ? '<span class="cn">' + it.count + "</span>" : "") + "</a>";
@@ -399,14 +401,14 @@
     if (!st.session) return;
     st.plan = currentPlan();
     renderChrome(); $("helpBtn").title = T().g.btn;
-    var r = st.route, h = st.role === "reviewer" ? RV.page(r) : r === "members" ? pageMembers() : r === "add" ? pageAdd() : r === "collections" ? pageCollections() : r === "legacy" ? pageLegacy() : r === "resources" ? pageResources() : pageTasks();
+    var r = st.route, h = rvRole() ? RV.page(r) : r === "members" ? pageMembers() : r === "add" ? pageAdd() : r === "collections" ? pageCollections() : r === "legacy" ? pageLegacy() : r === "resources" ? pageResources() : pageTasks();
     $("app").innerHTML = h;
-    afterRender(); if (st.role === "reviewer") RV.after();
+    afterRender(); if (rvRole()) RV.after();
     maybeConfetti();
   }
   var ALIAS = { tasks: "overview", customers: "members", pending: "collections", tags: "collections", import: "add", nozalo: "legacy" };
   function route(){
-    if (st.role === "reviewer") { var mr = /^#\/([a-z0-9-]+)/i.exec(location.hash || ""); st.route = RV.resolveRoute(mr ? mr[1] : ""); render(); window.scrollTo(0, 0); return; }
+    if (rvRole()) { var mr = /^#\/([a-z0-9-]+)/i.exec(location.hash || ""); st.route = RV.resolveRoute(mr ? mr[1] : ""); render(); window.scrollTo(0, 0); return; }
     var m = /^#\/([a-z]+)/.exec(location.hash || ""); st.route = m ? (ALIAS[m[1]] || m[1]) : "overview";
     if (["overview", "add", "collections", "members", "legacy", "resources"].indexOf(st.route) === -1) st.route = "overview";
     render(); window.scrollTo(0, 0);
@@ -553,7 +555,7 @@
       h += '<dl class="kv"><dt>' + esc(t.lTag) + '</dt><dd class="mono">' + esc(c.tag || "—") + "</dd><dt>" + esc(t.lPhone) + "</dt><dd>" + (tel(c.phone) || "—") + "</dd><dt>" + esc(t.lDep) + "</dt><dd>" + esc(dmy(c.dep) || "—") + "</dd><dt>" + esc(t.lColl) + "</dt><dd>" + esc(dmy(c.coll) || "—") + "</dd>"
         + "<dt>" + esc(t.lStatus) + "</dt><dd>" + esc(c.status || "—") + "</dd><dt>" + esc(t.lDob) + "</dt><dd>" + esc(dmy(c.dob) || "—") + "</dd><dt>" + esc(t.lParent) + "</dt><dd>" + esc([d.parent_name, d.relation].filter(Boolean).join(" · ") || "—") + "</dd><dt>" + esc(t.lGender) + "</dt><dd>" + esc(t.genders[d.gender] || d.gender || "—") + "</dd>"
         + (c.kid2 ? "<dt>" + esc(t.lKid2) + "</dt><dd>" + esc(c.kid2) + "</dd>" : "") + "<dt>" + esc(t.lNote) + "</dt><dd>" + esc(c.note || "—") + "</dd></dl>";
-      if (st.role !== "reviewer") h += '<div class="acts" style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn primary" data-act="edit-cust" data-key="' + esc(c.key) + '">' + esc(t.edit) + "</button></div>";
+      if (!rvRole()) h += '<div class="acts" style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn primary" data-act="edit-cust" data-key="' + esc(c.key) + '">' + esc(t.edit) + "</button></div>";
       h += timelineHtml(c);
     } else {
       var rel = d.relation || "", relKnown = Z.RELATIONS.indexOf(rel) !== -1 || !rel;
@@ -1006,9 +1008,9 @@
     if (!welcome) h += '<div class="gbtns"><button type="button" class="btn primary" data-act="guide-close">' + esc(g.gotit) + "</button></div>";
     return h + "</div>";
   }
-  function openGuide(mode){ store("zalo_guide_seen", "1"); st.ui.sheetKey = "guide"; openSheet(st.role === "reviewer" ? RV.guideHtml() : guideHtml(mode)); }
+  function openGuide(mode){ store("zalo_guide_seen", "1"); st.ui.sheetKey = "guide"; openSheet(rvRole() ? RV.guideHtml() : guideHtml(mode)); }
   /* the welcome opens once per device, on the first sign-in */
-  function firstRun(){ if (st.role === "reviewer" || store("zalo_guide_seen")) return; setTimeout(function () { if (st.session && !st.ui.sheetKey) openGuide("welcome"); }, 500); }
+  function firstRun(){ if (rvRole() || store("zalo_guide_seen")) return; setTimeout(function () { if (st.session && !st.ui.sheetKey) openGuide("welcome"); }, 500); }
   function startTour(page){
     closeSheet(); store("zalo_guide_seen", "1"); endTour(); tour = { page: page, i: 0, el: null, k: "", n: 0 };
     if (st.route !== page) location.hash = "#/" + page;
@@ -1072,7 +1074,7 @@
 
   function reload(quiet){
     if (!quiet) { st.feed = { mode: "loading", at: "" }; renderChrome(); }
-    return apiGet({ action: "bootstrap" }).then(function (d) { if (st.role === "reviewer") RV.shape(d); else shape(d); st.feed = { mode: st.demo ? "demo" : "live", at: new Date().toTimeString().slice(0, 5) }; if (!quiet) render(); })
+    return apiGet({ action: "bootstrap" }).then(function (d) { if (rvRole()) RV.shape(d); else shape(d); st.feed = { mode: st.demo ? "demo" : "live", at: new Date().toTimeString().slice(0, 5) }; if (!quiet) render(); })
       .catch(function (e) { st.feed = { mode: "failed", at: "" }; if (!quiet) render(); toast(fill(T().neterr, { e: e.message }), true); });
   }
 
@@ -1168,7 +1170,7 @@
   });
   document.addEventListener("change", function (ev) {
     var el = ev.target; if (!el.dataset) return;
-    if (st.role === "reviewer" && RV.change(el)) return;
+    if (rvRole() && RV.change(el)) return;
     if (el.dataset.act === "sel") { var sel = st.ui.massSel[el.dataset.g] = st.ui.massSel[el.dataset.g] || {}; sel[el.dataset.k] = el.checked; render(); }
     else if (el.dataset.act === "sel-all") { var g = st.groups[el.dataset.g], s2 = st.ui.massSel[el.dataset.g] = {}; if (el.checked) g.tasks.forEach(function (x) { if (!x.full) s2[x.key + "|" + x.stage] = true; }); render(); }
     else if (el.dataset.act === "p-check") { var btn = document.querySelector('#p-' + el.dataset.row + ' [data-act="p-submit"]'); if (btn) btn.disabled = !el.checked; }
@@ -1214,19 +1216,19 @@
   function enterApp(){
     $("gate").classList.add("gone"); st.session = true;
     sstore("zalo_s", JSON.stringify({ u: st.u, h: st.h, clinic: st.clinic, demo: st.demo, role: st.role }));
-    if (st.role === "reviewer") { $("wrap").hidden = false; route(); return; }
+    if (rvRole()) { $("wrap").hidden = false; route(); return; }
     var known = st.da && st.data && st.data.das && st.data.das[st.da];
     if (known) { $("wrap").hidden = false; route(); firstRun(); } else showPick();
   }
-  /* a bootstrap that says role:"reviewer" opens the audit view instead of the DA's task list */
+  /* a bootstrap that says role:"reviewer" or role:"ho" opens the tracker instead of the DA's task list */
   function takeBootstrap(d){
-    if (d.role === "reviewer") { st.role = "reviewer"; st.da = ""; RV.shape(d); if (!store("zalo_lang") && !/[?&]lang=/.test(location.search)) setLang("zh"); }
+    if (d.role === "reviewer" || d.role === "ho") { st.role = d.role; st.da = ""; RV.shape(d); if (!store("zalo_lang") && !/[?&]lang=/.test(location.search)) setLang(d.role === "ho" ? "en" : "zh"); }
     else { st.role = "da"; st.clinic = d.clinic; shape(d); }
   }
   function signOut(){ st.session = false; st.role = "da"; st.u = st.h = ""; st.demo = false; st.data = null; sstore("zalo_s", null); $("wrap").hidden = true; $("pick").classList.add("gone"); $("gate").classList.remove("gone"); $("gp").value = ""; $("gu").focus(); }
   function startDemo(mode){
     st.demo = true; st.clinic = "NGT"; st.u = "NGT_DA"; st.h = "demo"; st.today = (/[?&]asof=(\d{4}-\d{2}-\d{2})/.exec(location.search) || [])[1] || Z.todayISO();
-    if (mode === "reviewer") { st.role = "reviewer"; st.u = "CZ"; var daDemo = DemoAPI.load(); st.today = daDemo.today; RV.shape(RV.demo.load(daDemo)); st.feed = { mode: "demo", at: "" }; enterApp(); return; }
+    if (mode === "reviewer" || mode === "ho") { st.role = mode; st.u = mode === "ho" ? "SL" : "CZ"; var daDemo = DemoAPI.load(); st.today = daDemo.today; RV.shape(RV.demo.load(daDemo, mode)); if (mode === "ho") RV.demo.seed(); st.feed = { mode: "demo", at: "" }; enterApp(); return; }
     shape(DemoAPI.load()); st.feed = { mode: "demo", at: "" }; if (!st.da) st.da = "Tiên"; enterApp(); }
   function login(u, pw){
     var t = T(), btn = $("gateBtn"), err = $("gateErr"); btn.disabled = true; btn.textContent = t.signingin; err.classList.remove("on");
@@ -1248,9 +1250,10 @@
     checkVersion();
     window.addEventListener("hashchange", function () { if (tour && tour.page !== st.route) endTour(); });
     if (/[?&]demo=reviewer/.test(location.search)) return startDemo("reviewer");
+    if (/[?&]demo=ho/.test(location.search)) return startDemo("ho");
     if (/[?&]demo=1/.test(location.search)) return startDemo();
     var s = sstore("zalo_s"); if (s) { try { s = JSON.parse(s); } catch (e) { s = null; } }
-    if (s && s.demo) return startDemo(s.role === "reviewer" ? "reviewer" : "");
+    if (s && s.demo) return startDemo(s.role === "reviewer" || s.role === "ho" ? s.role : "");
     if (s && s.u && s.h) { st.u = s.u; st.h = s.h; st.clinic = s.clinic; apiGet({ action: "bootstrap" }).then(function (d) { takeBootstrap(d); st.feed = { mode: "live", at: new Date().toTimeString().slice(0, 5) }; enterApp(); }).catch(function () { $("gu").value = s.u; $("gu").focus(); }); return; }
     $("gu").focus();
   }
@@ -1258,7 +1261,8 @@
     lang: function () { return st.lang; }, esc: esc, fill: fill, t: T, today: function () { return st.today; },
     settings: function () { return st.settings; }, cadenceTab: function () { return st.cadence; }, customers: function () { return st.cust; },
     shapeClinic: function (d) { st.clinic = d.clinic; shape(d); }, prodLabel: prodLabel, custLabel: custLabel, pageMembers: pageMembers,
-    get: apiGet, post: apiPost, toast: toast, store: store, render: render
+    get: apiGet, post: apiPost, toast: toast, store: store, render: render,
+    openSheet: function (html, key) { st.ui.sheetKey = key || "rv"; openSheet(html); }, closeSheet: closeSheet
   });
   init();
 })();
