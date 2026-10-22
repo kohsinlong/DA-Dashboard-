@@ -6,7 +6,7 @@
   /* Paste the Apps Script /exec URL here after deploying (README §2.10). ?api=<url> and the
      "Connect" box on the sign-in card override it for testing. */
   var API = { url: "https://script.google.com/macros/s/AKfycbwselLgmfAg8ffK5IqBpXVvY8Ppqv2hDNCOStNABLLNfSalUvx5UKR7GC6LIxKuVEO9kg/exec" };
-  var VERSION = "1.6.5";
+  var VERSION = "1.6.6";
 
   /* ------------------------------------------------------------------ strings */
   var L = {
@@ -975,13 +975,17 @@
   /* GitHub Pages caches index.html for ten minutes, so a phone can run the old release with the
      new one already published. version.json is fetched fresh on every start; when it names a
      newer release than this file, the page reloads once under a fresh URL. */
+  /* A newer release reloads the page past the Pages cache (the ?r= makes a fresh request). Retried every
+     two minutes while the versions still differ (a reload that landed on a stale copy is not the end of
+     it), and checked again every ten minutes while the page stays open. */
   function checkVersion(){
     fetch("version.json?t=" + Date.now(), { cache: "no-store" }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
       if (!j || !j.v || j.v === VERSION) return;
-      var key = "zalo_reloaded_" + j.v; if (sstore(key)) return; sstore(key, "1");
-      location.replace(location.pathname + (location.search ? location.search + "&" : "?") + "r=" + Date.now() + location.hash);
+      var last = +sstore("zalo_reload_at") || 0; if (Date.now() - last < 120000) return; sstore("zalo_reload_at", String(Date.now()));
+      location.replace(location.pathname + (location.search ? location.search.replace(/[?&]r=\d+/, "") + "&" : "?") + "r=" + Date.now() + location.hash);
     }).catch(function () {});
   }
+  setInterval(checkVersion, 600000);
 
   /* ------------------------------------------------------------------ guide and tour */
   /* Tour steps per page: a selector and a key into t.g.steps. Steps whose element is not on the
