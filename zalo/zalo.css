@@ -268,7 +268,7 @@ a.btn{text-decoration:none}
 .rvjt{font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:6px}
 .rvlegacy{font-size:.82rem;color:var(--ink-2);white-space:pre-wrap;background:var(--surface-2);border-radius:6px;padding:8px 10px;margin-bottom:8px}
 .rvms{border:1px solid var(--rule-2);border-left:4px solid var(--rule);border-radius:6px;padding:8px 10px;margin-bottom:6px;background:var(--ground)}
-.rvms.wk{border-left-color:var(--accent)}
+.rvms.now{border-left-color:var(--accent)}
 .rvms.full{border-left-color:var(--ok)} .rvms.part{border-left-color:var(--warn)} .rvms.none{border-left-color:var(--bad)}
 .rvmh{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:4px}
 .rvmh b{font-family:"IBM Plex Mono",monospace;font-size:.86rem}

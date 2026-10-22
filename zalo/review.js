@@ -378,7 +378,7 @@ window.ZALO_REVIEW = (function () {
     j.forEach(function (m) {
       var bits = (a.marks || {})[m.stage], marked = bits !== undefined && bits !== "", db = daBits(c, m.stage), inWeek = m.due >= a.week && m.due <= Z.addDays(a.week, 6);
       var p = marked ? bitsPts(bits, m.items.length) : null;
-      h += '<div class="rvms' + (inWeek ? " wk" : "") + (marked ? (p === 1 ? " full" : p === 0 ? " none" : " part") : "") + '"><div class="rvmh"><b>' + esc(m.stage) + '</b><span class="d">' + esc(Z.fmtDM(m.due)) + "</span>"
+      h += '<div class="rvms' + (inWeek ? " now" : "") + (marked ? (p === 1 ? " full" : p === 0 ? " none" : " part") : "") + '"><div class="rvmh"><b>' + esc(m.stage) + '</b><span class="d">' + esc(Z.fmtDM(m.due)) + "</span>"
         + (inWeek ? '<span class="pill p-accent">' + esc(t.thisWeekChip) + "</span>" : "") + (m.before ? '<span class="pill p-inert">' + esc(t.beforeLive) + "</span>" : "")
         + '<span class="pill ' + (db ? (daState(c, m) === "sent" ? "p-ok" : "p-warn") : "p-inert") + '">' + esc(db ? t.daTicked + (daState(c, m) === "partial" ? " ½" : "") : t.daNone) + "</span>"
         + '<span class="rvmq"><button type="button" class="btn sm" data-act="rv-all" data-key="' + esc(a.key) + '" data-stage="' + esc(m.stage) + '" data-v="1">' + esc(t.allSent) + '</button><button type="button" class="btn sm" data-act="rv-all" data-key="' + esc(a.key) + '" data-stage="' + esc(m.stage) + '" data-v="0">' + esc(t.noneSent) + "</button></span></div>";
