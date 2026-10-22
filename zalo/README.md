@@ -720,12 +720,50 @@ browser cache. A deck handed over as .pdf skips LibreOffice. Any language can be
 week costs roughly 4–17 MB in the repository (the .pptx files are most of it); if that becomes
 a problem, keep the decks elsewhere and link them — the manifest's `file` can be any URL.
 
+### 2.16 Moving to MSG (hand-over checklist)
+
+Everything that runs is owned by a Google account (the script, the workbooks, the screenshot
+folder), a GitHub account (the page) and, for translations, an Anthropic console account (the
+API key). Moving the dashboard under MSG's own accounts is done in this order; the data never
+moves, it is already in the sheets.
+
+1. **Workbooks and folder.** From the current Google account, transfer ownership of the CRM
+   workbook(s), the "Zalo SOP Compliance Tracker" and the screenshot folder (its ID is in the
+   tracker's `设置 Settings`, `screenshot_folder`) to an MSG Google Workspace account. Nothing in
+   the sheets changes.
+2. **Script.** In that MSG account: script.google.com → New project → paste the current
+   `zalo/tools/zalo-sop.gs` → Save. Project settings → Script properties → add
+   `ANTHROPIC_API_KEY` with a key from **MSG's own** Anthropic console account (console.anthropic.com,
+   Billing then API keys). Run `setup`, `setupReviewer` and `testTranslation` once each from the
+   editor and allow the permissions. Deploy → New deployment → Web app, execute as Me, access
+   Anyone → copy the `/exec` URL.
+3. **Translation without a key.** If MSG does not want an Anthropic account, set `translate` to
+   `google` in the tracker's `设置 Settings`: the script then translates with Google Translate on
+   its own and nothing else changes. The key is only ever a Script property; it is never in the
+   code, the page or the sheet, so switching keys or providers is a settings change, not a release.
+4. **Page.** Transfer the GitHub repository to MSG's organisation (Settings → Transfer) and
+   re-enable Pages, or copy the `zalo/` folder and `theme.css` to any static host. Put the new
+   `/exec` URL into `API.url` at the top of `zalo/app.js`, and the page's new address into the
+   tracker's `app_url` setting (the links in the emails). Bump `VERSION`, the `?v=` tags and
+   `version.json` so phones pick it up.
+5. **Users.** Usernames and passwords live in `USERS` / `PW_HASHES`, `REVIEWERS` and `HO_USERS`
+   of the script; keep or change them in the new project. Everyone signs in once more on the new
+   address; sessions do not carry over.
+6. **Emails.** `email_ho` and `email_cz` in the tracker's settings; the sending account is the
+   one that deployed the script.
+7. **Retire the old deployment** (Manage deployments → archive) once the new address works, so
+   two scripts never write to the same sheets.
+
+Nothing in this setup depends on a personal Claude subscription or on a scheduled job outside
+the script; analysis sessions run here are one-off and write their results into the tracker.
+
 ## Part 3 — Change log
 
 Newest first. Each entry: date · version · what changed · why · files.
 
 | Date | Version | Change | Why | Files |
 |---|---|---|---|---|
+| 2026-10-22 | docs | §2.16 added: the hand-over checklist for moving the script, workbooks, page and translation key under MSG's own accounts, and how translation keeps working without an Anthropic key. | Asked at launch: what changes when the dashboard moves from personal accounts to MSG. | `zalo/README.md` |
 | 2026-10-22 | 1.6.1 | New sign-ins: `NGT_DA` (DA), `ChengYF` (reviewer), `OptoHO` (one shared head-office login); the approver names offered at Publish now come from `HO_APPROVERS` (SL, Anh) rather than from the HO logins, and the shared login preselects nobody; HO display names served for the edit log. | Credentials agreed at launch; one HO login, the approver tick says who approved. | `zalo/tools/zalo-sop.gs`, `zalo/app.js`, `zalo/review.js`, `zalo/index.html`, `zalo/version.json`, `zalo/tools/test-gs.js`, `zalo/README.md`, `README.md` |
 | 2026-10-22 | 1.6.0 | **Head office review mode** on the Zalo SOP Compliance Tracker: usernames `SL` and `ANH`; Overview with a review queue, waiting badges and a per-clinic compliance ladder; the clinic tab in review mode — the reviewer's marks correctable with every change logged, each remark as original · English · editable Vietnamese plus an HO note, a visible-to-DA switch per chat, **Start review**, **Send back to reviewer** (note required, emails CZ), **Publish to DA** with the approver (SL / Anh / Other with a name) recorded, **Reopen review**; a **By DA / product** scoreboard view for both roles; the reviewer sees HO's edits read only and the send-back note. Remarks are translated zh / en / vi through the Claude API when a week is completed (Google Translate fallback, fingerprinted so nothing is translated twice), HO's Vietnamese re-translated at publish. Audit and Weekly tabs gain the HO columns; settings gain `email_cz`, `translate`, `translate_model`; the script gains `hoEdit`, `hoFeedback`, `hoTranslate` and the HO status edges; a brand-new tab is widened before its header is written; `?demo=ho`. | HO reviews, corrects and approves what CZ completed before the DA sees it, in each person's language. | `zalo/review.js`, `zalo/app.js`, `zalo/zalo.css`, `zalo/index.html`, `zalo/version.json`, `zalo/tools/zalo-sop.gs`, `zalo/tools/test-gs.js`, `zalo/README.md`, `README.md` |
 | 2026-10-22 | 1.5.0 | **Zalo SOP Compliance Tracker** for the reviewer: Overview (clinic cards with status and trend, cadence × clinic heat map, most-missed / most-done items, needs attention) and a tab per clinic (NGT live, the others greyed) with the scoreboard (cadences / items / weeks, audited vs DA-reported, items sent against the total possible), the overall feedback, **To mark** with per-cadence quotas, **Other chats due** with optional extra marks, folded history with CSV, and **Complete week** that locks the week and emails HO once; Reopen until HO takes it. Weekly tab gains status, submitted-at, approved-by and published-at; settings gain `email_ho` and `app_url`. The agreed three-role design is written up in §2.14. | CZ's weekly audit of NGT moves fully onto the dashboard; HO review and the DA's feedback page follow. | `zalo/review.js`, `zalo/app.js`, `zalo/zalo.css`, `zalo/index.html`, `zalo/version.json`, `zalo/tools/zalo-sop.gs`, `zalo/tools/test-gs.js`, `zalo/README.md` |
