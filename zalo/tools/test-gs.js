@@ -110,7 +110,9 @@ function body(b){ return Object.assign({ u: "NGT_DA", h: H, da: "Tiên" }, b); }
 eq(get({ u: "NGT_DA", h: "wrong", action: "ping" }), { error: "forbidden" }, "wrong hash is refused");
 eq(get({ u: "XYZ_DA", h: H, action: "ping" }), { error: "unknown user" }, "unknown user is refused");
 eq(get({ u: "ngt_da", h: H, action: "ping" }).clinic, "NGT", "listed username, case-insensitive");
-eq(get({ u: "NGT_DA1", h: H, action: "ping" }), { error: "unknown user" }, "the old username no longer signs in");
+eq(get({ u: "NGT_DA1", h: H, action: "ping" }).clinic, "NGT", "the previous username still signs in as an alias");
+eq(get({ u: "NGT_DA", h: "d006b3f546ac914c34dfc209ad535ea530f32a1e8e0ae822ea049b3a783e4d20", action: "ping" }).clinic, "NGT", "the previous password is still accepted during the changeover");
+eq(get({ u: "NGT_DA", h: "", action: "ping" }), { error: "forbidden" }, "an empty hash is refused");
 eq(post({ action: "markSent" }), { error: "unknown user" }, "post without credentials is refused");
 
 /* ---------- setup ---------- */
