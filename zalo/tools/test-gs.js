@@ -93,18 +93,24 @@ var sandbox = {
 };
 vm.createContext(sandbox);
 vm.runInContext(fs.readFileSync(__dirname + "/zalo-sop.gs", "utf8"), sandbox);
+/* the shipped sign-ins exist before the fixtures below replace them: a listed name with a wrong hash is "forbidden", an unlisted one "unknown user" */
+eq(get({ u: "chengyf", h: "x", action: "ping" }), { error: "forbidden" }, "the reviewer username ChengYF is listed");
+eq(get({ u: "OptoHO", h: "x", action: "ping" }), { error: "forbidden" }, "the head-office username OptoHO is listed");
+eq(get({ u: "CZ", h: "x", action: "ping" }), { error: "unknown user" }, "the old reviewer username is gone");
+eq(get({ u: "SL", h: "x", action: "ping" }), { error: "unknown user" }, "the old head-office usernames are gone");
+eq(sandbox.approverNames(), ["SL", "Anh"], "the approver list is SL and Anh whatever the login");
 var RVH = "c7425b8bfb79932f5d6f5b46f3ddc20bb7c5050dd516aef9e87425afc4cf51c3";       /* sha256 of the reviewer demo password */
 sandbox.REVIEWERS = { CZ: { name: "ChenZhong", hash: RVH, clinics: { NGT: "TRACKER1" } } };
-var H = "d006b3f546ac914c34dfc209ad535ea530f32a1e8e0ae822ea049b3a783e4d20";
+var H = "48a495c2722686b5907a142bf3009e12856f690280cd0e37e91497fdeb597075";   /* sha256 of the DA password */
 function get(p){ return JSON.parse(sandbox.doGet({ parameter: p }).text); }
 function post(b){ return JSON.parse(sandbox.doPost({ postData: { contents: JSON.stringify(b) } }).text); }
-function body(b){ return Object.assign({ u: "NGT_DA1", h: H, da: "Tiên" }, b); }
+function body(b){ return Object.assign({ u: "NGT_DA", h: H, da: "Tiên" }, b); }
 
 /* ---------- auth ---------- */
-eq(get({ u: "NGT_DA1", h: "wrong", action: "ping" }), { error: "forbidden" }, "wrong hash is refused");
+eq(get({ u: "NGT_DA", h: "wrong", action: "ping" }), { error: "forbidden" }, "wrong hash is refused");
 eq(get({ u: "XYZ_DA", h: H, action: "ping" }), { error: "unknown user" }, "unknown user is refused");
-eq(get({ u: "ngt_da1", h: H, action: "ping" }).clinic, "NGT", "listed username, case-insensitive");
-eq(get({ u: "NGT_DA", h: H, action: "ping" }), { error: "unknown user" }, "the old username no longer signs in");
+eq(get({ u: "ngt_da", h: H, action: "ping" }).clinic, "NGT", "listed username, case-insensitive");
+eq(get({ u: "NGT_DA1", h: H, action: "ping" }), { error: "unknown user" }, "the old username no longer signs in");
 eq(post({ action: "markSent" }), { error: "unknown user" }, "post without credentials is refused");
 
 /* ---------- setup ---------- */
@@ -116,7 +122,7 @@ eq([cad.rows[0][4], cad.rows[1][4], cad.rows[2][4], cad.rows[3][4], cad.rows[4][
 sandbox.setup(); eq(cad.rows[1][4], "High", "setup is idempotent");
 
 /* ---------- bootstrap ---------- */
-var b = get({ u: "NGT_DA1", h: H });
+var b = get({ u: "NGT_DA", h: H });
 eq(b.ok, 1, "bootstrap ok");
 eq(b.customers.length, 3, "three customers read, formula-only rows skipped");
 eq([b.customers[0].dep, b.customers[0].coll, b.customers[1].dep, b.customers[2].dep], ["2026-07-20", "2026-07-27", "2026-10-03", "2026-10-10"], "dates read from Date, text and serial cells");
@@ -167,7 +173,7 @@ var tasks = ss.getSheetByName("DA_Tasks"); eq([tasks.rows[1][0], tasks.rows[1][1
 var un = post(body({ action: "markSent", undo: [{ key: "k1", stage: "CD+14" }, { key: "zz", stage: "D1" }] }));
 eq(un.undone, 1, "undo marks the latest matching row only");
 ok(tasks.rows[1][8] !== "", "undone_at set");
-eq(get({ u: "NGT_DA1", h: H }).tasks.length, 2, "bootstrap serves the ticks");
+eq(get({ u: "NGT_DA", h: H }).tasks.length, 2, "bootstrap serves the ticks");
 
 /* ---------- imports ---------- */
 var si = post(body({ action: "storeImports", orders: [{ code: "DT1", deposit: "2026-10-10", appointment: "2026-10-20", status: "Chờ Lấy", name: "Võ Gia", phone: "0977111222", lens: "1.61 EL Night", product: "Kính", note: "bạn của chị Lan" }, { code: "DT2", deposit: "2026-10-11", appointment: "2026-10-13", status: "DONE", name: "Lê An Nhiên", phone: "0966000111", product: "MC", collected: "2026-10-13" }] }));
@@ -215,7 +221,7 @@ eq(rget({ action: "ping" }).role, "reviewer", "reviewer ping, case-insensitive u
 var crmTabsBefore = ss.order.slice(), memBefore = JSON.stringify(mem.rows);
 var rb = rget({});
 eq([rb.ok, rb.role, rb.reviewer, rb.name], [1, "reviewer", "CZ", "ChenZhong"], "reviewer bootstrap");
-ok(rb.clinics.NGT && rb.clinics.NGT.customers.length === get({ u: "NGT_DA1", h: H }).customers.length, "the reviewer sees the clinic's customers");
+ok(rb.clinics.NGT && rb.clinics.NGT.customers.length === get({ u: "NGT_DA", h: H }).customers.length, "the reviewer sees the clinic's customers");
 ok(rb.clinics.NGT.tasks.length >= 1 && rb.clinics.NGT.settings.go_live === "2026-10-16", "the DA's ticks and settings come along");
 eq(JSON.stringify(mem.rows), memBefore, "the CRM form is untouched by the reviewer path");
 eq(ss.order, crmTabsBefore, "no tab is added to the CRM workbook by the reviewer path");
@@ -276,7 +282,7 @@ eq(au.getLastRow(), r1 - 1, "row gone");
 eq(rpost({ action: "markSent", items: [{ key: "k", stage: "D1" }] }).error, "unknown action: markSent", "a reviewer cannot run DA writes");
 eq(rpost({ action: "auditSave", audits: [{ key: "x", week: "bad", clinic: "NGT" }] }).error, "audit needs key and week", "bad week refused");
 eq(rpost({ action: "auditSave", audits: [{ key: "x", week: "2026-10-19", clinic: "XX" }] }).error, "clinic XX is not in your list", "unknown clinic refused");
-eq(get({ u: "NGT_DA1", h: H }).audits, undefined, "the DA's bootstrap carries no audit data");
+eq(get({ u: "NGT_DA", h: H }).audits, undefined, "the DA's bootstrap carries no audit data");
 
 /* ---------- week status: complete → email → locked → reopen ---------- */
 eq(wk.rows[0].slice(18, 22), ["状态 Status", "提交时间 Submitted at", "审批人 Approved by", "发布时间 Published at"], "weekly tab gained the status and approval columns");
@@ -305,7 +311,7 @@ eq(rpost({ action: "auditRemove", keys: [a2.key], clinic: "NGT" }).removed, 1, "
 
 /* ---------- head office (1.6.0) ---------- */
 var SLH = "fa76a43aaab8f7eab98ffea561815c3edb78c31d8e3cfbc152e20410b990f7c5", ANHH = "87886b83b8d2801c4d3050ac23331fcdb6af92fe8c481cedc692b77343014836";
-sandbox.HO_USERS = { SL: { name: "Sin Long", hash: SLH, approver: "SL" }, ANH: { name: "Anh", hash: ANHH, approver: "Anh" } };
+sandbox.HO_USERS = { SL: { name: "Sin Long", hash: SLH, approver: "SL" }, ANH: { name: "Anh", hash: ANHH, approver: "Anh" }, OPTOHO: { name: "OptoHO", hash: ANHH, approver: "" } };
 function hget(p){ return get(Object.assign({ u: "sl", h: SLH }, p)); }
 function hpost(b){ return post(Object.assign({ u: "SL", h: SLH }, b)); }
 /* fakes for the translation: script properties, Claude over UrlFetch, Google Translate */
@@ -326,6 +332,9 @@ memBefore = JSON.stringify(mem.rows);
 var hb = hget({});
 eq([hb.ok, hb.role, hb.reviewer, hb.name, hb.approver, hb.approvers, hb.reviewers], [1, "ho", "SL", "Sin Long", "SL", ["SL", "Anh"], { NGT: "ChenZhong" }], "HO bootstrap: role, approvers, the clinic's reviewer");
 ok(hb.clinics.NGT && hb.clinics.NGT.customers.length >= 3 && hb.audits.length >= 3, "HO sees the clinic and the reviewer's audits");
+eq(hb.hoNames, { SL: "Sin Long", ANH: "Anh", OPTOHO: "OptoHO" }, "HO display names served");
+var shared = get({ u: "optoho", h: ANHH });
+eq([shared.role, shared.name, shared.approver, shared.approvers], ["ho", "OptoHO", "", ["SL", "Anh"]], "a shared head-office login has no preselected approver but the same approver list");
 eq(JSON.stringify(mem.rows), memBefore, "the CRM form is untouched by the HO path");
 eq([au.rows[0][24], au.rows[0][32], au.rows[0].length >= 33], ["HO 备注 HO note", "翻译来源 Translated by", true], "audit tab gained the HO columns");
 eq([wk.rows[0][22], wk.rows[0][31]], ["总评 EN Remark EN", "HO 审核人 HO reviewer"], "weekly tab gained the HO columns");
@@ -430,7 +439,7 @@ var pub2 = hpost({ action: "weekStatus", week: "2026-10-19", clinic: "NGT", stat
 var m3 = sandbox.MailApp.sent[sandbox.MailApp.sent.length - 1];
 eq([pub2.status, pub2.emailed, m3.subject], ["published", 1, "[Zalo SOP] Sin Long published NGT week of 2026-10-19 (approved by Anh)"], "publishing straight from submitted, approver in the email");
 ok(/Approved by: Anh/.test(m3.body), "publish email body names the approver");
-eq(get({ u: "NGT_DA1", h: H }).weekly, undefined, "the DA's bootstrap still carries no tracker data");
+eq(get({ u: "NGT_DA", h: H }).weekly, undefined, "the DA's bootstrap still carries no tracker data");
 /* cleanup so nothing above this block changes */
 hpost({ action: "weekStatus", week: "2026-10-19", clinic: "NGT", status: "review" });
 hpost({ action: "weekStatus", week: "2026-10-19", clinic: "NGT", status: "marking", note: "cleanup" });

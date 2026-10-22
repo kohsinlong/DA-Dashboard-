@@ -1,6 +1,6 @@
 # DA Zalo Dashboard — design, operations and change log
 
-**Status:** v1.6.0 launched 22 Oct 2026 — head office review mode (SL, Anh) on the Zalo SOP Compliance Tracker, remarks translated zh / en / vi through the Claude API; the script needs a new version, the HO passwords and the API key (§2.10) · DA dashboard live since 16 Oct 2026 · **Go-live:** 16 Oct 2026 · **Clinic:** NGT · **Last updated:** 22 Oct 2026
+**Status:** v1.6.1, 22 Oct 2026 — new sign-ins (`NGT_DA`, `ChengYF`, `OptoHO`) on top of 1.6.0's head office review mode and Claude translations; the script needs a new version and the API key (§2.10) · DA dashboard live since 16 Oct 2026 · **Go-live:** 16 Oct 2026 · **Clinic:** NGT · **Last updated:** 22 Oct 2026
 
 This file is the single source of truth for the DA Zalo Dashboard. Part 1 is the view at a
 glance, Part 2 the granular rules, Part 3 the change log. Every change to the dashboard updates
@@ -25,8 +25,8 @@ information store; the dashboard writes to it.
 |---|---|
 | DA (Tiên) | signs in, works the task list, adds customers, records collections, uploads the QK report, confirms Zalo tag renames |
 | Manager (you) | edits the SOP content and the high/low split in the `Cadence (VN)` tab, changes settings in `DA_Settings`, reads `DA_Log` |
-| Reviewer (CZ) | signs in on the same page with his own username; audits a weekly sample of chats against the CRM and the DA's ticks, writes remarks, screenshots and the week's feedback, then completes the week — all into the Zalo SOP Compliance Tracker workbook (§2.14) |
-| HO (Sin Long, Anh) | signs in with an HO username (`SL`, `ANH`); reviews what CZ completed — corrects ticks, rewords the Vietnamese the DA will read, hides chats — records who approved and publishes to the DA, or sends the week back with a note (§2.14) |
+| Reviewer (CZ, 程总) | signs in on the same page as `ChengYF`; audits a weekly sample of chats against the CRM and the DA's ticks, writes remarks, screenshots and the week's feedback, then completes the week — all into the Zalo SOP Compliance Tracker workbook (§2.14) |
+| HO (Sin Long, Anh) | sign in with the shared head-office username `OptoHO`; the approver tick at Publish (SL / Anh / Other) records who approved; review what CZ completed — corrects ticks, rewords the Vietnamese the DA will read, hides chats — records who approved and publishes to the DA, or sends the week back with a note (§2.14) |
 | Head office | unchanged: the head-office SOP page reads the same sheet through its own feed |
 
 ### Moving parts
@@ -103,7 +103,7 @@ Files in `zalo/`:
 | Add a clinic or a username | add the workbook to `CLINICS` and the username to `USERS` in `zalo-sop.gs`, then publish a new version |
 | Change the reviewer's password, or the clinics he audits | `REVIEWERS` in `zalo-sop.gs` (sha256 of the new password; clinic code → his tracker's spreadsheet ID), then publish a new version |
 | Change the audit sample size, the first audited week, or who gets the Complete-week email | `设置 Settings` tab in the tracker (`sample_size`, `start_week`, `email_ho`) |
-| Change an HO password, or add an HO person | `HO_USERS` in `zalo-sop.gs` (sha256 of the new password; `approver` is the name shown in "approved by"), then publish a new version |
+| Change the head-office password, or the names offered at Publish | `HO_USERS` in `zalo-sop.gs` (sha256 of the new password) and `HO_APPROVERS` (SL, Anh), then publish a new version |
 | Set or change the Claude API key for translations, or switch translation to Google / off | Apps Script → Project settings → Script properties → `ANTHROPIC_API_KEY` (or paste it into `setAnthropicKey()` and run it once); `translate` and `translate_model` in the tracker's `设置 Settings` |
 | Change who is emailed when HO publishes or sends a week back | `email_cz` in the tracker's `设置 Settings` tab |
 | Update the script after editing it | Apps Script editor → Deploy → Manage deployments → Edit → New version |
@@ -114,7 +114,7 @@ Files in `zalo/`:
 
 ### 2.1 Sign-in and access
 
-- Username `NGT_DA1`, one shared password. Only usernames listed in `USERS` can sign in. Only the SHA-256 hash of the password is stored, and
+- Username `NGT_DA`, one shared password (usernames are not case-sensitive). Only usernames listed in `USERS` can sign in. Only the SHA-256 hash of the password is stored, and
   only in the script (`PW_HASH` in `zalo-sop.gs`); the page holds neither the password nor its
   hash, so nothing in the public page source can be brute-forced. The page hashes what the DA
   types, sends the hash with every request, and the script refuses anything else.
@@ -436,18 +436,18 @@ already created on 16 Oct 2026, and `setup()` is safe to run again):
    For the reviewer (1.4.0+): run `setupReviewer` once as well; it creates the tracker's four
    tabs and the screenshot folder and asks for the Drive and Gmail permissions the uploads and
    the Complete-week email need.
-   For head office (1.6.0): the two HO passwords are the hashes in `HO_USERS` (change them there
-   if you want others); add the Claude API key under **Project settings → Script properties** as
+   For head office (1.6.0): the shared head-office password is the hash in `HO_USERS` (`OptoHO`;
+   change it there if you want another); add the Claude API key under **Project settings → Script properties** as
    `ANTHROPIC_API_KEY` (or paste it into `setAnthropicKey()`, run it once, and put the placeholder
    back); run `testTranslation` once from the editor — it asks for the external-request
    permission and logs a sample translation — then publish the new version. Without a key the
-   script translates with Google Translate and the page's translation toast says so. Fill
-   `email_cz` in the tracker's `设置 Settings` so CZ is emailed when a week is published or sent
-   back.
+   script translates with Google Translate and the page's translation toast says so. `email_cz`
+   in the tracker's `设置 Settings` stays empty while CZ has no email address: no email is sent,
+   and CZ sees send-backs and the HO status on his Overview and the week's strip.
 4. Either paste that URL into `API.url` at the top of `zalo/app.js` and commit (the permanent
    way), or on the sign-in card open **Connect the script (advanced)** and paste it there, once
    per device. Sending the URL to Claude also works: it commits it.
-5. Open https://kohsinlong.github.io/DA-Dashboard-/zalo/, sign in as `NGT_DA1`, pick the DA,
+5. Open https://kohsinlong.github.io/DA-Dashboard-/zalo/, sign in as `NGT_DA`, pick the DA,
    and upload the latest QK report under Import QK.
 
 After editing the script: Deploy → Manage deployments → Edit → Version: New version → Deploy.
@@ -517,13 +517,13 @@ have since been added.
 ### 2.14 Zalo SOP Compliance Tracker (reviewer and HO)
 
 **Agreed design, 22 Oct 2026.** One login page, three roles, one tracker workbook. The username
-decides what opens: `NGT_DA1` the DA dashboard (§2.5); `CZ` the reviewer's tracker (1.5.0); `SL`
-or `ANH` the same tracker in head office's review mode (1.6.0, below). All three run off the
+decides what opens: `NGT_DA` the DA dashboard (§2.5); `ChengYF` the reviewer's tracker (1.5.0);
+`OptoHO` the same tracker in head office's review mode (1.6.0, below). All three run off the
 same script and workbooks.
 The old head-office compliance page in `zalo-sop-dashboard` is retired; its views are rebuilt here
 on the DA's real ticks.
 
-**Who:** the QA reviewer (CZ), username `CZ` in `REVIEWERS` in `zalo-sop.gs` with its own password
+**Who:** the QA reviewer (CZ, 程总), username `ChengYF` in `REVIEWERS` in `zalo-sop.gs` with its own password
 hash · **code:** `zalo/review.js` (pages and reviewer state; `app.js` only switches role, nav and
 routes) · **data:** the "Zalo SOP Compliance Tracker" workbook (CZ's tracker), never the clinics'
 CRM forms.
@@ -605,9 +605,9 @@ entries (matched by tag, or by the phone in the tag), copies each week's remark 
 The reviewer cannot run any DA write; they answer "unknown action". `?demo=reviewer` opens the
 reviewer view on the demo data.
 
-**Head office (1.6.0).** Usernames `SL` and `ANH` (`HO_USERS` in `zalo-sop.gs`, each with its own
-password hash and the name shown in "approved by") open the same tracker in review mode, in
-English by default. HO sees every clinic that has a reviewer tracker; the CRM forms stay read
+**Head office (1.6.0).** The shared username `OptoHO` (`HO_USERS` in `zalo-sop.gs`; the names
+offered at Publish come from `HO_APPROVERS`: SL and Anh, plus Other) opens the same tracker in
+review mode, in English by default. HO sees every clinic that has a reviewer tracker; the CRM forms stay read
 only; CZ's cells are never rewritten — HO's work lives in its own columns and every change
 carries who and when.
 
@@ -629,8 +629,8 @@ carries who and when.
   from **Edit log** on the chat or the week, and the strip counts the edits. The scoreboard
   gains a **By DA / product** view (both roles): due cadences, DA-reported, in sample, audited
   and ticked-not-found per DA and per product.
-- **Publish to DA** asks who approved — a tick for **SL** or **Anh** (the signed-in person is
-  preselected) or **Other** with a typed name — and refuses without one. It writes the approver
+- **Publish to DA** asks who approved — a tick for **SL** or **Anh** (nothing is preselected on the
+  shared login) or **Other** with a typed name — and refuses without one. It writes the approver
   and the time to the Weekly tab, translates any Vietnamese HO edited (so CZ can read it back in
   Chinese), emails CZ once (`email_cz`), and shows "published · approved by …" on the strip, the
   overview card and the queue. **Send back to reviewer** needs a note: the week returns to
@@ -726,6 +726,7 @@ Newest first. Each entry: date · version · what changed · why · files.
 
 | Date | Version | Change | Why | Files |
 |---|---|---|---|---|
+| 2026-10-22 | 1.6.1 | New sign-ins: `NGT_DA` (DA), `ChengYF` (reviewer), `OptoHO` (one shared head-office login); the approver names offered at Publish now come from `HO_APPROVERS` (SL, Anh) rather than from the HO logins, and the shared login preselects nobody; HO display names served for the edit log. | Credentials agreed at launch; one HO login, the approver tick says who approved. | `zalo/tools/zalo-sop.gs`, `zalo/app.js`, `zalo/review.js`, `zalo/index.html`, `zalo/version.json`, `zalo/tools/test-gs.js`, `zalo/README.md`, `README.md` |
 | 2026-10-22 | 1.6.0 | **Head office review mode** on the Zalo SOP Compliance Tracker: usernames `SL` and `ANH`; Overview with a review queue, waiting badges and a per-clinic compliance ladder; the clinic tab in review mode — the reviewer's marks correctable with every change logged, each remark as original · English · editable Vietnamese plus an HO note, a visible-to-DA switch per chat, **Start review**, **Send back to reviewer** (note required, emails CZ), **Publish to DA** with the approver (SL / Anh / Other with a name) recorded, **Reopen review**; a **By DA / product** scoreboard view for both roles; the reviewer sees HO's edits read only and the send-back note. Remarks are translated zh / en / vi through the Claude API when a week is completed (Google Translate fallback, fingerprinted so nothing is translated twice), HO's Vietnamese re-translated at publish. Audit and Weekly tabs gain the HO columns; settings gain `email_cz`, `translate`, `translate_model`; the script gains `hoEdit`, `hoFeedback`, `hoTranslate` and the HO status edges; a brand-new tab is widened before its header is written; `?demo=ho`. | HO reviews, corrects and approves what CZ completed before the DA sees it, in each person's language. | `zalo/review.js`, `zalo/app.js`, `zalo/zalo.css`, `zalo/index.html`, `zalo/version.json`, `zalo/tools/zalo-sop.gs`, `zalo/tools/test-gs.js`, `zalo/README.md`, `README.md` |
 | 2026-10-22 | 1.5.0 | **Zalo SOP Compliance Tracker** for the reviewer: Overview (clinic cards with status and trend, cadence × clinic heat map, most-missed / most-done items, needs attention) and a tab per clinic (NGT live, the others greyed) with the scoreboard (cadences / items / weeks, audited vs DA-reported, items sent against the total possible), the overall feedback, **To mark** with per-cadence quotas, **Other chats due** with optional extra marks, folded history with CSV, and **Complete week** that locks the week and emails HO once; Reopen until HO takes it. Weekly tab gains status, submitted-at, approved-by and published-at; settings gain `email_ho` and `app_url`. The agreed three-role design is written up in §2.14. | CZ's weekly audit of NGT moves fully onto the dashboard; HO review and the DA's feedback page follow. | `zalo/review.js`, `zalo/app.js`, `zalo/zalo.css`, `zalo/index.html`, `zalo/version.json`, `zalo/tools/zalo-sop.gs`, `zalo/tools/test-gs.js`, `zalo/README.md` |
 | 2026-10-22 | 1.4.0 | **Reviewer mode**: the QA reviewer signs in with his own username and gets This week · Tracker · CRM instead of the DA's tabs. A weekly sample drawn across cadences and products, the customer's whole journey as tick boxes next to the DA's own ticks (with "ticked, not found" counted), remarks, screenshots to Drive, a data-issue flag, the week's overall feedback, a week-by-week tracker with CSV export. Everything is written to the reviewer's tracker workbook (tabs `审核 Audit`, `周总评 Weekly`, `截图 Screenshots`, `设置 Settings`); the CRM is read only on that path. The tracker's hand-typed week sheets are imported once from W42 and hidden. | CZ's weekly audit of NGT moves from a formula sheet to the dashboard, on the same due dates the DA works from. | `zalo/review.js`, `zalo/app.js`, `zalo/zalo.css`, `zalo/index.html`, `zalo/version.json`, `zalo/tools/zalo-sop.gs`, `zalo/tools/test-gs.js`, `zalo/README.md` |

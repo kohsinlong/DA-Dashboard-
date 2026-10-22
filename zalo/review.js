@@ -208,11 +208,11 @@ window.ZALO_REVIEW = (function () {
   function stageOrder(a, b){ return Z.STAGES.indexOf(a) - Z.STAGES.indexOf(b); }
   function isLive(code){ return st.live.indexOf(code) !== -1; }
   function pct(a, b){ return b ? Math.round(a / b * 100) : null; }
-  /* roles: the reviewer marks; head office reviews. `me` is the signed-in id (CZ, SL, ANH) */
+  /* roles: the reviewer marks; head office reviews. `me` is the signed-in id (CHENGYF, OPTOHO; CZ / SL in the demo) */
   function isHo(){ return !!(st.data && st.data.role === "ho"); }
   function me(){ return st.data ? (st.data.reviewer || "") : ""; }
   function rvName(code){ var m = st.data && st.data.reviewers; return (m && m[code || st.clinic]) || "CZ"; }
-  function hoLabel(id){ var ap = (st.data && st.data.approvers) || []; if (!id) return ""; var hit = ap.filter(function (a) { return a.toUpperCase() === String(id).toUpperCase(); })[0]; return hit || id; }
+  function hoLabel(id){ if (!id) return ""; var nm = (st.data && st.data.hoNames) || {}, ap = (st.data && st.data.approvers) || []; if (nm[String(id).toUpperCase()]) return nm[String(id).toUpperCase()]; var hit = ap.filter(function (a) { return a.toUpperCase() === String(id).toUpperCase(); })[0]; return hit || id; }
   function TH(){ return T().ho; }
   /* the marks that count: head office's corrections override the reviewer's ticks */
   function marksOf(a){ return a.hoMarks || a.marks || {}; }
@@ -539,7 +539,7 @@ window.ZALO_REVIEW = (function () {
   /* ------------------------------------------------------------------ publish / send back dialogs */
   function openPublish(week){
     var th = TH(), s = weekStats(week), recs = recsOf(week), hidden = recs.filter(function (a) { return a.visible === 0; }).length, un = untranslated(week), aps = ((st.data && st.data.approvers) || []).slice(), busy = trBusy(week);
-    if (!st.ui.ap) st.ui.ap = (st.data && st.data.approver) || aps[0] || "other";
+    if (!st.ui.ap) st.ui.ap = (st.data && st.data.approver) || "";   /* a shared head-office login preselects nobody */
     var h = '<div class="modal"><h2>' + esc(fill(th.pubTitle, { c: st.clinic, w: wTag(week) })) + '</h2><p class="lede">' + esc(th.pubLede) + "</p>"
       + '<p class="note2">' + esc(fill(th.pubSum, { n: recs.length, h: hidden, s: s.itemsPct === null ? "—" : s.itemsPct + "%", u: un })) + (un ? ' <button type="button" class="btn sm" data-act="rv-translate"' + (busy ? " disabled" : "") + ">" + esc(busy ? th.translating : fill(th.translateAll, { n: un })) + "</button>" : "") + "</p>"
       + '<div class="rvjt">' + esc(th.approvedBy) + '</div><div class="aprow">' + aps.map(function (a) { return '<label class="' + (st.ui.ap === a ? "on" : "") + '"><input type="radio" name="rvAp" value="' + esc(a) + '"' + (st.ui.ap === a ? " checked" : "") + "> " + esc(a) + "</label>"; }).join("")
@@ -1164,7 +1164,7 @@ window.ZALO_REVIEW = (function () {
       if (saved) { try { d = JSON.parse(saved); if (d.today !== daDemo.today || d.v !== 3) d = null; } catch (e) { d = null; } }
       if (!d) d = { v: 3, today: daDemo.today, clinics: { NGT: { customers: daDemo.customers, das: daDemo.das, cadence: [], tasks: daDemo.tasks, settings: daDemo.settings } },
                     audits: [], weekly: [], shots: [], settings: { NGT: { sample_size: "15", start_week: Z.addDays(Z.weekBounds(daDemo.today).start, -14) } }, cadenceCN: [] };
-      d.role = role; d.reviewer = role === "ho" ? "SL" : "CZ"; d.name = role === "ho" ? "Sin Long" : "ChenZhong"; d.approver = role === "ho" ? "SL" : ""; d.approvers = ["SL", "Anh"]; d.reviewers = { NGT: "ChenZhong" };
+      d.role = role; d.reviewer = role === "ho" ? "SL" : "CZ"; d.name = role === "ho" ? "Sin Long" : "ChenZhong"; d.approver = role === "ho" ? "SL" : ""; d.approvers = ["SL", "Anh"]; d.hoNames = { SL: "Sin Long", ANH: "Anh" }; d.reviewers = { NGT: "ChenZhong" };
       A.store("zalo_demo_rv", JSON.stringify(d)); return d;
     },
     /* head office demo: last week arrives completed by the reviewer, with marks, remarks and translations */

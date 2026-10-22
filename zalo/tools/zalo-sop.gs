@@ -30,19 +30,21 @@ var CLINICS = {
   /* clinic code → the CRM workbook and its Membership tab */
   "NGT": { id: "1IdKCJ58wJHrjFkaQmnTKwPo3rWtAvAA3CUYRkH_4IJI", sheet: "Membership_NGT" }
 };
-var USERS = { "NGT_DA1": "NGT" };    /* username → clinic; only names listed here can sign in */
+/* Usernames are matched without regard to case (the keys here are upper case). */
+var USERS = { "NGT_DA": "NGT" };    /* username → clinic; only names listed here can sign in */
 /* QA reviewers: username → own password hash and, per clinic they audit, their tracker workbook. */
 var REVIEWERS = {
-  "CZ": { name: "ChenZhong", hash: "c7425b8bfb79932f5d6f5b46f3ddc20bb7c5050dd516aef9e87425afc4cf51c3",
-          clinics: { "NGT": "1ki5FZBdnNDM83S5kYSKYk2uLVuSEoMa3559y4Av7OG8" } }
+  "CHENGYF": { name: "ChengYF", hash: "105741eec6f7b596060f6d8c3f6be260d63b0a7490f5bb6317617fa9f0971207",
+               clinics: { "NGT": "1ki5FZBdnNDM83S5kYSKYk2uLVuSEoMa3559y4Av7OG8" } }
 };
-/* Head office: username → name, own password hash, how the name appears in "approved by". HO sees
-   every clinic that has a reviewer tracker (REVIEWERS) in review mode. */
+/* Head office: username → name, own password hash and, when the login belongs to one person, the
+   name to preselect in "approved by". One shared login (OptoHO) leaves `approver` empty, so Publish
+   asks every time. HO sees every clinic that has a reviewer tracker (REVIEWERS) in review mode. */
 var HO_USERS = {
-  "SL":  { name: "Sin Long", hash: "fa76a43aaab8f7eab98ffea561815c3edb78c31d8e3cfbc152e20410b990f7c5", approver: "SL" },
-  "ANH": { name: "Anh",      hash: "87886b83b8d2801c4d3050ac23331fcdb6af92fe8c481cedc692b77343014836", approver: "Anh" }
+  "OPTOHO": { name: "OptoHO", hash: "602c1f796dd1597b4a92ad0bd7bf6cc4d2f69e004f29758a5ad5cba9d417e648", approver: "" }
 };
-var PW_HASH = "d006b3f546ac914c34dfc209ad535ea530f32a1e8e0ae822ea049b3a783e4d20";   /* sha256 of the shared password */
+var HO_APPROVERS = ["SL", "Anh"];   /* the names offered at Publish to DA, plus "Other" with a typed name */
+var PW_HASH = "48a495c2722686b5907a142bf3009e12856f690280cd0e37e91497fdeb597075";   /* sha256 of the DA password */
 var TZ = "Asia/Ho_Chi_Minh";
 var CADENCE_SHEET = "Cadence (VN)";
 var TABS = { tasks: "DA_Tasks", imports: "DA_Imports", details: "DA_Details", settings: "DA_Settings", log: "DA_Log" };
@@ -510,7 +512,7 @@ function hoOf(u, h) {
   var id = String(u || "").trim().toUpperCase(), r = HO_USERS[id];
   if (!r) return null;
   if (!r.hash || String(h || "").toLowerCase() !== r.hash) throw new Error("forbidden");
-  return { id: id, name: r.name || id, role: "ho", approver: r.approver || r.name || id, clinics: hoClinics(), cache: {} };
+  return { id: id, name: r.name || id, role: "ho", approver: r.approver === undefined ? (r.name || id) : r.approver, clinics: hoClinics(), cache: {} };
 }
 function hoClinics() {
   var o = {};
@@ -522,7 +524,8 @@ function reviewerFor(code) {
   for (var i = 0; i < ids.length; i++) if ((REVIEWERS[ids[i]].clinics || {})[code]) return { id: ids[i], name: REVIEWERS[ids[i]].name || ids[i] };
   return { id: "", name: "the reviewer" };
 }
-function approverNames() { return Object.keys(HO_USERS).map(function (k) { return HO_USERS[k].approver || HO_USERS[k].name || k; }); }
+function approverNames() { return HO_APPROVERS.slice(); }
+function hoNames() { var o = {}; Object.keys(HO_USERS).forEach(function (k) { o[k] = HO_USERS[k].name || k; }); return o; }
 function parseJson(s, fallback) { try { return s ? JSON.parse(s) : fallback; } catch (e) { return fallback; } }
 function rvTracker(rv, clinic) {
   var id = rv.clinics[clinic];
@@ -625,7 +628,7 @@ function reviewerGet(rv, p) {
   return reviewerBootstrap(rv);
 }
 function reviewerBootstrap(rv) {
-  var res = { ok: 1, role: rv.role, reviewer: rv.id, name: rv.name, approver: rv.approver || "", approvers: approverNames(), reviewers: {}, generated: now(), today: rvToday(),
+  var res = { ok: 1, role: rv.role, reviewer: rv.id, name: rv.name, approver: rv.approver || "", approvers: approverNames(), hoNames: hoNames(), reviewers: {}, generated: now(), today: rvToday(),
               clinics: {}, audits: [], weekly: [], shots: [], settings: {}, cadenceCN: [] }, done = {};
   Object.keys(rv.clinics).forEach(function (code) {
     if (!CLINICS[code]) { res.clinics[code] = { error: "clinic not configured" }; return; }
